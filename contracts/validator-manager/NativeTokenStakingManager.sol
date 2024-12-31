@@ -20,6 +20,7 @@ import {Initializable} from
  * @dev Implementation of the {INativeTokenStakingManager} interface.
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
+ * @custom:oz-upgrades-unsafe-allow constructor external-library-linking
  */
 contract NativeTokenStakingManager is
     Initializable,
