@@ -10,7 +10,7 @@ import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {PChainOwner, ConversionData, InitialValidator} from "../interfaces/IValidatorManager.sol";
 
 contract ValidatorMessagesTest is Test {
-    bytes32 public constant DEFAULT_L1_ID =
+    bytes32 public constant DEFAULT_SUBNET_ID =
         bytes32(hex"1234567812345678123456781234567812345678123456781234567812345678");
     bytes public constant DEFAULT_NODE_ID =
         bytes(hex"1234567812345678123456781234567812345678123456781234567812345678");
@@ -78,7 +78,7 @@ contract ValidatorMessagesTest is Test {
         );
         ValidatorMessages.packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 nodeID: DEFAULT_NODE_ID,
                 registrationExpiry: DEFAULT_EXPIRY,
                 blsPublicKey: invalidBLSKey,
@@ -250,7 +250,7 @@ contract ValidatorMessagesTest is Test {
         (bytes32 validationID, bytes memory packed) = ValidatorMessages
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 nodeID: DEFAULT_NODE_ID,
                 registrationExpiry: DEFAULT_EXPIRY,
                 blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -262,7 +262,7 @@ contract ValidatorMessagesTest is Test {
 
         ValidatorMessages.ValidationPeriod memory info =
             ValidatorMessages.unpackRegisterL1ValidatorMessage(packed);
-        assertEq(info.l1ID, DEFAULT_L1_ID);
+        assertEq(info.subnetID, DEFAULT_SUBNET_ID);
         assertEq(info.nodeID, DEFAULT_NODE_ID);
         assertEq(info.weight, DEFAULT_WEIGHT);
         assertEq(info.registrationExpiry, DEFAULT_EXPIRY);
@@ -288,7 +288,7 @@ contract ValidatorMessagesTest is Test {
         });
         bytes memory packed = ValidatorMessages.packConversionData(
             ConversionData({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 validatorManagerBlockchainID: DEFAULT_SUBNET_CONVERSION_ID,
                 validatorManagerAddress: DEFAULT_OWNER,
                 initialValidators: initialValidators
@@ -341,7 +341,7 @@ contract ValidatorMessagesTest is Test {
     function _getPackedRegisterL1ValidatorMessage() internal view returns (bytes memory) {
         (, bytes memory packed) = ValidatorMessages.packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 nodeID: DEFAULT_NODE_ID,
                 registrationExpiry: DEFAULT_EXPIRY,
                 blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,

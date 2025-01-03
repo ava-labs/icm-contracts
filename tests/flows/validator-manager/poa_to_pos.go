@@ -46,7 +46,7 @@ func PoAMigrationToPoS(network *localnetwork.LocalNetwork) {
 	signatureAggregator := utils.NewSignatureAggregator(
 		cChainInfo.NodeURIs[0],
 		[]ids.ID{
-			l1AInfo.L1ID,
+			l1AInfo.SubnetID,
 		},
 	)
 
@@ -76,7 +76,7 @@ func PoAMigrationToPoS(network *localnetwork.LocalNetwork) {
 		ownerKey,
 		true,
 	)
-	proxyAddress := network.GetValidatorManager(l1AInfo.L1ID)
+	proxyAddress := network.GetValidatorManager(l1AInfo.SubnetID)
 	poaValidatorManager, err := poavalidatormanager.NewPoAValidatorManager(proxyAddress, l1AInfo.RPCClient)
 	Expect(err).Should(BeNil())
 
@@ -177,7 +177,7 @@ func PoAMigrationToPoS(network *localnetwork.LocalNetwork) {
 		opts,
 		nativetokenstakingmanager.PoSValidatorManagerSettings{
 			BaseSettings: nativetokenstakingmanager.ValidatorManagerSettings{
-				L1ID:                   l1AInfo.L1ID,
+				SubnetID:               l1AInfo.SubnetID,
 				ChurnPeriodSeconds:     utils.DefaultChurnPeriodSeconds,
 				MaximumChurnPercentage: utils.DefaultMaxChurnPercentage,
 			},

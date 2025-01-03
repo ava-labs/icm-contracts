@@ -15,7 +15,7 @@ library ValidatorMessages {
     // The validationID is the SHA-256 hash of the concatenation of the CODEC_ID,
     // REGISTER_L1_VALIDATOR_MESSAGE_TYPE_ID, and the concatenated ValidationPeriod fields.
     struct ValidationPeriod {
-        bytes32 l1ID;
+        bytes32 subnetID;
         bytes nodeID;
         bytes blsPublicKey;
         uint64 registrationExpiry;
@@ -126,7 +126,7 @@ library ValidatorMessages {
      * +----------------+-----------------+--------------------------------------------------------+
      * |       codecID  :          uint16 |                                                2 bytes |
      * +----------------+-----------------+--------------------------------------------------------+
-     * |       l1ID :        [32]byte |                                               32 bytes |
+     * |       subnetID :        [32]byte |                                               32 bytes |
      * +----------------+-----------------+--------------------------------------------------------+
      * | managerChainID :        [32]byte |                                               32 bytes |
      * +----------------+-----------------+--------------------------------------------------------+
@@ -161,7 +161,7 @@ library ValidatorMessages {
         // solhint-disable-next-line func-named-parameters
         bytes memory res = abi.encodePacked(
             CODEC_ID,
-            conversionData.l1ID,
+            conversionData.subnetID,
             conversionData.validatorManagerBlockchainID,
             uint32(20),
             conversionData.validatorManagerAddress,
@@ -192,7 +192,7 @@ library ValidatorMessages {
      * +-----------------------+-------------+--------------------------------------------------------------------+
      * |                typeID :      uint32 |                                                            4 bytes |
      * +-----------------------+-------------+-------------------------------------------------------------------+
-     * |              l1ID :    [32]byte |                                                           32 bytes |
+     * |              subnetID :    [32]byte |                                                           32 bytes |
      * +-----------------------+-------------+--------------------------------------------------------------------+
      * |                nodeID :      []byte |                                              4 + len(nodeID) bytes |
      * +-----------------------+-------------+--------------------------------------------------------------------+
@@ -234,7 +234,7 @@ library ValidatorMessages {
         bytes memory res = abi.encodePacked(
             CODEC_ID,
             REGISTER_L1_VALIDATOR_MESSAGE_TYPE_ID,
-            validationPeriod.l1ID,
+            validationPeriod.subnetID,
             uint32(validationPeriod.nodeID.length),
             validationPeriod.nodeID,
             validationPeriod.blsPublicKey,
@@ -298,13 +298,13 @@ library ValidatorMessages {
             index += 4;
         }
 
-        // Unpack the l1ID
+        // Unpack the subnetID
         {
-            bytes32 l1ID;
+            bytes32 subnetID;
             for (uint256 i; i < 32; ++i) {
-                l1ID |= bytes32(uint256(uint8(input[i + index])) << (8 * (31 - i)));
+                subnetID |= bytes32(uint256(uint8(input[i + index])) << (8 * (31 - i)));
             }
-            validation.l1ID = l1ID;
+            validation.subnetID = subnetID;
             index += 32;
         }
 

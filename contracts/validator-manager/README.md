@@ -37,6 +37,10 @@ PoSValidatorManager <|-- ERC20TokenStakingManager
 PoSValidatorManager <|-- NativeTokenStakingManager
 ```
 
+## A Note on Nomenclature
+
+The contracts in this directory are only useful to L1s that have been converted from Subnets as described in ACP-77. As such, `l1`/`L1` is generally preferred over `subnet`/`Subnet` in the source code. The one major exception is that `subnetID` should be used to refer to both Subnets that have not been converted, and L1s that have. This is because an L1 must first be initialized as a Subnet by issuing a `CreateSubnetTx` on the P-Chain, the transaction hash of which becomes the `subnetID`. Rather than change the name and/or value of this identifier, it is simpler for both to remain static in perpetuity.
+
 ## Deploying
 
 Three concrete `ValidatorManager` contracts are provided - `PoAValidatorManager`, `NativeTokenStakingManager`, and `ERC20TokenStakingManager`. `NativeTokenStakingManager`, and `ERC20TokenStakingManager` implement `PoSValidatorManager`, which itself implements `ValidatorManager`. These are implemented as [upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/main/contracts/proxy/utils/Initializable.sol#L56) contracts. There are numerous [guides](https://blog.chain.link/upgradable-smart-contracts/) for deploying upgradeable smart contracts, but the general steps are as follows:

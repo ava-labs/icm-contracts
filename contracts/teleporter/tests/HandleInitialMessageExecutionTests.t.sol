@@ -22,7 +22,7 @@ enum SampleMessageReceiverAction {
 contract SampleMessageReceiver is ITeleporterReceiver {
     address public immutable teleporterContract;
     string public latestMessage;
-    bytes32 public latestMessageSenderL1ID;
+    bytes32 public latestMessageSenderSubnetID;
     address public latestMessageSenderAddress;
 
     constructor(address teleporterContractAddress) {
@@ -59,7 +59,7 @@ contract SampleMessageReceiver is ITeleporterReceiver {
         require(msg.sender == teleporterContract, "unauthorized");
         require(succeed, "intended to fail");
         latestMessage = message;
-        latestMessageSenderL1ID = sourceBlockchainID;
+        latestMessageSenderSubnetID = sourceBlockchainID;
         latestMessageSenderAddress = originSenderAddress;
     }
 
@@ -73,7 +73,7 @@ contract SampleMessageReceiver is ITeleporterReceiver {
         ITeleporterMessenger messenger = ITeleporterMessenger(teleporterContract);
         messenger.receiveCrossChainMessage(0, address(42));
         latestMessage = message;
-        latestMessageSenderL1ID = sourceBlockchainID;
+        latestMessageSenderSubnetID = sourceBlockchainID;
         latestMessageSenderAddress = originSenderAddress;
     }
 }
@@ -128,7 +128,7 @@ contract HandleInitialMessageExecutionTest is TeleporterMessengerTest {
 
         // Check that the message had the proper affect on the destination contract.
         assertEq(destinationContract.latestMessage(), messageString);
-        assertEq(destinationContract.latestMessageSenderL1ID(), DEFAULT_SOURCE_BLOCKCHAIN_ID);
+        assertEq(destinationContract.latestMessageSenderSubnetID(), DEFAULT_SOURCE_BLOCKCHAIN_ID);
         assertEq(destinationContract.latestMessageSenderAddress(), address(this));
         assertEq(
             teleporterMessenger.getRelayerRewardAddress(expectedMessageID),
@@ -203,7 +203,7 @@ contract HandleInitialMessageExecutionTest is TeleporterMessengerTest {
 
         // Check that the message hash was stored in state and the message did not have any affect on the destination.
         assertEq(destinationContract.latestMessage(), "");
-        assertEq(destinationContract.latestMessageSenderL1ID(), bytes32(0));
+        assertEq(destinationContract.latestMessageSenderSubnetID(), bytes32(0));
         assertEq(destinationContract.latestMessageSenderAddress(), address(0));
         assertEq(
             teleporterMessenger.getRelayerRewardAddress(messageID), DEFAULT_RELAYER_REWARD_ADDRESS
@@ -251,7 +251,7 @@ contract HandleInitialMessageExecutionTest is TeleporterMessengerTest {
 
         // Check that the message hash was stored in state and the message did not have any affect on the destination.
         assertEq(destinationContract.latestMessage(), "");
-        assertEq(destinationContract.latestMessageSenderL1ID(), bytes32(0));
+        assertEq(destinationContract.latestMessageSenderSubnetID(), bytes32(0));
         assertEq(destinationContract.latestMessageSenderAddress(), address(0));
         assertEq(
             teleporterMessenger.getRelayerRewardAddress(messageID), DEFAULT_RELAYER_REWARD_ADDRESS

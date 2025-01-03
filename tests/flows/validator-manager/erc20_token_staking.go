@@ -43,7 +43,7 @@ func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
 	signatureAggregator := utils.NewSignatureAggregator(
 		cChainInfo.NodeURIs[0],
 		[]ids.ID{
-			l1AInfo.L1ID,
+			l1AInfo.SubnetID,
 		},
 	)
 	ctx := context.Background()
@@ -56,7 +56,7 @@ func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
 		fundedKey,
 		false,
 	)
-	stakingManagerAddress := network.GetValidatorManager(l1AInfo.L1ID)
+	stakingManagerAddress := network.GetValidatorManager(l1AInfo.SubnetID)
 	erc20StakingManager, err := erc20tokenstakingmanager.NewERC20TokenStakingManager(
 		stakingManagerAddress,
 		l1AInfo.RPCClient,

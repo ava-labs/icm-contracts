@@ -448,7 +448,7 @@ func GetPChainInfo(cChainInfo interfaces.L1TestInfo) interfaces.L1TestInfo {
 	Expect(err).Should(BeNil())
 	return interfaces.L1TestInfo{
 		BlockchainID: pChainBlockchainID,
-		L1ID:         ids.Empty,
+		SubnetID:     ids.Empty,
 	}
 }
 
@@ -456,7 +456,7 @@ type ChainConfigMap map[string]string
 
 // Sets the chain config in customChainConfigs for the specified L!
 func (m ChainConfigMap) Add(l1 interfaces.L1TestInfo, chainConfig string) {
-	if l1.L1ID == constants.PrimaryNetworkID {
+	if l1.SubnetID == constants.PrimaryNetworkID {
 		m[CChainPathSpecifier] = chainConfig
 	} else {
 		m[l1.BlockchainID.String()] = chainConfig
@@ -546,7 +546,7 @@ func InstantiateGenesisTemplate(
 }
 
 // Aggregator utils
-func NewSignatureAggregator(apiUri string, l1IDs []ids.ID) *aggregator.SignatureAggregator {
+func NewSignatureAggregator(apiUri string, subnetIDs []ids.ID) *aggregator.SignatureAggregator {
 	cfg := sigAggConfig.Config{
 		PChainAPI: &relayerConfig.APIConfig{
 			BaseURL: apiUri,
@@ -556,8 +556,8 @@ func NewSignatureAggregator(apiUri string, l1IDs []ids.ID) *aggregator.Signature
 		},
 		AllowPrivateIPs: true,
 	}
-	trackedL1s := set.NewSet[ids.ID](len(l1IDs))
-	trackedL1s.Add(l1IDs...)
+	trackedL1s := set.NewSet[ids.ID](len(subnetIDs))
+	trackedL1s.Add(subnetIDs...)
 	registry := prometheus.NewRegistry()
 	messageCreator, err := message.NewCreator(
 		logging.NoLog{},
@@ -683,15 +683,15 @@ func GetSignedMessage(
 	justification []byte,
 	signatureAggregator *aggregator.SignatureAggregator,
 ) *avalancheWarp.Message {
-	signingL1ID := source.L1ID
-	if source.L1ID == constants.PrimaryNetworkID && !destination.RequirePrimaryNetworkSigners {
-		signingL1ID = destination.L1ID
+	signingSubnetID := source.SubnetID
+	if source.SubnetID == constants.PrimaryNetworkID && !destination.RequirePrimaryNetworkSigners {
+		signingSubnetID = destination.SubnetID
 	}
 
 	signedWarpMessage, err := signatureAggregator.CreateSignedMessage(
 		unsignedWarpMessage,
 		justification,
-		signingL1ID,
+		signingSubnetID,
 		warp.WarpDefaultQuorumNumerator,
 	)
 	Expect(err).Should(BeNil())
@@ -699,10 +699,10 @@ func GetSignedMessage(
 	return signedWarpMessage
 }
 
-func SetupProposerVM(ctx context.Context, fundedKey *ecdsa.PrivateKey, network *tmpnet.Network, L1ID ids.ID) {
+func SetupProposerVM(ctx context.Context, fundedKey *ecdsa.PrivateKey, network *tmpnet.Network, SubnetID ids.ID) {
 	l1Details := network.Subnets[slices.IndexFunc(
 		network.Subnets,
-		func(s *tmpnet.Subnet) bool { return s.SubnetID == L1ID },
+		func(s *tmpnet.Subnet) bool { return s.SubnetID == SubnetID },
 	)]
 
 	chainID := l1Details.Chains[0].ChainID

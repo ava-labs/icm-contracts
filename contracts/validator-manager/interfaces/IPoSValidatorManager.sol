@@ -30,7 +30,7 @@ enum DelegatorStatus {
  * @notice weightToValueFactor is the factor used to convert validator weight to value
  * @notice rewardCalculator is the reward calculator used to calculate rewards for this validator manager
  * @notice uptimeBlockchainID is the ID of the blockchain that submits uptime proofs.
- * This must be a blockchain validated by the l1ID that this contract manages.
+ * This must be a blockchain validated by the subnetID that this contract manages.
  */
 struct PoSValidatorManagerSettings {
     ValidatorManagerSettings baseSettings;

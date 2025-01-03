@@ -51,12 +51,12 @@ struct ValidatorChurnPeriod {
 
 /**
  * @notice Validator Manager settings, used to initialize the Validator Manager
- * @notice The l1ID is the ID of the L1 that the Validator Manager is managing
+ * @notice The subnetID is the ID of the L1 that the Validator Manager is managing
  * @notice The churnPeriodSeconds is the duration of the churn period in seconds
  * @notice The maximumChurnPercentage is the maximum percentage of the total weight that can be added or removed in a single churn period
  */
 struct ValidatorManagerSettings {
-    bytes32 l1ID;
+    bytes32 subnetID;
     uint64 churnPeriodSeconds;
     uint8 maximumChurnPercentage;
 }
@@ -68,7 +68,7 @@ struct ValidatorManagerSettings {
  * and verified by the Validator Manager.
  */
 struct ConversionData {
-    bytes32 l1ID;
+    bytes32 subnetID;
     bytes32 validatorManagerBlockchainID;
     address validatorManagerAddress;
     InitialValidator[] initialValidators;

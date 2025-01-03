@@ -185,10 +185,10 @@ func (n *LocalNetwork) ConvertSubnet(
 	senderKey *ecdsa.PrivateKey,
 	proxy bool,
 ) ([]utils.Node, []ids.ID, *proxyadmin.ProxyAdmin) {
-	goLog.Println("Converting l1", l1.L1ID)
+	goLog.Println("Converting l1", l1.SubnetID)
 	cChainInfo := n.GetPrimaryNetworkInfo()
 	pClient := platformvm.NewClient(cChainInfo.NodeURIs[0])
-	currentValidators, err := pClient.GetCurrentValidators(ctx, l1.L1ID, nil)
+	currentValidators, err := pClient.GetCurrentValidators(ctx, l1.SubnetID, nil)
 	Expect(err).Should(BeNil())
 
 	vdrManagerAddress, proxyAdmin := utils.DeployAndInitializeValidatorManager(
@@ -198,7 +198,7 @@ func (n *LocalNetwork) ConvertSubnet(
 		managerType,
 		proxy,
 	)
-	n.validatorManagers[l1.L1ID] = vdrManagerAddress
+	n.validatorManagers[l1.SubnetID] = vdrManagerAddress
 
 	tmpnetNodes := n.GetExtraNodes(len(weights))
 	sort.Slice(tmpnetNodes, func(i, j int) bool {
@@ -235,7 +235,7 @@ func (n *LocalNetwork) ConvertSubnet(
 	}
 	pChainWallet := n.GetPChainWallet()
 	_, err = pChainWallet.IssueConvertSubnetToL1Tx(
-		l1.L1ID,
+		l1.SubnetID,
 		l1.BlockchainID,
 		vdrManagerAddress[:],
 		vdrs,
@@ -262,7 +262,7 @@ func (n *LocalNetwork) ConvertSubnet(
 
 	// Remove the bootstrap nodes as l1 validators
 	for _, vdr := range currentValidators {
-		_, err := pChainWallet.IssueRemoveSubnetValidatorTx(vdr.NodeID, l1.L1ID)
+		_, err := pChainWallet.IssueRemoveSubnetValidatorTx(vdr.NodeID, l1.SubnetID)
 		Expect(err).Should(BeNil())
 		for _, node := range n.Network.Nodes {
 			if node.NodeID == vdr.NodeID {
@@ -284,14 +284,14 @@ func (n *LocalNetwork) AddSubnetValidators(
 ) interfaces.L1TestInfo {
 	// Modify the each node's config to track the l1
 	for _, node := range nodes {
-		goLog.Printf("Adding node %s @ %s to l1 %s", node.NodeID, node.URI, l1.L1ID)
+		goLog.Printf("Adding node %s @ %s to l1 %s", node.NodeID, node.URI, l1.SubnetID)
 		existingTrackedSubnets, err := node.Flags.GetStringVal(config.TrackSubnetsKey)
 		Expect(err).Should(BeNil())
-		if existingTrackedSubnets == l1.L1ID.String() {
-			goLog.Printf("Node %s @ %s already tracking l1 %s\n", node.NodeID, node.URI, l1.L1ID)
+		if existingTrackedSubnets == l1.SubnetID.String() {
+			goLog.Printf("Node %s @ %s already tracking l1 %s\n", node.NodeID, node.URI, l1.SubnetID)
 			continue
 		}
-		node.Flags[config.TrackSubnetsKey] = l1.L1ID.String()
+		node.Flags[config.TrackSubnetsKey] = l1.SubnetID.String()
 
 		if partialSync {
 			node.Flags[config.PartialSyncPrimaryNetworkKey] = true
@@ -305,7 +305,7 @@ func (n *LocalNetwork) AddSubnetValidators(
 
 	// Update the tmpnet Subnet struct
 	for _, tmpnetSubnet := range n.Network.Subnets {
-		if tmpnetSubnet.SubnetID == l1.L1ID {
+		if tmpnetSubnet.SubnetID == l1.SubnetID {
 			for _, tmpnetNode := range nodes {
 				tmpnetSubnet.ValidatorIDs = append(tmpnetSubnet.ValidatorIDs, tmpnetNode.NodeID)
 			}
@@ -313,21 +313,21 @@ func (n *LocalNetwork) AddSubnetValidators(
 	}
 
 	// Refresh the l1 info after restarting the nodes
-	return n.GetL1Info(l1.L1ID)
+	return n.GetL1Info(l1.SubnetID)
 }
 
-func (n *LocalNetwork) GetValidatorManager(l1ID ids.ID) common.Address {
-	return n.validatorManagers[l1ID]
+func (n *LocalNetwork) GetValidatorManager(subnetID ids.ID) common.Address {
+	return n.validatorManagers[subnetID]
 }
 
 func (n *LocalNetwork) GetSignatureAggregator() *aggregator.SignatureAggregator {
-	var l1IDs []ids.ID
+	var subnetIDs []ids.ID
 	for _, l1 := range n.GetL1Infos() {
-		l1IDs = append(l1IDs, l1.L1ID)
+		subnetIDs = append(subnetIDs, l1.SubnetID)
 	}
 	return utils.NewSignatureAggregator(
 		n.GetPrimaryNetworkInfo().NodeURIs[0],
-		l1IDs,
+		subnetIDs,
 	)
 }
 
@@ -363,7 +363,7 @@ func (n *LocalNetwork) GetPrimaryNetworkInfo() interfaces.L1TestInfo {
 	evmChainID, err := rpcClient.ChainID(context.Background())
 	Expect(err).Should(BeNil())
 	return interfaces.L1TestInfo{
-		L1ID:                         ids.Empty,
+		SubnetID:                     ids.Empty,
 		BlockchainID:                 cChainBlockchainID,
 		NodeURIs:                     nodeURIs,
 		WSClient:                     wsClient,
@@ -373,9 +373,9 @@ func (n *LocalNetwork) GetPrimaryNetworkInfo() interfaces.L1TestInfo {
 	}
 }
 
-func (n *LocalNetwork) GetL1Info(l1ID ids.ID) interfaces.L1TestInfo {
+func (n *LocalNetwork) GetL1Info(subnetID ids.ID) interfaces.L1TestInfo {
 	for _, l1 := range n.Network.Subnets {
-		if l1.SubnetID == l1ID {
+		if l1.SubnetID == subnetID {
 			var nodeURIs []string
 			for _, nodeID := range l1.ValidatorIDs {
 				uri, err := n.Network.GetURIForNodeID(nodeID)
@@ -394,7 +394,7 @@ func (n *LocalNetwork) GetL1Info(l1ID ids.ID) interfaces.L1TestInfo {
 			spec, ok := n.deployedL1Specs[l1.Name]
 			Expect(ok).Should(BeTrue())
 			return interfaces.L1TestInfo{
-				L1ID:                         l1ID,
+				SubnetID:                     subnetID,
 				BlockchainID:                 blockchainID,
 				NodeURIs:                     nodeURIs,
 				WSClient:                     wsClient,
@@ -429,7 +429,7 @@ func (n *LocalNetwork) GetL1Infos() []interfaces.L1TestInfo {
 		spec, ok := n.deployedL1Specs[l1.Name]
 		Expect(ok).Should(BeTrue())
 		l1s[i] = interfaces.L1TestInfo{
-			L1ID:                         l1.SubnetID,
+			SubnetID:                     l1.SubnetID,
 			BlockchainID:                 blockchainID,
 			NodeURIs:                     nodeURIs,
 			WSClient:                     wsClient,
@@ -514,9 +514,9 @@ func (n *LocalNetwork) Dir() string {
 func (n *LocalNetwork) GetPChainWallet() pwallet.Wallet {
 	// Create the P-Chain wallet to issue transactions
 	kc := secp256k1fx.NewKeychain(n.globalFundedKey)
-	var l1IDs []ids.ID
+	var subnetIDs []ids.ID
 	for _, l1 := range n.GetL1Infos() {
-		l1IDs = append(l1IDs, l1.L1ID)
+		subnetIDs = append(subnetIDs, l1.SubnetID)
 	}
 	wallet, err := primary.MakeWallet(
 		context.Background(),
@@ -524,7 +524,7 @@ func (n *LocalNetwork) GetPChainWallet() pwallet.Wallet {
 		kc,
 		kc,
 		primary.WalletConfig{
-			SubnetIDs: l1IDs,
+			SubnetIDs: subnetIDs,
 		})
 	Expect(err).Should(BeNil())
 	return wallet.P()

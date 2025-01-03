@@ -57,7 +57,7 @@ abstract contract PoSValidatorManager is
         uint256 _weightToValueFactor;
         /// @notice The reward calculator for this validator manager.
         IRewardCalculator _rewardCalculator;
-        /// @notice The ID of the blockchain that submits uptime proofs. This must be a blockchain validated by the l1ID that this contract manages.
+        /// @notice The ID of the blockchain that submits uptime proofs. This must be a blockchain validated by the subnetID that this contract manages.
         bytes32 _uptimeBlockchainID;
         /// @notice Maps the validation ID to its requirements.
         mapping(bytes32 validationID => PoSValidatorInfo) _posValidatorInfo;

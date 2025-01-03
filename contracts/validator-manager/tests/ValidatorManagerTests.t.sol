@@ -22,7 +22,7 @@ import {
 // TODO: Remove this once all unit tests implemented
 // solhint-disable no-empty-blocks
 abstract contract ValidatorManagerTest is Test {
-    bytes32 public constant DEFAULT_L1_ID =
+    bytes32 public constant DEFAULT_SUBNET_ID =
         bytes32(hex"1234567812345678123456781234567812345678123456781234567812345678");
     bytes public constant DEFAULT_NODE_ID =
         bytes(hex"1234567812345678123456781234567812345678123456781234567812345678");
@@ -98,7 +98,11 @@ abstract contract ValidatorManagerTest is Test {
 
     function testInitializeValidatorRegistrationSuccess() public {
         _setUpInitializeValidatorRegistration(
-            DEFAULT_NODE_ID, DEFAULT_L1_ID, DEFAULT_WEIGHT, DEFAULT_EXPIRY, DEFAULT_BLS_PUBLIC_KEY
+            DEFAULT_NODE_ID,
+            DEFAULT_SUBNET_ID,
+            DEFAULT_WEIGHT,
+            DEFAULT_EXPIRY,
+            DEFAULT_BLS_PUBLIC_KEY
         );
     }
 
@@ -188,12 +192,16 @@ abstract contract ValidatorManagerTest is Test {
     // reference to the abstract type.
     function testResendRegisterValidatorMessage() public {
         bytes32 validationID = _setUpInitializeValidatorRegistration(
-            DEFAULT_NODE_ID, DEFAULT_L1_ID, DEFAULT_WEIGHT, DEFAULT_EXPIRY, DEFAULT_BLS_PUBLIC_KEY
+            DEFAULT_NODE_ID,
+            DEFAULT_SUBNET_ID,
+            DEFAULT_WEIGHT,
+            DEFAULT_EXPIRY,
+            DEFAULT_BLS_PUBLIC_KEY
         );
         (, bytes memory registerL1ValidatorMessage) = ValidatorMessages
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 nodeID: DEFAULT_NODE_ID,
                 blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
                 registrationExpiry: DEFAULT_EXPIRY,
@@ -272,7 +280,11 @@ abstract contract ValidatorManagerTest is Test {
 
     function testCompleteInvalidatedValidation() public {
         bytes32 validationID = _setUpInitializeValidatorRegistration(
-            DEFAULT_NODE_ID, DEFAULT_L1_ID, DEFAULT_WEIGHT, DEFAULT_EXPIRY, DEFAULT_BLS_PUBLIC_KEY
+            DEFAULT_NODE_ID,
+            DEFAULT_SUBNET_ID,
+            DEFAULT_WEIGHT,
+            DEFAULT_EXPIRY,
+            DEFAULT_BLS_PUBLIC_KEY
         );
         bytes memory l1ValidatorRegistrationMessage =
             ValidatorMessages.packL1ValidatorRegistrationMessage(validationID, false);
@@ -308,7 +320,7 @@ abstract contract ValidatorManagerTest is Test {
         );
         manager.initializeValidatorSet(_defaultConversionDataTotalWeight5(), 0);
 
-        bytes32 validationID = sha256(abi.encodePacked(DEFAULT_L1_ID, uint32(0)));
+        bytes32 validationID = sha256(abi.encodePacked(DEFAULT_SUBNET_ID, uint32(0)));
         vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidTotalWeight.selector, 4));
         _forceInitializeEndValidation(validationID, false, address(0));
     }
@@ -321,7 +333,7 @@ abstract contract ValidatorManagerTest is Test {
         // First registration should succeed
         _registerValidator({
             nodeID: _newNodeID(),
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             weight: churnThreshold,
             registrationExpiry: DEFAULT_EXPIRY,
             blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -353,7 +365,7 @@ abstract contract ValidatorManagerTest is Test {
         // Registration should succeed
         bytes32 validationID = _registerValidator({
             nodeID: DEFAULT_NODE_ID,
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             weight: _valueToWeight(DEFAULT_MINIMUM_STAKE_AMOUNT),
             registrationExpiry: DEFAULT_EXPIRY,
             blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -367,7 +379,7 @@ abstract contract ValidatorManagerTest is Test {
         // Registration should succeed
         _registerValidator({
             nodeID: _newNodeID(),
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             weight: churnThreshold,
             registrationExpiry: DEFAULT_EXPIRY + 25 hours,
             blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -401,7 +413,7 @@ abstract contract ValidatorManagerTest is Test {
 
     function _setUpInitializeValidatorRegistration(
         bytes memory nodeID,
-        bytes32 l1ID,
+        bytes32 subnetID,
         uint64 weight,
         uint64 registrationExpiry,
         bytes memory blsPublicKey
@@ -409,7 +421,7 @@ abstract contract ValidatorManagerTest is Test {
         (validationID,) = ValidatorMessages.packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
                 nodeID: nodeID,
-                l1ID: l1ID,
+                subnetID: subnetID,
                 blsPublicKey: blsPublicKey,
                 registrationExpiry: registrationExpiry,
                 remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
@@ -420,7 +432,7 @@ abstract contract ValidatorManagerTest is Test {
         (, bytes memory registerL1ValidatorMessage) = ValidatorMessages
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: l1ID,
+                subnetID: subnetID,
                 nodeID: nodeID,
                 blsPublicKey: blsPublicKey,
                 registrationExpiry: registrationExpiry,
@@ -450,14 +462,14 @@ abstract contract ValidatorManagerTest is Test {
 
     function _registerValidator(
         bytes memory nodeID,
-        bytes32 l1ID,
+        bytes32 subnetID,
         uint64 weight,
         uint64 registrationExpiry,
         bytes memory blsPublicKey,
         uint64 registrationTimestamp
     ) internal returns (bytes32 validationID) {
         validationID = _setUpInitializeValidatorRegistration(
-            nodeID, l1ID, weight, registrationExpiry, blsPublicKey
+            nodeID, subnetID, weight, registrationExpiry, blsPublicKey
         );
         bytes memory l1ValidatorRegistrationMessage =
             ValidatorMessages.packL1ValidatorRegistrationMessage(validationID, true);
@@ -517,7 +529,7 @@ abstract contract ValidatorManagerTest is Test {
     function _registerDefaultValidator() internal returns (bytes32 validationID) {
         return _registerValidator({
             nodeID: DEFAULT_NODE_ID,
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             weight: DEFAULT_WEIGHT,
             registrationExpiry: DEFAULT_EXPIRY,
             blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -638,7 +650,7 @@ abstract contract ValidatorManagerTest is Test {
         assertEq(initialWeight, DEFAULT_INITIAL_TOTAL_WEIGHT);
 
         return ConversionData({
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             validatorManagerBlockchainID: DEFAULT_SOURCE_BLOCKCHAIN_ID,
             validatorManagerAddress: address(validatorManager),
             initialValidators: initialValidators
@@ -660,7 +672,7 @@ abstract contract ValidatorManagerTest is Test {
         });
 
         return ConversionData({
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             validatorManagerBlockchainID: DEFAULT_SOURCE_BLOCKCHAIN_ID,
             validatorManagerAddress: address(validatorManager),
             initialValidators: initialValidators
@@ -682,7 +694,7 @@ abstract contract ValidatorManagerTest is Test {
         });
 
         return ConversionData({
-            l1ID: DEFAULT_L1_ID,
+            subnetID: DEFAULT_SUBNET_ID,
             validatorManagerBlockchainID: DEFAULT_SOURCE_BLOCKCHAIN_ID,
             validatorManagerAddress: address(validatorManager),
             initialValidators: initialValidators

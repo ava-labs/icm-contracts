@@ -37,7 +37,7 @@ contract PoAValidatorManagerTest is ValidatorManagerTest {
         vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
         app.initialize(
             ValidatorManagerSettings({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 churnPeriodSeconds: DEFAULT_CHURN_PERIOD,
                 maximumChurnPercentage: DEFAULT_MAXIMUM_CHURN_PERCENTAGE
             }),
@@ -113,7 +113,7 @@ contract PoAValidatorManagerTest is ValidatorManagerTest {
         app = new PoAValidatorManager(ICMInitializable.Allowed);
         app.initialize(
             ValidatorManagerSettings({
-                l1ID: DEFAULT_L1_ID,
+                subnetID: DEFAULT_SUBNET_ID,
                 churnPeriodSeconds: DEFAULT_CHURN_PERIOD,
                 maximumChurnPercentage: DEFAULT_MAXIMUM_CHURN_PERCENTAGE
             }),

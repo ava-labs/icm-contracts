@@ -36,8 +36,8 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
     /// @custom:storage-location erc7201:avalanche-icm.storage.ValidatorManager
 
     struct ValidatorManagerStorage {
-        /// @notice The l1ID associated with this validator manager.
-        bytes32 _l1ID;
+        /// @notice The subnetID associated with this validator manager.
+        bytes32 _subnetID;
         /// @notice The number of seconds after which to reset the churn tracker.
         uint64 _churnPeriodSeconds;
         /// @notice The maximum churn rate allowed per churn period.
@@ -123,7 +123,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         onlyInitializing
     {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
-        $._l1ID = settings.l1ID;
+        $._subnetID = settings.subnetID;
 
         if (
             settings.maximumChurnPercentage > MAXIMUM_CHURN_PERCENTAGE_LIMIT
@@ -174,7 +174,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
 
             // Validation ID of the initial validators is the sha256 hash of the
             // convert subnet to L1 tx ID and the index of the initial validator.
-            bytes32 validationID = sha256(abi.encodePacked(conversionData.l1ID, i));
+            bytes32 validationID = sha256(abi.encodePacked(conversionData.subnetID, i));
 
             // Save the initial validator as an active validator.
 
@@ -277,7 +277,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         (bytes32 validationID, bytes memory registerL1ValidatorMessage) = ValidatorMessages
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                l1ID: $._l1ID,
+                subnetID: $._subnetID,
                 nodeID: input.nodeID,
                 blsPublicKey: input.blsPublicKey,
                 remainingBalanceOwner: input.remainingBalanceOwner,
