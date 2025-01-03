@@ -17,7 +17,6 @@ import (
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
 	deploymentUtils "github.com/ava-labs/icm-contracts/utils/deployment-utils"
 	gasUtils "github.com/ava-labs/icm-contracts/utils/gas-utils"
-	"github.com/ava-labs/icm-services/signature-aggregator/aggregator"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
@@ -156,7 +155,7 @@ func (t TeleporterTestInfo) RelayTeleporterMessage(
 	expectSuccess bool,
 	fundedKey *ecdsa.PrivateKey,
 	justification []byte,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) *types.Receipt {
 	// Fetch the Teleporter message from the logs
 	sendEvent, err := GetEventFromLogs(sourceReceipt.Logs, t.TeleporterMessenger(source).ParseSendCrossChainMessage)
@@ -207,7 +206,7 @@ func (t TeleporterTestInfo) SendExampleCrossChainMessageAndVerify(
 	destExampleMessenger *testmessenger.TestMessenger,
 	senderKey *ecdsa.PrivateKey,
 	message string,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 	expectSuccess bool,
 ) {
 	// Call the example messenger contract on L1 A
@@ -286,7 +285,7 @@ func (t TeleporterTestInfo) AddProtocolVersionAndWaitForAcceptance(
 	newTeleporterAddress common.Address,
 	senderKey *ecdsa.PrivateKey,
 	unsignedMessage *avalancheWarp.UnsignedMessage,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) {
 	signedWarpMsg := GetSignedMessage(l1, l1, unsignedMessage, nil, signatureAggregator)
 	log.Info("Got signed warp message", "messageID", signedWarpMsg.ID())
@@ -328,7 +327,7 @@ func (t TeleporterTestInfo) ClearReceiptQueue(
 	fundedKey *ecdsa.PrivateKey,
 	source interfaces.L1TestInfo,
 	destination interfaces.L1TestInfo,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) {
 	sourceTeleporterMessenger := t.TeleporterMessenger(source)
 	outstandReceiptCount := GetOutstandingReceiptCount(

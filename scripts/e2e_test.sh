@@ -74,6 +74,13 @@ echo "Copied ${BASEDIR}/subnet-evm/subnet-evm binary to ${BASEDIR}/avalanchego/p
 
 export AVALANCHEGO_BUILD_PATH=$BASEDIR/avalanchego
 
+ICM_SERVICES_BUILD_PATH=$BASEDIR/icm-services
+
+cd $ICM_CONTRACTS_PATH
+# Install signature-aggregator binary
+BASEDIR=$BASEDIR ICM_SERVICES_BUILD_PATH=$ICM_SERVICES_BUILD_PATH "${ICM_CONTRACTS_PATH}/scripts/install_sig_agg_release.sh"
+echo "Installed signature-aggregator from icm-services release ${ICM_SERVICES_VERSION}"
+
 cd $ICM_CONTRACTS_PATH
 if command -v forge &> /dev/null; then
   forge build --skip test
@@ -93,7 +100,7 @@ for component in $(echo $components | tr ',' ' '); do
 
     echo "Running e2e tests for $component"
 
-    RUN_E2E=true ./tests/suites/$component/$component.test \
+    RUN_E2E=true SIG_AGG_PATH=$ICM_SERVICES_BUILD_PATH/signature-aggregator ./tests/suites/$component/$component.test \
     --ginkgo.vv \
     --ginkgo.label-filter=${GINKGO_LABEL_FILTER:-""} \
     --ginkgo.focus=${GINKGO_FOCUS:-""} \

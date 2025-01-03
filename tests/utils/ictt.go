@@ -21,7 +21,6 @@ import (
 	mockERC20SACR "github.com/ava-labs/icm-contracts/abi-bindings/go/ictt/mocks/MockERC20SendAndCallReceiver"
 	mockNSACR "github.com/ava-labs/icm-contracts/abi-bindings/go/ictt/mocks/MockNativeSendAndCallReceiver"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
-	"github.com/ava-labs/icm-services/signature-aggregator/aggregator"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -308,7 +307,7 @@ func RegisterERC20TokenRemoteOnHome(
 	remoteL1 interfaces.L1TestInfo,
 	remoteAddress common.Address,
 	fundedKey *ecdsa.PrivateKey,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) {
 	RegisterTokenRemoteOnHome(
 		ctx,
@@ -336,7 +335,7 @@ func RegisterTokenRemoteOnHome(
 	expectedTokenMultiplier *big.Int,
 	expectedmultiplyOnRemote bool,
 	fundedKey *ecdsa.PrivateKey,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) *big.Int {
 	// Call the remote to send a register message to the home
 	tokenRemote, err := tokenremote.NewTokenRemote(
@@ -849,7 +848,7 @@ func SendNativeMultiHopAndVerify(
 	cChainInfo interfaces.L1TestInfo,
 	amount *big.Int,
 	secondaryFeeAmount *big.Int,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) {
 	input := nativetokenremote.SendTokensInput{
 		DestinationBlockchainID:            toL1.BlockchainID,
@@ -927,7 +926,7 @@ func SendERC20TokenMultiHopAndVerify(
 	cChainInfo interfaces.L1TestInfo,
 	amount *big.Int,
 	secondaryFeeAmount *big.Int,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) {
 	// Send tokens to the sender address to have gas for submitting the send tokens transaction
 	SendNativeTransfer(

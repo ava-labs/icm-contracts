@@ -8,7 +8,6 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 	validatorsetsig "github.com/ava-labs/icm-contracts/abi-bindings/go/governance/ValidatorSetSig"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
-	"github.com/ava-labs/icm-services/signature-aggregator/aggregator"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -46,7 +45,7 @@ func ExecuteValidatorSetSigCallAndVerify(
 	validatorSetSigAddress common.Address,
 	senderKey *ecdsa.PrivateKey,
 	unsignedMessage *avalancheWarp.UnsignedMessage,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 	expectSuccess bool,
 ) *types.Receipt {
 	signedWarpMsg := GetSignedMessage(source, destination, unsignedMessage, nil, signatureAggregator)

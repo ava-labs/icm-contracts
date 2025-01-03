@@ -71,6 +71,8 @@ func AddFeeAmount(network *localnetwork.LocalNetwork, teleporter utils.Teleporte
 		teleporter.TeleporterMessenger(l1AInfo),
 	)
 
+	aggregator := network.GetSignatureAggregator()
+	defer aggregator.Shutdown()
 	// Relay message from L1 A to L1 B
 	deliveryReceipt := teleporter.RelayTeleporterMessage(
 		ctx,
@@ -80,7 +82,7 @@ func AddFeeAmount(network *localnetwork.LocalNetwork, teleporter utils.Teleporte
 		true,
 		fundedKey,
 		nil,
-		network.GetSignatureAggregator(),
+		aggregator,
 	)
 	receiveEvent, err := utils.GetEventFromLogs(
 		deliveryReceipt.Logs,
@@ -123,7 +125,7 @@ func AddFeeAmount(network *localnetwork.LocalNetwork, teleporter utils.Teleporte
 		true,
 		fundedKey,
 		nil,
-		network.GetSignatureAggregator(),
+		aggregator,
 	)
 
 	// Check message delivered

@@ -39,12 +39,6 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 	_, fundedKey := network.GetFundedAccountInfo()
 	pChainInfo := utils.GetPChainInfo(cChainInfo)
 
-	signatureAggregator := utils.NewSignatureAggregator(
-		cChainInfo.NodeURIs[0],
-		[]ids.ID{
-			l1AInfo.L1ID,
-		},
-	)
 	ctx := context.Background()
 
 	nodes, initialValidationIDs, _ := network.ConvertSubnet(
@@ -62,6 +56,14 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 	)
 	Expect(err).Should(BeNil())
 	utils.AddNativeMinterAdmin(ctx, l1AInfo, fundedKey, stakingManagerAddress)
+
+	signatureAggregator := utils.NewSignatureAggregator(
+		cChainInfo.NodeURIs[0],
+		[]ids.ID{
+			l1AInfo.L1ID,
+		},
+	)
+	defer signatureAggregator.Shutdown()
 
 	//
 	// Delist one initial validator
@@ -139,9 +141,6 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 		Expect(err).Should(BeNil())
 		delegationID = initRegistrationEvent.DelegationID
 
-		aggregator := network.GetSignatureAggregator()
-		defer aggregator.Shutdown()
-
 		// Gather subnet-evm Warp signatures for the L1ValidatorWeightMessage & relay to the P-Chain
 		signedWarpMessage := utils.ConstructSignedWarpMessage(
 			context.Background(),
@@ -149,7 +148,7 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 			l1AInfo,
 			pChainInfo,
 			nil,
-			aggregator,
+			signatureAggregator,
 		)
 
 		// Issue a tx to update the validator's weight on the P-Chain
@@ -207,9 +206,6 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 		Expect(delegatorRemovalEvent.ValidationID[:]).Should(Equal(validationID[:]))
 		Expect(delegatorRemovalEvent.DelegationID[:]).Should(Equal(delegationID[:]))
 
-		aggregator := network.GetSignatureAggregator()
-		defer aggregator.Shutdown()
-
 		// Gather subnet-evm Warp signatures for the SetL1ValidatorWeightMessage & relay to the P-Chain
 		// (Sending to the P-Chain will be skipped for now)
 		signedWarpMessage := utils.ConstructSignedWarpMessage(
@@ -218,7 +214,7 @@ func NativeTokenStakingManager(network *localnetwork.LocalNetwork) {
 			l1AInfo,
 			pChainInfo,
 			nil,
-			aggregator,
+			signatureAggregator,
 		)
 		Expect(err).Should(BeNil())
 

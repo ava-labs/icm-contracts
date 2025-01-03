@@ -179,7 +179,7 @@ func ValidatorSetSig(network *localnetwork.LocalNetwork) {
 		validatorSetSigContractAddress,
 		fundedKey,
 		&offchainMessages[0],
-		network.GetSignatureAggregator(),
+		aggregator,
 		false,
 	)
 
@@ -196,7 +196,7 @@ func ValidatorSetSig(network *localnetwork.LocalNetwork) {
 		validatorSetSigContractAddress,
 		fundedKey,
 		&offchainMessages[1],
-		network.GetSignatureAggregator(),
+		aggregator,
 		true,
 	)
 
@@ -228,7 +228,7 @@ func ValidatorSetSig(network *localnetwork.LocalNetwork) {
 		validatorSetSigContractAddress2,
 		fundedKey,
 		&offchainMessages[2],
-		network.GetSignatureAggregator(),
+		aggregator,
 		true,
 	)
 

@@ -16,21 +16,13 @@ import (
 
 	"github.com/ava-labs/avalanchego/api/info"
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/message"
 	"github.com/ava-labs/avalanchego/tests/fixture/tmpnet"
 	"github.com/ava-labs/avalanchego/utils/constants"
-	"github.com/ava-labs/avalanchego/utils/logging"
-	"github.com/ava-labs/avalanchego/utils/set"
 	"github.com/ava-labs/avalanchego/vms/platformvm/signer"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	nativeMinter "github.com/ava-labs/icm-contracts/abi-bindings/go/INativeMinter"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
 	gasUtils "github.com/ava-labs/icm-contracts/utils/gas-utils"
-	relayerConfig "github.com/ava-labs/icm-services/config"
-	"github.com/ava-labs/icm-services/peers"
-	"github.com/ava-labs/icm-services/signature-aggregator/aggregator"
-	sigAggConfig "github.com/ava-labs/icm-services/signature-aggregator/config"
-	"github.com/ava-labs/icm-services/signature-aggregator/metrics"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ava-labs/subnet-evm/eth/tracers"
@@ -44,7 +36,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
 	. "github.com/onsi/gomega"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -545,52 +536,6 @@ func InstantiateGenesisTemplate(
 	return l1GenesisFile.Name()
 }
 
-// Aggregator utils
-func NewSignatureAggregator(apiUri string, l1IDs []ids.ID) *aggregator.SignatureAggregator {
-	cfg := sigAggConfig.Config{
-		PChainAPI: &relayerConfig.APIConfig{
-			BaseURL: apiUri,
-		},
-		InfoAPI: &relayerConfig.APIConfig{
-			BaseURL: apiUri,
-		},
-		AllowPrivateIPs: true,
-	}
-	trackedL1s := set.NewSet[ids.ID](len(l1IDs))
-	trackedL1s.Add(l1IDs...)
-	registry := prometheus.NewRegistry()
-	messageCreator, err := message.NewCreator(
-		logging.NoLog{},
-		registry,
-		constants.DefaultNetworkCompressionType,
-		constants.DefaultNetworkMaximumInboundTimeout,
-	)
-	Expect(err).Should(BeNil())
-
-	networkRegistry := prometheus.NewRegistry()
-	appRequestNetwork, err := peers.NewNetwork(
-		logging.Error,
-		networkRegistry,
-		trackedL1s,
-		nil,
-		&cfg,
-	)
-	Expect(err).Should(BeNil())
-
-	agg, err := aggregator.NewSignatureAggregator(
-		appRequestNetwork,
-		logging.NoLog{},
-		messageCreator,
-		1024,
-		metrics.NewSignatureAggregatorMetrics(prometheus.NewRegistry()),
-		// Setting the etnaTime to a minute ago so that the post-etna code path is used in the test
-		time.Now().Add(-1*time.Minute),
-	)
-	Expect(err).Should(BeNil())
-	return agg
-}
-
-//
 // Native minter utils
 //
 
@@ -662,7 +607,7 @@ func ConstructSignedWarpMessage(
 	source interfaces.L1TestInfo,
 	destination interfaces.L1TestInfo,
 	justification []byte,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) *avalancheWarp.Message {
 	unsignedMsg := ExtractWarpMessageFromLog(ctx, sourceReceipt, source)
 
@@ -681,7 +626,7 @@ func GetSignedMessage(
 	destination interfaces.L1TestInfo,
 	unsignedWarpMessage *avalancheWarp.UnsignedMessage,
 	justification []byte,
-	signatureAggregator *aggregator.SignatureAggregator,
+	signatureAggregator *SignatureAggregator,
 ) *avalancheWarp.Message {
 	signingL1ID := source.L1ID
 	if source.L1ID == constants.PrimaryNetworkID && !destination.RequirePrimaryNetworkSigners {
