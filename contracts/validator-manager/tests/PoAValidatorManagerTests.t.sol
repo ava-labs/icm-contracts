@@ -8,8 +8,7 @@ pragma solidity 0.8.25;
 import {PoAValidatorManager} from "../PoAValidatorManager.sol";
 import {
     ValidatorManagerSettings,
-    ValidatorRegistrationInput,
-    IValidatorManager
+    ValidatorRegistrationInput
 } from "../interfaces/IValidatorManager.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
@@ -17,6 +16,7 @@ import {ValidatorManager} from "../ValidatorManager.sol";
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts@5.0.2/proxy/utils/Initializable.sol";
+import {ACP99Manager} from "../ACP99Manager.sol";
 
 contract PoAValidatorManagerTest is ValidatorManagerTest {
     PoAValidatorManager public app;
@@ -109,7 +109,7 @@ contract PoAValidatorManagerTest is ValidatorManagerTest {
         return app.initializeEndValidation(validationID);
     }
 
-    function _setUp() internal override returns (IValidatorManager) {
+    function _setUp() internal override returns (ACP99Manager) {
         app = new PoAValidatorManager(ICMInitializable.Allowed);
         app.initialize(
             ValidatorManagerSettings({

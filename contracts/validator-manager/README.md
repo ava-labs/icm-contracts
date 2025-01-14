@@ -1,36 +1,45 @@
-# Validator Manager Contract
+# Validator Manager Contracts
 
-The contracts in this directory define the Validator Manager used to manage Avalanche L1 validators, as defined in [ACP-77](https://github.com/avalanche-foundation/ACPs/tree/main/ACPs/77-reinventing-subnets). `ValidatorManager.sol` is the top-level abstract contract that provides the basic functionality. The other contracts are related as follows:
+The contracts in this directory define the Validator Manager used to manage Avalanche L1 validators, as defined in [ACP-77](https://github.com/avalanche-foundation/ACPs/tree/main/ACPs/77-reinventing-subnets). They comply with [ACP-99](https://github.com/avalanche-foundation/ACPs/tree/main/ACPs/99-validatorsetmanager-contract), which specifies the standard minimal functionality that Validator Managers should implement. The contracts in this directory are are related as follows:
 
 ```mermaid
 classDiagram
-class ValidatorManager {
-    initializeValidatorSet()
-    completeValidatorRegistration()
-    completeEndValidation()
-
+class ACP99Manager {
+    +initializeValidatorSet()
+    +completeValidatorRegistration()
+    +completeValidatorRemoval()
+    +completeValidatorWeightUpdate()
+    -_initiateValidatorRegistration()
+    -_initiateValidatorRemoval()
+    -_initiateValidatorWeightUpdate()
 }
+<<Abstract>> ACP99Manager
+
+class ValidatorManager 
 <<Abstract>> ValidatorManager
+note for ValidatorManager "Implements most of ACP99Manager"
+
 class PoSValidatorManager {
-    initializeEndValidation()
-    completeDelegatorRegistration()
-    initializeEndDelegation()
-    completeEndDelegation()
+    +initializeEndValidation()
+    +completeDelegatorRegistration()
+    +initializeEndDelegation()
+    +completeEndDelegation()
 }
 <<Abstract>> PoSValidatorManager
 class ERC20TokenStakingManager {
-    initializeValidatorRegistration()
-    initializeDelegatorRegistration()
+    +initializeValidatorRegistration()
+    +initializeDelegatorRegistration()
 }
 class NativeTokenStakingManager {
-    initializeValidatorRegistration() payable
-    initializeDelegatorRegistration() payable
+    +initializeValidatorRegistration() payable
+    +initializeDelegatorRegistration() payable
 }
 class PoAValidatorManager {
-    initializeValidatorRegistration()
-    initializeEndValidation()
+    +initializeValidatorRegistration()
+    +initializeEndValidation()
 }
 
+ACP99Manager <|-- ValidatorManager
 ValidatorManager <|-- PoSValidatorManager
 ValidatorManager <|-- PoAValidatorManager
 PoSValidatorManager <|-- ERC20TokenStakingManager

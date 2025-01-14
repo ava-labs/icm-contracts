@@ -52,7 +52,7 @@ struct Delegator {
     address owner;
     bytes32 validationID;
     uint64 weight;
-    uint64 startedAt;
+    uint64 startTime;
     uint64 startingNonce;
     uint64 endingNonce;
 }

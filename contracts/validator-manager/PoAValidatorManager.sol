@@ -55,7 +55,14 @@ contract PoAValidatorManager is IPoAValidatorManager, ValidatorManager, OwnableU
         ValidatorRegistrationInput calldata registrationInput,
         uint64 weight
     ) external onlyOwner returns (bytes32 validationID) {
-        return _initializeValidatorRegistration(registrationInput, weight);
+        return _initiateValidatorRegistration({
+            nodeID: registrationInput.nodeID,
+            blsPublicKey: registrationInput.blsPublicKey,
+            registrationExpiry: registrationInput.registrationExpiry,
+            remainingBalanceOwner: registrationInput.remainingBalanceOwner,
+            disableOwner: registrationInput.disableOwner,
+            weight: weight
+        });
     }
 
     // solhint-enable ordering
@@ -63,13 +70,19 @@ contract PoAValidatorManager is IPoAValidatorManager, ValidatorManager, OwnableU
      * @notice See {IPoAValidatorManager-initializeEndValidation}.
      */
     function initializeEndValidation(bytes32 validationID) external override onlyOwner {
-        _initializeEndValidation(validationID);
+        _initiateValidatorRemoval(validationID);
     }
 
     /**
-     * @notice See {IValidatorManager-completeEndValidation}.
+     * @notice See {ACP99Manager-completeValidatorRemoval}.
      */
-    function completeEndValidation(uint32 messageIndex) external {
-        _completeEndValidation(messageIndex);
+    function completeValidatorRemoval(uint32 messageIndex)
+        public
+        virtual
+        override
+        returns (bytes32)
+    {
+        (bytes32 validationID,) = _completeEndValidation(messageIndex);
+        return validationID;
     }
 }

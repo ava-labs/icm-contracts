@@ -31,7 +31,7 @@ contract ExampleRewardCalculator is IRewardCalculator {
         uint64 stakingEndTime,
         uint64 uptimeSeconds
     ) external view returns (uint256) {
-        // Equivalent to uptimeSeconds/(validator.endedAt - validator.startedAt) < UPTIME_REWARDS_THRESHOLD_PERCENTAGE/100
+        // Equivalent to uptimeSeconds/(validator.endTime - validator.startTime) < UPTIME_REWARDS_THRESHOLD_PERCENTAGE/100
         // Rearranged to prevent integer division truncation.
         if (
             uptimeSeconds * 100

@@ -6,18 +6,14 @@
 pragma solidity 0.8.25;
 
 import {Test} from "@forge-std/Test.sol";
-import {ValidatorManager, ConversionData, InitialValidator} from "../ValidatorManager.sol";
+import {ValidatorManager} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {
-    ValidatorStatus,
-    ValidatorRegistrationInput,
-    PChainOwner,
-    IValidatorManager
-} from "../interfaces/IValidatorManager.sol";
+import {ValidatorRegistrationInput} from "../interfaces/IValidatorManager.sol";
 import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.0/contracts/interfaces/IWarpMessenger.sol";
+import {ACP99Manager, ConversionData, InitialValidator, PChainOwner} from "../ACP99Manager.sol";
 
 // TODO: Remove this once all unit tests implemented
 // solhint-disable no-empty-blocks
@@ -62,28 +58,32 @@ abstract contract ValidatorManagerTest is Test {
     // Used to create unique validator IDs in {_newNodeID}
     uint64 public nodeIDCounter = 0;
 
-    event ValidationPeriodCreated(
+    event RegisteredInitialValidator(bytes32 indexed validationID, bytes nodeID, uint64 weight);
+
+    event InitiatedValidatorRegistration(
         bytes32 indexed validationID,
-        bytes32 indexed registerValidationMessageID,
-        uint64 weight,
         bytes nodeID,
-        uint64 registrationExpiry
+        bytes32 registrationMessageID,
+        uint64 registrationExpiry,
+        uint64 weight
     );
 
-    event InitialValidatorCreated(bytes32 indexed validationID, uint64 weight, bytes nodeID);
+    event CompletedValidatorRegistration(bytes32 indexed validationID, bytes nodeID, uint64 weight);
 
-    event ValidationPeriodRegistered(
-        bytes32 indexed validationID, uint64 weight, uint256 timestamp
-    );
-
-    event ValidatorRemovalInitialized(
+    event InitiatedValidatorRemoval(
         bytes32 indexed validationID,
-        bytes32 indexed setWeightMessageID,
+        bytes32 validatorWeightMessageID,
         uint64 weight,
-        uint256 endTime
+        uint64 endTime
     );
 
-    event ValidationPeriodEnded(bytes32 indexed validationID, ValidatorStatus indexed status);
+    event CompletedValidatorRemoval(bytes32 indexed validationID);
+
+    event InitiatedValidatorWeightUpdate(
+        bytes32 indexed validationID, uint64 nonce, bytes32 weightUpdateMessageID, uint64 weight
+    );
+
+    event CompletedValidatorWeightUpdate(bytes32 indexed validationID, uint64 nonce, uint64 weight);
 
     event ValidatorWeightUpdate(
         bytes32 indexed validationID,
@@ -278,9 +278,9 @@ abstract contract ValidatorManagerTest is Test {
         _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
 
         vm.expectEmit(true, true, true, true, address(validatorManager));
-        emit ValidationPeriodEnded(validationID, ValidatorStatus.Completed);
+        emit CompletedValidatorRemoval(validationID);
 
-        validatorManager.completeEndValidation(0);
+        validatorManager.completeValidatorRemoval(0);
     }
 
     function testCompleteInvalidatedValidation() public {
@@ -297,14 +297,14 @@ abstract contract ValidatorManagerTest is Test {
         _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
 
         vm.expectEmit(true, true, true, true, address(validatorManager));
-        emit ValidationPeriodEnded(validationID, ValidatorStatus.Invalidated);
+        emit CompletedValidatorRemoval(validationID);
 
-        validatorManager.completeEndValidation(0);
+        validatorManager.completeValidatorRemoval(0);
     }
 
     function testInitialWeightsTooLow() public {
         vm.prank(address(123));
-        IValidatorManager manager = _setUp();
+        ACP99Manager manager = _setUp();
 
         _mockGetBlockchainID();
         vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidTotalWeight.selector, 4));
@@ -314,7 +314,7 @@ abstract contract ValidatorManagerTest is Test {
     function testRemoveValidatorTotalWeight5() public {
         // Use prank here, because otherwise each test will end up with a different contract address, leading to a different subnet conversion hash.
         vm.prank(address(123));
-        IValidatorManager manager = _setUp();
+        ACP99Manager manager = _setUp();
 
         _mockGetBlockchainID();
         _mockGetPChainWarpMessage(
@@ -451,7 +451,9 @@ abstract contract ValidatorManagerTest is Test {
 
         _beforeSend(_weightToValue(weight), address(this));
         vm.expectEmit(true, true, true, true, address(validatorManager));
-        emit ValidationPeriodCreated(validationID, bytes32(0), weight, nodeID, registrationExpiry);
+        emit InitiatedValidatorRegistration(
+            validationID, nodeID, bytes32(0), registrationExpiry, weight
+        );
 
         _initializeValidatorRegistration(
             ValidatorRegistrationInput({
@@ -483,7 +485,7 @@ abstract contract ValidatorManagerTest is Test {
 
         vm.warp(registrationTimestamp);
         vm.expectEmit(true, true, true, true, address(validatorManager));
-        emit ValidationPeriodRegistered(validationID, weight, registrationTimestamp);
+        emit CompletedValidatorRegistration(validationID, nodeID, weight);
 
         validatorManager.completeValidatorRegistration(0);
     }
@@ -627,7 +629,7 @@ abstract contract ValidatorManagerTest is Test {
         address rewardRecipient
     ) internal virtual;
 
-    function _setUp() internal virtual returns (IValidatorManager);
+    function _setUp() internal virtual returns (ACP99Manager);
 
     function _beforeSend(uint256 amount, address spender) internal virtual;
 

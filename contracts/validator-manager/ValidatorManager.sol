@@ -7,16 +7,18 @@ pragma solidity 0.8.25;
 
 import {ValidatorMessages} from "./ValidatorMessages.sol";
 import {
-    InitialValidator,
     IValidatorManager,
+    ValidatorChurnPeriod,
+    ValidatorManagerSettings
+} from "./interfaces/IValidatorManager.sol";
+import {
+    ACP99Manager,
+    InitialValidator,
     PChainOwner,
     ConversionData,
     Validator,
-    ValidatorChurnPeriod,
-    ValidatorManagerSettings,
-    ValidatorRegistrationInput,
     ValidatorStatus
-} from "./interfaces/IValidatorManager.sol";
+} from "./ACP99Manager.sol";
 import {
     IWarpMessenger,
     WarpMessage
@@ -31,7 +33,12 @@ import {Initializable} from
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
  */
-abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValidatorManager {
+abstract contract ValidatorManager is
+    Initializable,
+    ContextUpgradeable,
+    IValidatorManager,
+    ACP99Manager
+{
     // solhint-disable private-vars-leading-underscore
     /// @custom:storage-location erc7201:avalanche-icm.storage.ValidatorManager
 
@@ -78,6 +85,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
     error InvalidTotalWeight(uint64 weight);
     error InvalidValidationID(bytes32 validationID);
     error InvalidValidatorStatus(ValidatorStatus status);
+    error InvalidNonce(uint64 nonce);
     error InvalidWarpMessage();
     error MaxChurnRateExceeded(uint64 churnAmount);
     error NodeAlreadyRegistered(bytes nodeID);
@@ -144,12 +152,12 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
     }
 
     /**
-     * @notice See {IValidatorManager-initializeValidatorSet}.
+     * @notice See {ACP99Manager-initializeValidatorSet}.
      */
     function initializeValidatorSet(
         ConversionData calldata conversionData,
         uint32 messageIndex
-    ) external {
+    ) public virtual override {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         if ($._initializedValidatorSet) {
             revert InvalidInitializationStatus();
@@ -182,14 +190,14 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
             $._validationPeriods[validationID].status = ValidatorStatus.Active;
             $._validationPeriods[validationID].nodeID = initialValidator.nodeID;
             $._validationPeriods[validationID].startingWeight = initialValidator.weight;
-            $._validationPeriods[validationID].messageNonce = 0;
+            $._validationPeriods[validationID].sentNonce = 0;
             $._validationPeriods[validationID].weight = initialValidator.weight;
-            $._validationPeriods[validationID].startedAt = uint64(block.timestamp);
-            $._validationPeriods[validationID].endedAt = 0;
+            $._validationPeriods[validationID].startTime = uint64(block.timestamp);
+            $._validationPeriods[validationID].endTime = 0;
             totalWeight += initialValidator.weight;
 
-            emit InitialValidatorCreated(
-                validationID, initialValidator.weight, initialValidator.nodeID
+            emit RegisteredInitialValidator(
+                validationID, initialValidator.nodeID, initialValidator.weight
             );
         }
         $._churnTracker.totalWeight = totalWeight;
@@ -213,7 +221,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         $._initializedValidatorSet = true;
     }
 
-    function _validatePChainOwner(PChainOwner calldata pChainOwner) internal pure {
+    function _validatePChainOwner(PChainOwner memory pChainOwner) internal pure {
         // If threshold is 0, addresses must be empty.
         if (pChainOwner.threshold == 0 && pChainOwner.addresses.length != 0) {
             revert InvalidPChainOwnerThreshold(pChainOwner.threshold, pChainOwner.addresses.length);
@@ -235,20 +243,23 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
      * @notice Begins the validator registration process, and sets the initial weight for the validator.
      * This is the only method related to validator registration and removal that needs the initializedValidatorSet
      * modifier. All others are guarded by checking the validator status changes initialized in this function.
-     * @param input The inputs for a validator registration.
      * @param weight The weight of the validator being registered.
      */
-    function _initializeValidatorRegistration(
-        ValidatorRegistrationInput calldata input,
+    function _initiateValidatorRegistration(
+        bytes memory nodeID,
+        bytes memory blsPublicKey,
+        uint64 registrationExpiry,
+        PChainOwner memory remainingBalanceOwner,
+        PChainOwner memory disableOwner,
         uint64 weight
-    ) internal virtual initializedValidatorSet returns (bytes32) {
+    ) internal virtual override initializedValidatorSet returns (bytes32) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
 
         if (
-            input.registrationExpiry <= block.timestamp
-                || input.registrationExpiry >= block.timestamp + MAXIMUM_REGISTRATION_EXPIRY_LENGTH
+            registrationExpiry <= block.timestamp
+                || registrationExpiry >= block.timestamp + MAXIMUM_REGISTRATION_EXPIRY_LENGTH
         ) {
-            revert InvalidRegistrationExpiry(input.registrationExpiry);
+            revert InvalidRegistrationExpiry(registrationExpiry);
         }
 
         // Ensure the new validator doesn't overflow the total weight
@@ -256,19 +267,19 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
             revert InvalidTotalWeight(weight);
         }
 
-        _validatePChainOwner(input.remainingBalanceOwner);
-        _validatePChainOwner(input.disableOwner);
+        _validatePChainOwner(remainingBalanceOwner);
+        _validatePChainOwner(disableOwner);
 
         // Ensure the nodeID is not the zero address, and is not already an active validator.
 
-        if (input.blsPublicKey.length != BLS_PUBLIC_KEY_LENGTH) {
-            revert InvalidBLSKeyLength(input.blsPublicKey.length);
+        if (blsPublicKey.length != BLS_PUBLIC_KEY_LENGTH) {
+            revert InvalidBLSKeyLength(blsPublicKey.length);
         }
-        if (input.nodeID.length == 0) {
-            revert InvalidNodeID(input.nodeID);
+        if (nodeID.length == 0) {
+            revert InvalidNodeID(nodeID);
         }
-        if ($._registeredValidators[input.nodeID] != bytes32(0)) {
-            revert NodeAlreadyRegistered(input.nodeID);
+        if ($._registeredValidators[nodeID] != bytes32(0)) {
+            revert NodeAlreadyRegistered(nodeID);
         }
 
         // Check that adding this validator would not exceed the maximum churn rate.
@@ -278,29 +289,29 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
                 subnetID: $._subnetID,
-                nodeID: input.nodeID,
-                blsPublicKey: input.blsPublicKey,
-                remainingBalanceOwner: input.remainingBalanceOwner,
-                disableOwner: input.disableOwner,
-                registrationExpiry: input.registrationExpiry,
+                nodeID: nodeID,
+                blsPublicKey: blsPublicKey,
+                remainingBalanceOwner: remainingBalanceOwner,
+                disableOwner: disableOwner,
+                registrationExpiry: registrationExpiry,
                 weight: weight
             })
         );
         $._pendingRegisterValidationMessages[validationID] = registerL1ValidatorMessage;
-        $._registeredValidators[input.nodeID] = validationID;
+        $._registeredValidators[nodeID] = validationID;
 
         // Submit the message to the Warp precompile.
         bytes32 messageID = WARP_MESSENGER.sendWarpMessage(registerL1ValidatorMessage);
         $._validationPeriods[validationID].status = ValidatorStatus.PendingAdded;
-        $._validationPeriods[validationID].nodeID = input.nodeID;
+        $._validationPeriods[validationID].nodeID = nodeID;
         $._validationPeriods[validationID].startingWeight = weight;
-        $._validationPeriods[validationID].messageNonce = 0;
+        $._validationPeriods[validationID].sentNonce = 0;
         $._validationPeriods[validationID].weight = weight;
-        $._validationPeriods[validationID].startedAt = 0; // The validation period only starts once the registration is acknowledged.
-        $._validationPeriods[validationID].endedAt = 0;
+        $._validationPeriods[validationID].startTime = 0; // The validation period only starts once the registration is acknowledged.
+        $._validationPeriods[validationID].endTime = 0;
 
-        emit ValidationPeriodCreated(
-            validationID, messageID, weight, input.nodeID, input.registrationExpiry
+        emit InitiatedValidatorRegistration(
+            validationID, nodeID, messageID, registrationExpiry, weight
         );
 
         return validationID;
@@ -324,9 +335,14 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
     }
 
     /**
-     * @notice See {IValidatorManager-completeValidatorRegistration}.
+     * @notice See {ACP99Manager-completeValidatorRegistration}.
      */
-    function completeValidatorRegistration(uint32 messageIndex) external {
+    function completeValidatorRegistration(uint32 messageIndex)
+        public
+        virtual
+        override
+        returns (bytes32)
+    {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         (bytes32 validationID, bool validRegistration) = ValidatorMessages
             .unpackL1ValidatorRegistrationMessage(_getPChainWarpMessage(messageIndex).payload);
@@ -344,10 +360,14 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
 
         delete $._pendingRegisterValidationMessages[validationID];
         $._validationPeriods[validationID].status = ValidatorStatus.Active;
-        $._validationPeriods[validationID].startedAt = uint64(block.timestamp);
-        emit ValidationPeriodRegistered(
-            validationID, $._validationPeriods[validationID].weight, block.timestamp
+        $._validationPeriods[validationID].startTime = uint64(block.timestamp);
+        emit CompletedValidatorRegistration(
+            validationID,
+            $._validationPeriods[validationID].nodeID,
+            $._validationPeriods[validationID].weight
         );
+
+        return validationID;
     }
 
     /**
@@ -363,9 +383,48 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
      * @notice Returns a validator registered to the given validationID
      * @param validationID ID of the validation period associated with the validator
      */
-    function getValidator(bytes32 validationID) public view returns (Validator memory) {
+    function getValidator(bytes32 validationID)
+        public
+        view
+        virtual
+        override
+        returns (Validator memory)
+    {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         return $._validationPeriods[validationID];
+    }
+
+    function l1TotalWeight() public view virtual override returns (uint64) {
+        return _getValidatorManagerStorage()._churnTracker.totalWeight;
+    }
+
+    function subnetID() public view virtual override returns (bytes32) {
+        return _getValidatorManagerStorage()._subnetID;
+    }
+
+    function completeValidatorWeightUpdate(uint32 messageIndex)
+        public
+        virtual
+        override
+        returns (bytes32, uint64)
+    {
+        WarpMessage memory warpMessage = _getPChainWarpMessage(messageIndex);
+        (bytes32 validationID, uint64 nonce, uint64 weight) =
+            ValidatorMessages.unpackL1ValidatorWeightMessage(warpMessage.payload);
+
+        ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
+
+        // The received nonce should be no greater than the highest sent nonce to ensure
+        // that weight changes are only initiated by this contract.
+        if ($._validationPeriods[validationID].sentNonce < nonce) {
+            revert InvalidNonce(nonce);
+        }
+
+        $._validationPeriods[validationID].receivedNonce = nonce;
+
+        emit CompletedValidatorWeightUpdate(validationID, nonce, weight);
+
+        return (validationID, nonce);
     }
 
     /**
@@ -374,11 +433,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
      * Any rewards for this validation period will stop accruing when this function is called.
      * @param validationID The ID of the validation period being ended.
      */
-    function _initializeEndValidation(bytes32 validationID)
-        internal
-        virtual
-        returns (Validator memory)
-    {
+    function _initiateValidatorRemoval(bytes32 validationID) internal virtual override {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
 
         // Ensure the validation period is active.
@@ -394,17 +449,17 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
 
         // Set the end time of the validation period, since it is no longer known to be an active validator
         // on the P-Chain.
-        validator.endedAt = uint64(block.timestamp);
+        validator.endTime = uint64(block.timestamp);
 
         // Save the validator updates.
         $._validationPeriods[validationID] = validator;
 
-        (, bytes32 messageID) = _setValidatorWeight(validationID, 0);
+        (, bytes32 messageID) = _initiateValidatorWeightUpdate(validationID, 0);
 
         // Emit the event to signal the start of the validator removal process.
-        emit ValidatorRemovalInitialized(validationID, messageID, validator.weight, block.timestamp);
-
-        return validator;
+        emit InitiatedValidatorRemoval(
+            validationID, messageID, validator.weight, uint64(block.timestamp)
+        );
     }
 
     /**
@@ -420,7 +475,7 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         }
 
         WARP_MESSENGER.sendWarpMessage(
-            ValidatorMessages.packL1ValidatorWeightMessage(validationID, validator.messageNonce, 0)
+            ValidatorMessages.packL1ValidatorWeightMessage(validationID, validator.sentNonce, 0)
         );
     }
 
@@ -469,14 +524,14 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         $._validationPeriods[validationID] = validator;
 
         // Emit event.
-        emit ValidationPeriodEnded(validationID, validator.status);
+        emit CompletedValidatorRemoval(validationID);
 
         return (validationID, validator);
     }
 
-    function _incrementAndGetNonce(bytes32 validationID) internal returns (uint64) {
+    function _incrementSentNonce(bytes32 validationID) internal returns (uint64) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
-        return ++$._validationPeriods[validationID].messageNonce;
+        return ++$._validationPeriods[validationID].sentNonce;
     }
 
     function _getPChainWarpMessage(uint32 messageIndex)
@@ -500,17 +555,17 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         return warpMessage;
     }
 
-    function _setValidatorWeight(
+    function _initiateValidatorWeightUpdate(
         bytes32 validationID,
         uint64 newWeight
-    ) internal returns (uint64, bytes32) {
+    ) internal virtual override returns (uint64, bytes32) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         uint64 validatorWeight = $._validationPeriods[validationID].weight;
 
         // Check that changing the validator weight would not exceed the maximum churn rate.
         _checkAndUpdateChurnTracker(newWeight, validatorWeight);
 
-        uint64 nonce = _incrementAndGetNonce(validationID);
+        uint64 nonce = _incrementSentNonce(validationID);
 
         $._validationPeriods[validationID].weight = newWeight;
 
@@ -519,11 +574,11 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
             ValidatorMessages.packL1ValidatorWeightMessage(validationID, nonce, newWeight)
         );
 
-        emit ValidatorWeightUpdate({
+        emit InitiatedValidatorWeightUpdate({
             validationID: validationID,
             nonce: nonce,
-            weight: newWeight,
-            setWeightMessageID: messageID
+            weightUpdateMessageID: messageID,
+            weight: newWeight
         });
 
         return (nonce, messageID);
@@ -555,11 +610,11 @@ abstract contract ValidatorManager is Initializable, ContextUpgradeable, IValida
         ValidatorChurnPeriod memory churnTracker = $._churnTracker;
 
         if (
-            churnTracker.startedAt == 0
-                || currentTime >= churnTracker.startedAt + $._churnPeriodSeconds
+            churnTracker.startTime == 0
+                || currentTime >= churnTracker.startTime + $._churnPeriodSeconds
         ) {
             churnTracker.churnAmount = weightChange;
-            churnTracker.startedAt = currentTime;
+            churnTracker.startTime = currentTime;
             churnTracker.initialWeight = churnTracker.totalWeight;
         } else {
             // Churn is always additive whether the weight is being added or removed.

@@ -9,7 +9,7 @@ import {PoSValidatorManagerTest} from "./PoSValidatorManagerTests.t.sol";
 import {ERC20TokenStakingManager} from "../ERC20TokenStakingManager.sol";
 import {PoSValidatorManager, PoSValidatorManagerSettings} from "../PoSValidatorManager.sol";
 import {ExampleRewardCalculator} from "../ExampleRewardCalculator.sol";
-import {ValidatorRegistrationInput, IValidatorManager} from "../interfaces/IValidatorManager.sol";
+import {ValidatorRegistrationInput} from "../interfaces/IValidatorManager.sol";
 import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {ExampleERC20} from "@mocks/ExampleERC20.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
@@ -17,6 +17,7 @@ import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {Initializable} from "@openzeppelin/contracts@5.0.2/proxy/utils/Initializable.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
+import {ACP99Manager} from "../ACP99Manager.sol";
 
 contract ERC20TokenStakingManagerTest is PoSValidatorManagerTest {
     using SafeERC20 for IERC20Mintable;
@@ -218,7 +219,7 @@ contract ERC20TokenStakingManagerTest is PoSValidatorManagerTest {
         vm.expectCall(address(token), abi.encodeCall(IERC20Mintable.mint, (account, amount)));
     }
 
-    function _setUp() internal override returns (IValidatorManager) {
+    function _setUp() internal override returns (ACP99Manager) {
         // Construct the object under test
         app = new ERC20TokenStakingManager(ICMInitializable.Allowed);
         token = new ExampleERC20();

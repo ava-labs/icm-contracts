@@ -7,7 +7,7 @@ pragma solidity 0.8.25;
 
 import {Test} from "@forge-std/Test.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {PChainOwner, ConversionData, InitialValidator} from "../interfaces/IValidatorManager.sol";
+import {PChainOwner, ConversionData, InitialValidator} from "../ACP99Manager.sol";
 
 contract ValidatorMessagesTest is Test {
     bytes32 public constant DEFAULT_SUBNET_ID =
