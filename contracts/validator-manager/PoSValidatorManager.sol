@@ -180,6 +180,37 @@ abstract contract PoSValidatorManager is
     }
 
     /**
+     * @notice Returns validator parameters enforced by the validator manager when registering or removing a validator
+     *
+     * @return minimumStakeAmount The minimum amount of stake required to register a validator.
+     * @return maximumStakeAmount The maximum amount that a validator may stake on registration.
+     * @return minimumStakeDuration The minimum amount of time that a validator must stake for.
+     * @return minimumDelegationFeeBips The minimum delegation fee percentage, in basis points, required to delegate to a validator.
+     * @return maximumStakeMultiplier The amount of total stake that may be attributed to the validator through delegations,
+     * as a factor of the initial stake.
+     */
+    function getValidatorParameters()
+        public
+        view
+        returns (
+            uint256 minimumStakeAmount,
+            uint256 maximumStakeAmount,
+            uint64 minimumStakeDuration,
+            uint16 minimumDelegationFeeBips,
+            uint64 maximumStakeMultiplier
+        )
+    {
+        PoSValidatorManagerStorage storage $ = _getPoSValidatorManagerStorage();
+        return (
+            $._minimumStakeAmount,
+            $._maximumStakeAmount,
+            $._minimumStakeDuration,
+            $._minimumDelegationFeeBips,
+            $._maximumStakeMultiplier
+        );
+    }
+
+    /**
      * @notice See {IPoSValidatorManager-submitUptimeProof}.
      */
     function submitUptimeProof(bytes32 validationID, uint32 messageIndex) external {

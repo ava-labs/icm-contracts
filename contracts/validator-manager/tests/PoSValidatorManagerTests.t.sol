@@ -1932,6 +1932,23 @@ abstract contract PoSValidatorManagerTest is ValidatorManagerTest {
         );
     }
 
+    function testGetValidatorSettings() public view {
+        (
+            uint256 minimumStakeAmount,
+            uint256 maximumStakeAmount,
+            uint64 minimumStakeDuration,
+            uint16 minimumDelegationFeeBips,
+            uint64 maximumStakeMultiplier
+        ) = posValidatorManager.getValidatorParameters();
+
+        PoSValidatorManagerSettings memory settings = _defaultPoSSettings();
+        assertEq(minimumStakeAmount, settings.minimumStakeAmount);
+        assertEq(maximumStakeAmount, settings.maximumStakeAmount);
+        assertEq(minimumStakeDuration, settings.minimumStakeDuration);
+        assertEq(minimumDelegationFeeBips, settings.minimumDelegationFeeBips);
+        assertEq(maximumStakeMultiplier, settings.maximumStakeMultiplier);
+    }
+
     function _initializeValidatorRegistration(
         ValidatorRegistrationInput memory registrationInput,
         uint16 delegationFeeBips,
