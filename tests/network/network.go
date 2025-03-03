@@ -433,7 +433,10 @@ func (n *LocalNetwork) GetL1Info(subnetID ids.ID) interfaces.L1TestInfo {
 		if l1.SubnetID == subnetID {
 			var nodeURIs []string
 			for _, nodeID := range l1.ValidatorIDs {
-				uri, err := n.Network.GetURIForNodeID(nodeID)
+				node, err := n.Network.GetNode(nodeID)
+				Expect(err).Should(BeNil())
+
+				uri, _, err := node.GetLocalURI(context.Background())
 				Expect(err).Should(BeNil())
 
 				nodeURIs = append(nodeURIs, uri)
@@ -468,7 +471,10 @@ func (n *LocalNetwork) GetL1Infos() []interfaces.L1TestInfo {
 	for i, l1 := range n.Network.Subnets {
 		var nodeURIs []string
 		for _, nodeID := range l1.ValidatorIDs {
-			uri, err := n.Network.GetURIForNodeID(nodeID)
+			node, err := n.Network.GetNode(nodeID)
+			Expect(err).Should(BeNil())
+
+			uri, _, err := node.GetLocalURI(context.Background())
 			Expect(err).Should(BeNil())
 
 			nodeURIs = append(nodeURIs, uri)

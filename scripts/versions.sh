@@ -40,7 +40,7 @@ SUBNET_EVM_VERSION=${SUBNET_EVM_VERSION:-$(extract_commit "$(getDepVersion githu
 
 
 # Set golangci-lint version
-GOLANGCI_LINT_VERSION=${GOLANGCI_LINT_VERSION:-'v1.60'}
+GOLANGCI_LINT_VERSION=${GOLANGCI_LINT_VERSION:-'v1.64.5'}
 
 # Extract the Solidity version from foundry.toml
 SOLIDITY_VERSION=$(awk -F"'" '/^solc_version/ {print $2}' $ICM_CONTRACTS_PATH/foundry.toml)

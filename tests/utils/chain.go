@@ -652,7 +652,9 @@ func SetupProposerVM(ctx context.Context, fundedKey *ecdsa.PrivateKey, network *
 
 	chainID := l1Details.Chains[0].ChainID
 
-	nodeURI, err := network.GetURIForNodeID(l1Details.ValidatorIDs[0])
+	node, err := network.GetNode(l1Details.ValidatorIDs[0])
+	Expect(err).Should(BeNil())
+	nodeURI, _, err := node.GetLocalURI(context.Background())
 	Expect(err).Should(BeNil())
 	uri := HttpToWebsocketURI(nodeURI, chainID.String())
 
