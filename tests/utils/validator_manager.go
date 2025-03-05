@@ -25,6 +25,7 @@ import (
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
+	poavalidatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/PoAValidatorManagerV1"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
 	istakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/IStakingManager"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
@@ -265,6 +266,88 @@ func DeployExampleRewardCalculator(
 //
 // Validator Set Initialization utils
 //
+
+func InitializeValidatorSetV1(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	validatorManagerAddress common.Address,
+	networkID uint32,
+	signatureAggregator *SignatureAggregator,
+	nodes []Node,
+) []ids.ID {
+	log.Println("Initializing validator set", "l1", l1Info.SubnetID)
+	initialValidators := make([]warpMessage.SubnetToL1ConversionValidatorData, len(nodes))
+	initialValidatorsABI := make([]poavalidatormanager.InitialValidator, len(nodes))
+	for i, node := range nodes {
+		initialValidators[i] = warpMessage.SubnetToL1ConversionValidatorData{
+			NodeID:       node.NodeID.Bytes(),
+			BLSPublicKey: node.NodePoP.PublicKey,
+			Weight:       nodes[i].Weight,
+		}
+		initialValidatorsABI[i] = poavalidatormanager.InitialValidator{
+			NodeID:       node.NodeID.Bytes(),
+			BlsPublicKey: node.NodePoP.PublicKey[:],
+			Weight:       nodes[i].Weight,
+		}
+	}
+
+	l1ConversionData := warpMessage.SubnetToL1ConversionData{
+		SubnetID:       l1Info.SubnetID,
+		ManagerChainID: l1Info.BlockchainID,
+		ManagerAddress: validatorManagerAddress[:],
+		Validators:     initialValidators,
+	}
+	l1ConversionDataABI := poavalidatormanager.ConversionData{
+		L1ID:                         l1Info.SubnetID,
+		ValidatorManagerBlockchainID: l1Info.BlockchainID,
+		ValidatorManagerAddress:      validatorManagerAddress,
+		InitialValidators:            initialValidatorsABI,
+	}
+	l1ConversionID, err := warpMessage.SubnetToL1ConversionID(l1ConversionData)
+	Expect(err).Should(BeNil())
+	l1ConversionSignedMessage := ConstructL1ConversionMessage(
+		l1ConversionID,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+
+	// Deliver the Warp message to the L1
+	abi, err := poavalidatormanager.PoAValidatorManagerMetaData.GetAbi()
+	Expect(err).Should(BeNil())
+	callData, err := abi.Pack("initializeValidatorSet", l1ConversionDataABI, uint32(0))
+	Expect(err).Should(BeNil())
+	receipt := CallWarpReceiver(
+		ctx,
+		callData,
+		senderKey,
+		l1Info,
+		validatorManagerAddress,
+		l1ConversionSignedMessage.Bytes(),
+	)
+
+	manager, err := poavalidatormanager.NewPoAValidatorManager(validatorManagerAddress, l1Info.RPCClient)
+	Expect(err).Should(BeNil())
+	initialValidatorCreatedEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		manager.ParseInitialValidatorCreated,
+	)
+	Expect(err).Should(BeNil())
+	var validationIDs []ids.ID
+	for i := range nodes {
+		validationIDs = append(validationIDs, l1Info.SubnetID.Append(uint32(i)))
+	}
+
+	Expect(initialValidatorCreatedEvent.Weight).Should(Equal(nodes[0].Weight))
+
+	emittedValidationID := ids.ID(initialValidatorCreatedEvent.ValidationID)
+	Expect(emittedValidationID).Should(Equal(validationIDs[0]))
+
+	return validationIDs
+}
 
 func InitializeValidatorSet(
 	ctx context.Context,
@@ -692,6 +775,186 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	registrationEvent, err := GetEventFromLogs(
 		receipt.Logs,
 		acp99Manager.ParseCompletedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
+
+	return validationID
+}
+
+func InitializeAndCompleteEndInitialPoAValidationV1(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	ownerKey *ecdsa.PrivateKey,
+	fundedKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	validatorManager *poavalidatormanager.PoAValidatorManager,
+	validatorManagerAddress common.Address,
+	validationID ids.ID,
+	index uint32,
+	weight uint64,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+) {
+	log.Println("Initializing initial validator removal")
+	WaitMinStakeDuration(ctx, l1Info, fundedKey)
+	opts, err := bind.NewKeyedTransactorWithChainID(ownerKey, l1Info.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := validatorManager.InitializeEndValidation(
+		opts,
+		validationID,
+	)
+	Expect(err).Should(BeNil())
+	receipt := WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+
+	validatorRemovalEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		validatorManager.ParseValidatorRemovalInitialized,
+	)
+	Expect(err).Should(BeNil())
+	Expect(validatorRemovalEvent.ValidationID[:]).Should(Equal(validationID[:]))
+	Expect(validatorRemovalEvent.Weight).Should(Equal(weight))
+
+	// Gather subnet-evm Warp signatures for the SetL1ValidatorWeightMessage & relay to the P-Chain
+	// (Sending to the P-Chain will be skipped for now)
+	unsignedMessage := ExtractWarpMessageFromLog(ctx, receipt, l1Info)
+	signedWarpMessage, err := signatureAggregator.CreateSignedMessage(
+		unsignedMessage,
+		nil,
+		l1Info.SubnetID,
+		67,
+	)
+	Expect(err).Should(BeNil())
+
+	// Deliver the Warp message to the P-Chain
+	pchainWallet.IssueSetL1ValidatorWeightTx(signedWarpMessage.Bytes())
+	PChainProposerVMWorkaround(pchainWallet)
+	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+
+	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+	log.Println("Completing initial validator removal")
+	registrationSignedMessage := ConstructL1ValidatorRegistrationMessageForInitialValidator(
+		validationID,
+		index,
+		false,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+
+	// Deliver the Warp message to the L1
+	abi, err := poavalidatormanager.PoAValidatorManagerMetaData.GetAbi()
+	Expect(err).Should(BeNil())
+	callData, err := abi.Pack("completeEndValidation", uint32(0))
+	Expect(err).Should(BeNil())
+	receipt = CallWarpReceiver(
+		ctx,
+		callData,
+		ownerKey,
+		l1Info,
+		validatorManagerAddress,
+		registrationSignedMessage.Bytes(),
+	)
+
+	// Check that the validator is has been delisted from the staking contract
+	validationEndedEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		validatorManager.ParseValidationPeriodEnded,
+	)
+	Expect(err).Should(BeNil())
+	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
+}
+
+func InitializeAndCompletePoAValidatorRegistrationV1(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	ownerKey *ecdsa.PrivateKey,
+	fundedKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	validatorManager *poavalidatormanager.PoAValidatorManager,
+	validatorManagerAddress common.Address,
+	expiry uint64,
+	node Node,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+) ids.ID {
+	// Initiate validator registration
+	// receipt, validationID := InitializePoAValidatorRegistration(
+	// 	ctx,
+	// 	ownerKey,
+	// 	l1Info,
+	// 	node,
+	// 	expiry,
+	// 	validatorManager,
+	// )
+
+	opts, err := bind.NewKeyedTransactorWithChainID(ownerKey, l1Info.EVMChainID)
+	Expect(err).Should(BeNil())
+
+	tx, err := validatorManager.InitializeValidatorRegistration(
+		opts,
+		poavalidatormanager.ValidatorRegistrationInput{
+			NodeID:             node.NodeID[:],
+			RegistrationExpiry: expiry,
+			BlsPublicKey:       node.NodePoP.PublicKey[:],
+		},
+		node.Weight,
+	)
+	Expect(err).Should(BeNil())
+	receipt := WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+	registrationInitiatedEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		validatorManager.ParseValidationPeriodCreated,
+	)
+	Expect(err).Should(BeNil())
+	validationID := ids.ID(registrationInitiatedEvent.ValidationID)
+
+	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
+	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
+
+	_, err = pchainWallet.IssueRegisterL1ValidatorTx(
+		100*units.Avax,
+		node.NodePoP.ProofOfPossession,
+		signedWarpMessage.Bytes(),
+	)
+	Expect(err).Should(BeNil())
+	PChainProposerVMWorkaround(pchainWallet)
+	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+
+	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+	log.Println("Completing validator registration")
+	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
+		validationID,
+		expiry,
+		node,
+		true,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+
+	// Deliver the Warp message to the L1
+	abi, err := poavalidatormanager.PoAValidatorManagerMetaData.GetAbi()
+	Expect(err).Should(BeNil())
+	callData, err := abi.Pack("completeValidatorRegistration", uint32(0))
+	Expect(err).Should(BeNil())
+	receipt = CallWarpReceiver(
+		ctx,
+		callData,
+		ownerKey,
+		l1Info,
+		validatorManagerAddress,
+		registrationSignedMessage.Bytes(),
+	)
+
+	// Check that the validator is registered in the staking contract
+	registrationEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		validatorManager.ParseValidationPeriodRegistered,
 	)
 	Expect(err).Should(BeNil())
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))

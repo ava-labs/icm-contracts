@@ -29,6 +29,7 @@ import (
 	"github.com/ava-labs/avalanchego/wallet/subnet/primary"
 	ownableupgradeable "github.com/ava-labs/icm-contracts/abi-bindings/go/OwnableUpgradeable"
 	proxyadmin "github.com/ava-labs/icm-contracts/abi-bindings/go/ProxyAdmin"
+	poavalidatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/PoAValidatorManagerV1"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
 	"github.com/ava-labs/icm-contracts/tests/utils"
@@ -186,6 +187,137 @@ func NewLocalNetwork(
 	}
 
 	return localNetwork
+}
+
+func (n *LocalNetwork) ConvertSubnetPoAV1(
+	ctx context.Context,
+	l1 interfaces.L1TestInfo,
+	weights []uint64,
+	senderKey *ecdsa.PrivateKey,
+) ([]utils.Node, []ids.ID) {
+	goLog.Println("Converting l1", l1.SubnetID)
+	cChainInfo := n.GetPrimaryNetworkInfo()
+	pClient := platformvm.NewClient(cChainInfo.NodeURIs[0])
+	currentValidators, err := pClient.GetCurrentValidators(ctx, l1.SubnetID, nil)
+	Expect(err).Should(BeNil())
+
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+
+	// Reset the global binary data for better test isolation
+	poavalidatormanager.PoAValidatorManagerBin = poavalidatormanager.PoAValidatorManagerMetaData.Bin
+
+	vdrManagerAddress, tx, poaValidatorManager, err := poavalidatormanager.DeployPoAValidatorManager(
+		opts,
+		l1.RPCClient,
+		0, // ICMInitializable.Allowed
+	)
+	Expect(err).Should(BeNil())
+	utils.WaitForTransactionSuccess(ctx, l1, tx.Hash())
+
+	tx, err = poaValidatorManager.Initialize(
+		opts,
+		poavalidatormanager.ValidatorManagerSettings{
+			L1ID:                   l1.SubnetID,
+			ChurnPeriodSeconds:     uint64(0),
+			MaximumChurnPercentage: uint8(20),
+		},
+		utils.PrivateKeyToAddress(senderKey),
+	)
+	Expect(err).Should(BeNil())
+	utils.WaitForTransactionSuccess(ctx, l1, tx.Hash())
+
+	var vdrManagerProxyAdmin *proxyadmin.ProxyAdmin
+	// Overwrite the manager address with the proxy address
+	vdrManagerAddress, vdrManagerProxyAdmin = utils.DeployTransparentUpgradeableProxy(
+		ctx,
+		l1,
+		senderKey,
+		vdrManagerAddress,
+	)
+
+	n.validatorManagers[l1.SubnetID] = ProxyAddress{
+		Address:    vdrManagerAddress,
+		ProxyAdmin: vdrManagerProxyAdmin,
+	}
+
+	tmpnetNodes := n.GetExtraNodes(len(weights))
+	sort.Slice(tmpnetNodes, func(i, j int) bool {
+		return string(tmpnetNodes[i].NodeID.Bytes()) < string(tmpnetNodes[j].NodeID.Bytes())
+	})
+
+	var nodes []utils.Node
+	// Construct the converted l1 info
+	destAddr, err := address.ParseToID(utils.DefaultPChainAddress)
+	Expect(err).Should(BeNil())
+	vdrs := make([]*txs.ConvertSubnetToL1Validator, len(tmpnetNodes))
+	for i, node := range tmpnetNodes {
+		signer, err := node.GetProofOfPossession()
+		Expect(err).Should(BeNil())
+		nodes = append(nodes, utils.Node{
+			NodeID:  node.NodeID,
+			NodePoP: signer,
+			Weight:  weights[i],
+		})
+		vdrs[i] = &txs.ConvertSubnetToL1Validator{
+			NodeID:  node.NodeID.Bytes(),
+			Weight:  weights[i],
+			Balance: units.Avax * 100,
+			Signer:  *signer,
+			RemainingBalanceOwner: warpMessage.PChainOwner{
+				Threshold: 1,
+				Addresses: []ids.ShortID{destAddr},
+			},
+			DeactivationOwner: warpMessage.PChainOwner{
+				Threshold: 1,
+				Addresses: []ids.ShortID{destAddr},
+			},
+		}
+	}
+	pChainWallet := n.GetPChainWallet()
+	_, err = pChainWallet.IssueConvertSubnetToL1Tx(
+		l1.SubnetID,
+		l1.BlockchainID,
+		vdrManagerAddress[:],
+		vdrs,
+	)
+	Expect(err).Should(BeNil())
+
+	l1 = n.AddSubnetValidators(tmpnetNodes, l1, true)
+
+	utils.PChainProposerVMWorkaround(pChainWallet)
+	utils.AdvanceProposerVM(ctx, l1, senderKey, 5)
+
+	aggregator := n.GetSignatureAggregator()
+	defer aggregator.Shutdown()
+	validationIDs := utils.InitializeValidatorSetV1(
+		ctx,
+		senderKey,
+		l1,
+		utils.GetPChainInfo(cChainInfo),
+		vdrManagerAddress,
+		n.GetNetworkID(),
+		aggregator,
+		nodes,
+	)
+
+	// Remove the bootstrap nodes as l1 validators
+	for _, vdr := range currentValidators {
+		_, err := pChainWallet.IssueRemoveSubnetValidatorTx(vdr.NodeID, l1.SubnetID)
+		Expect(err).Should(BeNil())
+		for _, node := range n.Network.Nodes {
+			if node.NodeID == vdr.NodeID {
+				port := getTmpnetNodePort(node)
+				node.Flags[config.HTTPPortKey] = port
+				goLog.Println("Restarting bootstrap node", node.NodeID)
+				n.Network.RestartNode(ctx, n.logger, node)
+			}
+		}
+	}
+	utils.PChainProposerVMWorkaround(pChainWallet)
+	utils.AdvanceProposerVM(ctx, l1, senderKey, 5)
+
+	return nodes, validationIDs
 }
 
 func (n *LocalNetwork) ConvertSubnet(
