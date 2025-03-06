@@ -48,6 +48,17 @@ struct ValidatorManagerSettings {
     uint8 maximumChurnPercentage;
 }
 
+/// @dev Legacy struct used to migrate from V1 contracts
+struct ValidatorLegacy {
+    ValidatorStatus status;
+    bytes nodeID;
+    uint64 startingWeight;
+    uint64 messageNonce;
+    uint64 weight;
+    uint64 startedAt;
+    uint64 endedAt;
+}
+
 /**
  * @dev Implementation of the {ACP99Manager} abstract contract.
  *
@@ -67,12 +78,14 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         ValidatorChurnPeriod _churnTracker;
         /// @notice Maps the validationID to the registration message such that the message can be re-sent if needed.
         mapping(bytes32 => bytes) _pendingRegisterValidationMessages;
-        /// @notice Maps the validationID to the validator information.
-        mapping(bytes32 => Validator) _validationPeriods;
+        /// @notice Legacy storage for V1 validators.
+        mapping(bytes32 => ValidatorLegacy) _validationPeriodsLegacy;
         /// @notice Maps the nodeID to the validationID for validation periods that have not ended.
         mapping(bytes => bytes32) _registeredValidators;
         /// @notice Boolean that indicates if the initial validator set has been set.
         bool _initializedValidatorSet;
+        /// @notice Maps the validationID to the validator information.
+        mapping(bytes32 => Validator) _validationPeriods;
     }
     // solhint-enable private-vars-leading-underscore
 
@@ -136,6 +149,37 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
+    }
+
+    /**
+     * @notice Migrates a validator from the V1 contract to the V2 contract.
+     * @param validationID The ID of the validation period to migrate.
+     * @param receivedNonce The latest nonce received from the P-Chain.
+     */
+    function migrateFromV1(bytes32 validationID, uint32 receivedNonce) external {
+        ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
+        ValidatorLegacy storage legacy = $._validationPeriodsLegacy[validationID];
+        if (legacy.status == ValidatorStatus.Unknown) {
+            revert InvalidValidationID(validationID);
+        }
+        if (receivedNonce > legacy.messageNonce) {
+            revert InvalidNonce(receivedNonce);
+        }
+
+        $._validationPeriods[validationID] = Validator({
+            status: legacy.status,
+            nodeID: legacy.nodeID,
+            startingWeight: legacy.startingWeight,
+            sentNonce: legacy.messageNonce,
+            receivedNonce: receivedNonce,
+            weight: legacy.weight,
+            startTime: legacy.startedAt,
+            endTime: legacy.endedAt
+        });
+
+        // Set the legacy status to unknown to disallow future migrations.
+        legacy.status = ValidatorStatus.Unknown;
+        $._validationPeriodsLegacy[validationID] = legacy;
     }
 
     function initialize(ValidatorManagerSettings calldata settings) external initializer {
