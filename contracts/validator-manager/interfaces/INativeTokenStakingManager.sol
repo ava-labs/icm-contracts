@@ -36,8 +36,7 @@ interface INativeTokenStakingManager is IStakingManager {
      * @notice Begins the delegator registration process. Locks the provided native asset in the contract as the stake.
      * @param validationID The ID of the validator to stake to.
      */
-    function initiateDelegatorRegistration(bytes32 validationID)
-        external
-        payable
-        returns (bytes32);
+    function initiateDelegatorRegistration(
+        bytes32 validationID
+    ) external payable returns (bytes32);
 }

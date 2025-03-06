@@ -12,9 +12,9 @@ import {Address} from "@openzeppelin/contracts@5.0.2/utils/Address.sol";
 contract WrappedNativeToken is IWrappedNativeToken, ERC20 {
     using Address for address payable;
 
-    constructor(string memory symbol)
-        ERC20(string.concat("Wrapped ", symbol), string.concat("W", symbol))
-    {}
+    constructor(
+        string memory symbol
+    ) ERC20(string.concat("Wrapped ", symbol), string.concat("W", symbol)) {}
 
     receive() external payable {
         deposit();
@@ -24,7 +24,9 @@ contract WrappedNativeToken is IWrappedNativeToken, ERC20 {
         deposit();
     }
 
-    function withdraw(uint256 amount) external {
+    function withdraw(
+        uint256 amount
+    ) external {
         _burn(_msgSender(), amount);
         emit Withdrawal(_msgSender(), amount);
         payable(_msgSender()).sendValue(amount);

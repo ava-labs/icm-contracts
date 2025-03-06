@@ -22,7 +22,9 @@ interface INativeTokenRemote is ITokenRemote, INativeTokenTransferrer {
      * @notice Reports the increase in total burned transaction fees on this chain to its corresponding TokenHome instance.
      * @param requiredGasLimit The gas limit required to report the burned transaction fees to the home contract.
      */
-    function reportBurnedTxFees(uint256 requiredGasLimit) external;
+    function reportBurnedTxFees(
+        uint256 requiredGasLimit
+    ) external;
 
     /**
      * @notice Returns a best-estimate (upper bound) of the supply of the native asset

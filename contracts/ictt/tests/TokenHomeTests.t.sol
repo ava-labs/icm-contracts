@@ -811,7 +811,9 @@ abstract contract TokenHomeTest is TokenTransferrerTest {
      * Different from `_setUpExpectedDeposit` since the send that follows isn't
      * expected to succeed. So `setUpDeposit` does not check for expected emit events.
      */
-    function _setUpDeposit(uint256 amount) internal virtual;
+    function _setUpDeposit(
+        uint256 amount
+    ) internal virtual;
 
     function _setUpRegisteredRemote(
         bytes32 remoteBlockchainID,
@@ -906,12 +908,9 @@ abstract contract TokenHomeTest is TokenTransferrerTest {
         return DEFAULT_TOKEN_HOME_BLOCKCHAIN_ID;
     }
 
-    function _formatErrorMessage(string memory message)
-        internal
-        pure
-        override
-        returns (bytes memory)
-    {
+    function _formatErrorMessage(
+        string memory message
+    ) internal pure override returns (bytes memory) {
         return bytes(string.concat("TokenHome: ", message));
     }
 }

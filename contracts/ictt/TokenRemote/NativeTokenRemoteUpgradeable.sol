@@ -130,7 +130,9 @@ contract NativeTokenRemoteUpgradeable is
         _;
     }
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -173,10 +175,9 @@ contract NativeTokenRemoteUpgradeable is
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __NativeTokenRemote_init_unchained(uint256 burnedFeesReportingRewardPercentage)
-        internal
-        onlyInitializing
-    {
+    function __NativeTokenRemote_init_unchained(
+        uint256 burnedFeesReportingRewardPercentage
+    ) internal onlyInitializing {
         require(burnedFeesReportingRewardPercentage < 100, "NativeTokenRemote: invalid percentage");
         _getNativeTokenRemoteStorage()._burnedFeesReportingRewardPercentage =
             burnedFeesReportingRewardPercentage;
@@ -202,21 +203,27 @@ contract NativeTokenRemoteUpgradeable is
     /**
      * @dev See {INativeTokenTransferrer-send}.
      */
-    function send(SendTokensInput calldata input) external payable onlyWhenCollateralized {
+    function send(
+        SendTokensInput calldata input
+    ) external payable onlyWhenCollateralized {
         _send(input, msg.value);
     }
 
     /**
      * @dev See {INativeTokenTransferrer-sendAndCall}
      */
-    function sendAndCall(SendAndCallInput calldata input) external payable onlyWhenCollateralized {
+    function sendAndCall(
+        SendAndCallInput calldata input
+    ) external payable onlyWhenCollateralized {
         _sendAndCall(input, msg.value);
     }
 
     /**
      * @dev See {INativeTokenRemote-reportBurnedTxFees}.
      */
-    function reportBurnedTxFees(uint256 requiredGasLimit) external sendNonReentrant {
+    function reportBurnedTxFees(
+        uint256 requiredGasLimit
+    ) external sendNonReentrant {
         NativeTokenRemoteStorage storage $ = _getNativeTokenRemoteStorage();
         uint256 burnAddressBalance = BURNED_TX_FEES_ADDRESS.balance;
         require(
@@ -275,7 +282,9 @@ contract NativeTokenRemoteUpgradeable is
      * for the native token itself. {TokenRemote-_withdraw} is the internal method used when
      * processing token transfers.
      */
-    function withdraw(uint256 amount) external {
+    function withdraw(
+        uint256 amount
+    ) external {
         emit Withdrawal(_msgSender(), amount);
         _burn(_msgSender(), amount);
         payable(_msgSender()).sendValue(amount);
@@ -326,7 +335,9 @@ contract NativeTokenRemoteUpgradeable is
      * The tokens to be burnt are already held by this contract. To burn the tokens, send the
      * native token amount to the BURNED_FOR_TRANSFER_ADDRESS.
      */
-    function _burn(uint256 amount) internal virtual override returns (uint256) {
+    function _burn(
+        uint256 amount
+    ) internal virtual override returns (uint256) {
         payable(BURNED_FOR_TRANSFER_ADDRESS).sendValue(amount);
         return amount;
     }

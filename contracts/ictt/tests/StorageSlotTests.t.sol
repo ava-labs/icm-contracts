@@ -67,7 +67,9 @@ contract StorageSlotTest is Test {
         );
     }
 
-    function _erc7201StorageSlot(bytes memory storageName) private pure returns (bytes32) {
+    function _erc7201StorageSlot(
+        bytes memory storageName
+    ) private pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 uint256(keccak256(abi.encodePacked("avalanche-ictt.storage.", storageName))) - 1

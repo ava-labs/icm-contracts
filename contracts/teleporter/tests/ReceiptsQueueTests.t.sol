@@ -9,6 +9,7 @@ import {Test} from "@forge-std/Test.sol";
 import {ReceiptQueue} from "../ReceiptQueue.sol";
 import {TeleporterMessageReceipt} from "../ITeleporterMessenger.sol";
 
+/// forge-config: default.allow_internal_expect_revert = true
 contract ReceiptQueueTest is Test {
     using ReceiptQueue for ReceiptQueue.TeleporterMessageReceiptQueue;
     // The state of the contract gets reset before each
@@ -115,11 +116,9 @@ contract ReceiptQueueTest is Test {
         assertEq(result.relayerRewardAddress, address(0));
     }
 
-    function _formatReceiptQueueErrorMessage(bytes memory errorMessage)
-        private
-        pure
-        returns (bytes memory)
-    {
+    function _formatReceiptQueueErrorMessage(
+        bytes memory errorMessage
+    ) private pure returns (bytes memory) {
         return abi.encodePacked("ReceiptQueue: ", errorMessage);
     }
 }

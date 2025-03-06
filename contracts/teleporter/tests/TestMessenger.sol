@@ -106,11 +106,9 @@ contract TestMessenger is ReentrancyGuardUpgradeable, TeleporterRegistryOwnableA
      * @dev Returns the current message from another chain.
      * @return The sender of the message, and the message itself.
      */
-    function getCurrentMessage(bytes32 sourceBlockchainID)
-        external
-        view
-        returns (address, string memory)
-    {
+    function getCurrentMessage(
+        bytes32 sourceBlockchainID
+    ) external view returns (address, string memory) {
         Message memory messageInfo = _messages[sourceBlockchainID];
         return (messageInfo.sender, messageInfo.message);
     }

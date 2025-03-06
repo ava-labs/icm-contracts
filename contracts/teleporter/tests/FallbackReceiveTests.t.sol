@@ -28,7 +28,9 @@ contract FallbackReceiveApp {
     }
 
     // solhint-disable-next-line no-complex-fallback, payable-fallback
-    fallback(bytes calldata data) external returns (bytes memory) {
+    fallback(
+        bytes calldata data
+    ) external returns (bytes memory) {
         bytes4 selector = bytes4(data[:4]);
         // Check that the function selector was for receiveTeleporterMessage.
         require(

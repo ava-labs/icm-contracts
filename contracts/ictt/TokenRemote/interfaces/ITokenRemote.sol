@@ -37,5 +37,7 @@ interface ITokenRemote is ITokenTransferrer {
      * @notice Sends a Teleporter message to register the TokenRemote instance with its configured home.
      * @param feeInfo The optional fee asset and amount for the Teleporter message, for relayer incentivization.
      */
-    function registerWithHome(TeleporterFeeInfo calldata feeInfo) external;
+    function registerWithHome(
+        TeleporterFeeInfo calldata feeInfo
+    ) external;
 }

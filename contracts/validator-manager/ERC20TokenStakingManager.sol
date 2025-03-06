@@ -50,7 +50,9 @@ contract ERC20TokenStakingManager is Initializable, StakingManager, IERC20TokenS
         }
     }
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -79,10 +81,9 @@ contract ERC20TokenStakingManager is Initializable, StakingManager, IERC20TokenS
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __ERC20TokenStakingManager_init_unchained(IERC20Mintable token)
-        internal
-        onlyInitializing
-    {
+    function __ERC20TokenStakingManager_init_unchained(
+        IERC20Mintable token
+    ) internal onlyInitializing {
         ERC20TokenStakingManagerStorage storage $ = _getERC20StakingManagerStorage();
         if (address(token) == address(0)) {
             revert InvalidTokenAddress(address(token));
@@ -136,7 +137,9 @@ contract ERC20TokenStakingManager is Initializable, StakingManager, IERC20TokenS
      * @notice See {StakingManager-_lock}
      * Note: Must be guarded with reentrancy guard for safe transfer from.
      */
-    function _lock(uint256 value) internal virtual override returns (uint256) {
+    function _lock(
+        uint256 value
+    ) internal virtual override returns (uint256) {
         return _getERC20StakingManagerStorage()._token.safeTransferFrom(value);
     }
 

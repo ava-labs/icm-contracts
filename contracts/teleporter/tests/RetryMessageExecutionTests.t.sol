@@ -28,7 +28,9 @@ contract FlakyMessageReceiver is ITeleporterReceiver {
     bytes32 public latestMessageSenderSubnetID;
     address public latestMessageSenderAddress;
 
-    constructor(address teleporterContractAddress) {
+    constructor(
+        address teleporterContractAddress
+    ) {
         teleporterContract = teleporterContractAddress;
     }
 
@@ -176,10 +178,9 @@ contract RetryMessageExecutionTest is TeleporterMessengerTest {
         teleporterMessenger.retryMessageExecution(sourceBlockchainID, message);
     }
 
-    function _receiveFailedMessage(bool retryReceive)
-        internal
-        returns (bytes32, TeleporterMessage memory, string memory)
-    {
+    function _receiveFailedMessage(
+        bool retryReceive
+    ) internal returns (bytes32, TeleporterMessage memory, string memory) {
         // Construct the mock message to be received.
         string memory messageString = "Testing successful message";
         FlakyMessageReceiverAction action;

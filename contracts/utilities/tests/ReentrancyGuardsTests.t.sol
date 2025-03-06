@@ -91,7 +91,9 @@ contract SampleMessenger is ReentrancyGuards {
         nonce = 0;
     }
 
-    function sendAndCall(bytes memory message) public senderNonReentrant {
+    function sendAndCall(
+        bytes memory message
+    ) public senderNonReentrant {
         nonce++;
         if (message.length > 0) {
             // solhint-disable-next-line avoid-low-level-calls
@@ -109,7 +111,9 @@ contract SampleMessenger is ReentrancyGuards {
         sendMessage();
     }
 
-    function receiveAndCall(bytes memory message) public receiverNonReentrant {
+    function receiveAndCall(
+        bytes memory message
+    ) public receiverNonReentrant {
         nonce++;
         if (message.length > 0) {
             // solhint-disable-next-line avoid-low-level-calls

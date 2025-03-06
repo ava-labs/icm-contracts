@@ -1933,12 +1933,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         uint256 stakeAmount
     ) internal virtual returns (bytes32);
 
-    function _completeValidatorRegistration(uint32 messageIndex)
-        internal
-        virtual
-        override
-        returns (bytes32)
-    {
+    function _completeValidatorRegistration(
+        uint32 messageIndex
+    ) internal virtual override returns (bytes32) {
         return stakingManager.completeValidatorRegistration(messageIndex);
     }
 
@@ -1960,12 +1957,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         );
     }
 
-    function _completeValidatorRemoval(uint32 messageIndex)
-        internal
-        virtual
-        override
-        returns (bytes32)
-    {
+    function _completeValidatorRemoval(
+        uint32 messageIndex
+    ) internal virtual override returns (bytes32) {
         return stakingManager.completeValidatorRemoval(messageIndex);
     }
 
@@ -2047,10 +2041,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         );
     }
 
-    function _registerDefaultDelegator(bytes32 validationID)
-        internal
-        returns (bytes32 delegationID)
-    {
+    function _registerDefaultDelegator(
+        bytes32 validationID
+    ) internal returns (bytes32 delegationID) {
         return _registerDelegator({
             validationID: validationID,
             delegatorAddress: DEFAULT_DELEGATOR_ADDRESS,
@@ -2062,10 +2055,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         });
     }
 
-    function _initiateDefaultDelegatorRegistration(bytes32 validationID)
-        internal
-        returns (bytes32)
-    {
+    function _initiateDefaultDelegatorRegistration(
+        bytes32 validationID
+    ) internal returns (bytes32) {
         return _setUpInitiateDelegatorRegistration({
             validationID: validationID,
             delegatorAddress: DEFAULT_DELEGATOR_ADDRESS,
@@ -2338,7 +2330,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         }
     }
 
-    function _completeEndValidation(bytes memory l1ValidatorRegistrationMessage) internal {
+    function _completeEndValidation(
+        bytes memory l1ValidatorRegistrationMessage
+    ) internal {
         _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
         stakingManager.completeValidatorRemoval(0);
     }
@@ -2444,7 +2438,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         });
     }
 
-    function _getStakeAssetBalance(address account) internal virtual returns (uint256);
+    function _getStakeAssetBalance(
+        address account
+    ) internal virtual returns (uint256);
     function _expectStakeUnlock(address account, uint256 amount) internal virtual;
     function _expectRewardIssuance(address account, uint256 amount) internal virtual;
 

@@ -104,7 +104,9 @@ contract TeleporterRegistryAppUpgradeableTest is TeleporterRegistryAppTest {
         );
     }
 
-    function _erc7201StorageSlot(bytes memory storageName) private pure returns (bytes32) {
+    function _erc7201StorageSlot(
+        bytes memory storageName
+    ) private pure returns (bytes32) {
         return keccak256(
             abi.encode(uint256(keccak256(abi.encodePacked("teleporter.storage.", storageName))) - 1)
         ) & ~bytes32(uint256(0xff));

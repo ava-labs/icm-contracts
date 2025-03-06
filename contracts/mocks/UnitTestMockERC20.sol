@@ -46,7 +46,9 @@ contract UnitTestMockERC20 {
         return true;
     }
 
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(
+        address account
+    ) public view returns (uint256) {
         return mockBalances[account];
     }
 

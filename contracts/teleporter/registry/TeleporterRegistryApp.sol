@@ -116,7 +116,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
      * from old Teleporter versions from being received, this function should be safeguarded with access
      * controls. This is done by overriding the implementation of {_checkTeleporterRegistryAppAccess}.
      */
-    function updateMinTeleporterVersion(uint256 version) public virtual {
+    function updateMinTeleporterVersion(
+        uint256 version
+    ) public virtual {
         _checkTeleporterRegistryAppAccess();
         _setMinTeleporterVersion(version);
     }
@@ -133,7 +135,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
      * - `teleporterAddress` is not the zero address.
      * - `teleporterAddress` is not already paused.
      */
-    function pauseTeleporterAddress(address teleporterAddress) public virtual {
+    function pauseTeleporterAddress(
+        address teleporterAddress
+    ) public virtual {
         _checkTeleporterRegistryAppAccess();
         require(teleporterAddress != address(0), "TeleporterRegistryApp: zero Teleporter address");
         require(
@@ -156,7 +160,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
      * - `teleporterAddress` is not the zero address.
      * - `teleporterAddress` is already paused.
      */
-    function unpauseTeleporterAddress(address teleporterAddress) public virtual {
+    function unpauseTeleporterAddress(
+        address teleporterAddress
+    ) public virtual {
         _checkTeleporterRegistryAppAccess();
         require(teleporterAddress != address(0), "TeleporterRegistryApp: zero Teleporter address");
         require(
@@ -177,12 +183,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
     /**
      * @dev Checks if a Teleporter address is paused.
      */
-    function isTeleporterAddressPaused(address teleporterAddress)
-        public
-        view
-        virtual
-        returns (bool)
-    {
+    function isTeleporterAddressPaused(
+        address teleporterAddress
+    ) public view virtual returns (bool) {
         return _pausedTeleporterAddresses[teleporterAddress];
     }
 
@@ -195,7 +198,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
      * - `version` must be greater than the current minimum Teleporter version.
      *
      */
-    function _setMinTeleporterVersion(uint256 version) internal virtual {
+    function _setMinTeleporterVersion(
+        uint256 version
+    ) internal virtual {
         uint256 latestTeleporterVersion = teleporterRegistry.latestVersion();
         uint256 oldMinTeleporterVersion = _minTeleporterVersion;
 
@@ -238,11 +243,9 @@ abstract contract TeleporterRegistryApp is Context, ITeleporterReceiver, Reentra
      *
      * @return `messageID` The unique identifier for the Teleporter message.
      */
-    function _sendTeleporterMessage(TeleporterMessageInput memory messageInput)
-        internal
-        virtual
-        returns (bytes32)
-    {
+    function _sendTeleporterMessage(
+        TeleporterMessageInput memory messageInput
+    ) internal virtual returns (bytes32) {
         ITeleporterMessenger teleporterMessenger = _getTeleporterMessenger();
         // For non-zero fee amounts increase the Teleporter contract's allowance.
         if (messageInput.feeInfo.amount > 0) {

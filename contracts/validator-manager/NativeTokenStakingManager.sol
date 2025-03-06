@@ -28,7 +28,9 @@ contract NativeTokenStakingManager is Initializable, StakingManager, INativeToke
     INativeMinter public constant NATIVE_MINTER =
         INativeMinter(0x0200000000000000000000000000000000000001);
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -40,15 +42,16 @@ contract NativeTokenStakingManager is Initializable, StakingManager, INativeToke
      * @param settings Initial settings for the PoS validator manager
      */
     // solhint-disable ordering
-    function initialize(StakingManagerSettings calldata settings) external reinitializer(2) {
+    function initialize(
+        StakingManagerSettings calldata settings
+    ) external reinitializer(2) {
         __NativeTokenStakingManager_init(settings);
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __NativeTokenStakingManager_init(StakingManagerSettings calldata settings)
-        internal
-        onlyInitializing
-    {
+    function __NativeTokenStakingManager_init(
+        StakingManagerSettings calldata settings
+    ) internal onlyInitializing {
         __StakingManager_init(settings);
     }
 
@@ -82,19 +85,18 @@ contract NativeTokenStakingManager is Initializable, StakingManager, INativeToke
     /**
      * @notice See {INativeTokenStakingManager-initiateDelegatorRegistration}.
      */
-    function initiateDelegatorRegistration(bytes32 validationID)
-        external
-        payable
-        nonReentrant
-        returns (bytes32)
-    {
+    function initiateDelegatorRegistration(
+        bytes32 validationID
+    ) external payable nonReentrant returns (bytes32) {
         return _initiateDelegatorRegistration(validationID, _msgSender(), msg.value);
     }
 
     /**
      * @notice See {StakingManager-_lock}
      */
-    function _lock(uint256 value) internal virtual override returns (uint256) {
+    function _lock(
+        uint256 value
+    ) internal virtual override returns (uint256) {
         return value;
     }
 

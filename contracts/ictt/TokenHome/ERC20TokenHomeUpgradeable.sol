@@ -56,7 +56,9 @@ contract ERC20TokenHomeUpgradeable is IERC20TokenHome, TokenHome {
         }
     }
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -107,7 +109,9 @@ contract ERC20TokenHomeUpgradeable is IERC20TokenHome, TokenHome {
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __ERC20TokenHome_init_unchained(address tokenAddress) internal onlyInitializing {
+    function __ERC20TokenHome_init_unchained(
+        address tokenAddress
+    ) internal onlyInitializing {
         _getERC20TokenHomeStorage()._token = IERC20(tokenAddress);
     }
     // solhint-enable ordering
@@ -146,7 +150,9 @@ contract ERC20TokenHomeUpgradeable is IERC20TokenHome, TokenHome {
     /**
      * @dev See {TokenHome-_deposit}
      */
-    function _deposit(uint256 amount) internal virtual override returns (uint256) {
+    function _deposit(
+        uint256 amount
+    ) internal virtual override returns (uint256) {
         ERC20TokenHomeStorage storage $ = _getERC20TokenHomeStorage();
         return SafeERC20TransferFrom.safeTransferFrom($._token, _msgSender(), amount);
     }

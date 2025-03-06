@@ -126,10 +126,9 @@ abstract contract StakingManager is
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __StakingManager_init(StakingManagerSettings calldata settings)
-        internal
-        onlyInitializing
-    {
+    function __StakingManager_init(
+        StakingManagerSettings calldata settings
+    ) internal onlyInitializing {
         __ReentrancyGuard_init();
         __StakingManager_init_unchained({
             manager: settings.manager,
@@ -210,7 +209,9 @@ abstract contract StakingManager is
     /**
      * @notice See {IStakingManager-claimDelegationFees}.
      */
-    function claimDelegationFees(bytes32 validationID) external {
+    function claimDelegationFees(
+        bytes32 validationID
+    ) external {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
 
         ValidatorStatus status = $._manager.getValidator(validationID).status;
@@ -402,11 +403,9 @@ abstract contract StakingManager is
      * @notice See {IStakingManager-completeValidatorRemoval}.
      * Extends the functionality of {ACP99Manager-completeValidatorRemoval} by unlocking staking rewards.
      */
-    function completeValidatorRemoval(uint32 messageIndex)
-        external
-        nonReentrant
-        returns (bytes32)
-    {
+    function completeValidatorRemoval(
+        uint32 messageIndex
+    ) external nonReentrant returns (bytes32) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
 
         // Check if the validator has been already been removed from the validator manager.
@@ -543,7 +542,9 @@ abstract contract StakingManager is
     /**
      * @notice See {IStakingManager-completeValidatorRegistration}.
      */
-    function completeValidatorRegistration(uint32 messageIndex) external returns (bytes32) {
+    function completeValidatorRegistration(
+        uint32 messageIndex
+    ) external returns (bytes32) {
         return _getStakingManagerStorage()._manager.completeValidatorRegistration(messageIndex);
     }
 
@@ -551,7 +552,9 @@ abstract contract StakingManager is
      * @notice Converts a token value to a weight.
      * @param value Token value to convert.
      */
-    function valueToWeight(uint256 value) public view returns (uint64) {
+    function valueToWeight(
+        uint256 value
+    ) public view returns (uint64) {
         uint256 weight = value / _getStakingManagerStorage()._weightToValueFactor;
         if (weight == 0 || weight > type(uint64).max) {
             revert InvalidStakeAmount(value);
@@ -563,7 +566,9 @@ abstract contract StakingManager is
      * @notice Converts a weight to a token value.
      * @param weight weight to convert.
      */
-    function weightToValue(uint64 weight) public view returns (uint256) {
+    function weightToValue(
+        uint64 weight
+    ) public view returns (uint256) {
         return uint256(weight) * _getStakingManagerStorage()._weightToValueFactor;
     }
 
@@ -571,7 +576,9 @@ abstract contract StakingManager is
      * @notice Locks tokens in this contract.
      * @param value Number of tokens to lock.
      */
-    function _lock(uint256 value) internal virtual returns (uint256);
+    function _lock(
+        uint256 value
+    ) internal virtual returns (uint256);
 
     /**
      * @notice Unlocks token to a specific address.
@@ -882,7 +889,9 @@ abstract contract StakingManager is
      * @dev Resending the latest validator weight with the latest nonce is safe because all weight changes are
      * cumulative, so the latest weight change will always include the weight change for any added delegators.
      */
-    function resendUpdateDelegator(bytes32 delegationID) external {
+    function resendUpdateDelegator(
+        bytes32 delegationID
+    ) external {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
         Delegator memory delegator = $._delegatorStakes[delegationID];
         if (
@@ -948,7 +957,9 @@ abstract contract StakingManager is
         _completeDelegatorRemoval(delegationID);
     }
 
-    function _completeDelegatorRemoval(bytes32 delegationID) internal {
+    function _completeDelegatorRemoval(
+        bytes32 delegationID
+    ) internal {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
 
         Delegator memory delegator = $._delegatorStakes[delegationID];
@@ -988,7 +999,9 @@ abstract contract StakingManager is
      * @dev Return true if this is a PoS validator with locked stake. Returns false if this was originally a PoA
      * validator that was later migrated to this PoS manager, or the validator was part of the initial validator set.
      */
-    function _isPoSValidator(bytes32 validationID) internal view returns (bool) {
+    function _isPoSValidator(
+        bytes32 validationID
+    ) internal view returns (bool) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
         return $._posValidatorInfo[validationID].owner != address(0);
     }

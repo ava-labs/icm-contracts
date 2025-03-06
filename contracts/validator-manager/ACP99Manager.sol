@@ -108,11 +108,9 @@ abstract contract ACP99Manager {
     function subnetID() public view virtual returns (bytes32 id);
 
     /// @notice Returns the validator details for a given validation ID.
-    function getValidator(bytes32 validationID)
-        public
-        view
-        virtual
-        returns (Validator memory validator);
+    function getValidator(
+        bytes32 validationID
+    ) public view virtual returns (Validator memory validator);
 
     /// @notice Returns the total weight of the current L1 validator set.
     function l1TotalWeight() public view virtual returns (uint64 weight);
@@ -164,10 +162,9 @@ abstract contract ACP99Manager {
      * @param messageIndex The index of the L1ValidatorRegistrationMessage to be received providing the acknowledgement.
      * @return validationID The ID of the registered validator.
      */
-    function completeValidatorRegistration(uint32 messageIndex)
-        public
-        virtual
-        returns (bytes32 validationID);
+    function completeValidatorRegistration(
+        uint32 messageIndex
+    ) public virtual returns (bytes32 validationID);
 
     /**
      * @notice Initiates validator removal by issuing a L1ValidatorWeightMessage with the weight set to zero.
@@ -177,7 +174,9 @@ abstract contract ACP99Manager {
      *
      * @param validationID The ID of the validator to remove.
      */
-    function _initiateValidatorRemoval(bytes32 validationID) internal virtual;
+    function _initiateValidatorRemoval(
+        bytes32 validationID
+    ) internal virtual;
 
     /**
      * @notice Completes validator removal by consuming an RegisterL1ValidatorMessage from the P-Chain acknowledging
@@ -188,10 +187,9 @@ abstract contract ACP99Manager {
      * @param messageIndex The index of the RegisterL1ValidatorMessage.
      * @return validationID The ID of the validator that was removed.
      */
-    function completeValidatorRemoval(uint32 messageIndex)
-        public
-        virtual
-        returns (bytes32 validationID);
+    function completeValidatorRemoval(
+        uint32 messageIndex
+    ) public virtual returns (bytes32 validationID);
 
     /**
      * @notice Initiates a validator weight update by issuing an L1ValidatorWeightMessage with a nonzero weight.
@@ -219,8 +217,7 @@ abstract contract ACP99Manager {
      * @return validationID The ID of the validator, retreived from the L1ValidatorWeightMessage.
      * @return nonce The nonce of the validator, retreived from the L1ValidatorWeightMessage.
      */
-    function completeValidatorWeightUpdate(uint32 messageIndex)
-        public
-        virtual
-        returns (bytes32 validationID, uint64 nonce);
+    function completeValidatorWeightUpdate(
+        uint32 messageIndex
+    ) public virtual returns (bytes32 validationID, uint64 nonce);
 }

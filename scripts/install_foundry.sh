@@ -8,13 +8,13 @@ set -e
 # This can vary for different environments, so it is set to $HOME for consistency.
 export XDG_CONFIG_HOME=$HOME
 
-# This installs from ava-labs fork of the foundry repo.
-FOUNDRY_VERSION=v0.2.1
-curl -L https://raw.githubusercontent.com/ava-labs/foundry/${FOUNDRY_VERSION}/foundryup/install > /tmp/foundry-install-script
+FOUNDRY_VERSION=v1.0.0
+curl -L https://raw.githubusercontent.com/foundry-rs/foundry/${FOUNDRY_VERSION}/foundryup/install > /tmp/foundry-install-script
 # Set the foundry version in the install script
 # Avoid using sed -i due to macos m1 incompatibility
-sed "s/\/ava-labs\/foundry\/master\/foundryup/\/ava-labs\/foundry\/${FOUNDRY_VERSION}\/foundryup/g" /tmp/foundry-install-script
-cat /tmp/foundry-install-script | bash
+sed "s/\/foundry-rs\/foundry\/master\/foundryup/\/foundry-rs\/foundry\/${FOUNDRY_VERSION}\/foundryup/g" /tmp/foundry-install-script
+bash < /tmp/foundry-install-script
 
 export PATH=$PATH:$HOME/.foundry/bin:$HOME/.foundry:$HOME/.cargo/bin
-foundryup --version ${FOUNDRY_VERSION}
+
+foundryup

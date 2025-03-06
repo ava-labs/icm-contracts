@@ -132,30 +132,32 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     IWarpMessenger public constant WARP_MESSENGER =
         IWarpMessenger(0x0200000000000000000000000000000000000005);
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
     }
 
-    function initialize(ValidatorManagerSettings calldata settings) external initializer {
+    function initialize(
+        ValidatorManagerSettings calldata settings
+    ) external initializer {
         __ValidatorManager_init(settings);
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __ValidatorManager_init(ValidatorManagerSettings calldata settings)
-        internal
-        onlyInitializing
-    {
+    function __ValidatorManager_init(
+        ValidatorManagerSettings calldata settings
+    ) internal onlyInitializing {
         __Ownable_init(settings.admin);
         __ValidatorManager_init_unchained(settings);
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __ValidatorManager_init_unchained(ValidatorManagerSettings calldata settings)
-        internal
-        onlyInitializing
-    {
+    function __ValidatorManager_init_unchained(
+        ValidatorManagerSettings calldata settings
+    ) internal onlyInitializing {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         $._subnetID = settings.subnetID;
 
@@ -249,7 +251,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         $._initializedValidatorSet = true;
     }
 
-    function _validatePChainOwner(PChainOwner memory pChainOwner) internal pure {
+    function _validatePChainOwner(
+        PChainOwner memory pChainOwner
+    ) internal pure {
         // If threshold is 0, addresses must be empty.
         if (pChainOwner.threshold == 0 && pChainOwner.addresses.length != 0) {
             revert InvalidPChainOwnerThreshold(pChainOwner.threshold, pChainOwner.addresses.length);
@@ -366,7 +370,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
      * Only necessary if the original message can't be delivered due to validator churn.
      * @param validationID The ID of the validation period being registered.
      */
-    function resendRegisterValidatorMessage(bytes32 validationID) external {
+    function resendRegisterValidatorMessage(
+        bytes32 validationID
+    ) external {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         // The initial validator set must have been set already to have pending register validation messages.
         if ($._pendingRegisterValidationMessages[validationID].length == 0) {
@@ -383,13 +389,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     /**
      * @notice See {ACP99Manager-completeValidatorRegistration}.
      */
-    function completeValidatorRegistration(uint32 messageIndex)
-        public
-        virtual
-        override
-        onlyOwner
-        returns (bytes32)
-    {
+    function completeValidatorRegistration(
+        uint32 messageIndex
+    ) public virtual override onlyOwner returns (bytes32) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         (bytes32 validationID, bool validRegistration) = ValidatorMessages
             .unpackL1ValidatorRegistrationMessage(_getPChainWarpMessage(messageIndex).payload);
@@ -417,7 +419,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
      * @notice Returns a validation ID registered to the given nodeID
      * @param nodeID ID of the node associated with the validation ID
      */
-    function registeredValidators(bytes calldata nodeID) public view returns (bytes32) {
+    function registeredValidators(
+        bytes calldata nodeID
+    ) public view returns (bytes32) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         return $._registeredValidators[nodeID];
     }
@@ -425,13 +429,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     /**
      * @notice See {ACP99Manager-getValidator}.
      */
-    function getValidator(bytes32 validationID)
-        public
-        view
-        virtual
-        override
-        returns (Validator memory)
-    {
+    function getValidator(
+        bytes32 validationID
+    ) public view virtual override returns (Validator memory) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         return $._validationPeriods[validationID];
     }
@@ -453,13 +453,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     /**
      * @notice See {ACP99Manager-completeValidatorWeightUpdate}.
      */
-    function completeValidatorWeightUpdate(uint32 messageIndex)
-        public
-        virtual
-        override
-        onlyOwner
-        returns (bytes32, uint64)
-    {
+    function completeValidatorWeightUpdate(
+        uint32 messageIndex
+    ) public virtual override onlyOwner returns (bytes32, uint64) {
         WarpMessage memory warpMessage = _getPChainWarpMessage(messageIndex);
         (bytes32 validationID, uint64 nonce, uint64 weight) =
             ValidatorMessages.unpackL1ValidatorWeightMessage(warpMessage.payload);
@@ -479,7 +475,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         return (validationID, nonce);
     }
 
-    function initiateValidatorRemoval(bytes32 validationID) public onlyOwner {
+    function initiateValidatorRemoval(
+        bytes32 validationID
+    ) public onlyOwner {
         _initiateValidatorRemoval(validationID);
     }
 
@@ -487,7 +485,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
      * @notice See {ACP99Manager-_initiateValidatorRemoval}.
      * @dev This function modifies the validator's state. Callers should ensure that any references are updated.
      */
-    function _initiateValidatorRemoval(bytes32 validationID) internal virtual override {
+    function _initiateValidatorRemoval(
+        bytes32 validationID
+    ) internal virtual override {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
 
         // Ensure the validation period is active.
@@ -521,7 +521,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
      * Only necessary if the original message can't be delivered due to validator churn.
      * @param validationID The ID of the validation period being ended.
      */
-    function resendEndValidatorMessage(bytes32 validationID) external {
+    function resendEndValidatorMessage(
+        bytes32 validationID
+    ) external {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         Validator memory validator = $._validationPeriods[validationID];
 
@@ -538,13 +540,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     /**
      * @notice See {ACP99Manager-completeValidatorRemoval}.
      */
-    function completeValidatorRemoval(uint32 messageIndex)
-        public
-        virtual
-        override
-        onlyOwner
-        returns (bytes32)
-    {
+    function completeValidatorRemoval(
+        uint32 messageIndex
+    ) public virtual override onlyOwner returns (bytes32) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
 
         // Get the Warp message.
@@ -583,16 +581,16 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         return validationID;
     }
 
-    function _incrementSentNonce(bytes32 validationID) internal returns (uint64) {
+    function _incrementSentNonce(
+        bytes32 validationID
+    ) internal returns (uint64) {
         ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
         return ++$._validationPeriods[validationID].sentNonce;
     }
 
-    function _getPChainWarpMessage(uint32 messageIndex)
-        internal
-        view
-        returns (WarpMessage memory)
-    {
+    function _getPChainWarpMessage(
+        uint32 messageIndex
+    ) internal view returns (WarpMessage memory) {
         (WarpMessage memory warpMessage, bool valid) =
             WARP_MESSENGER.getVerifiedWarpMessage(messageIndex);
         if (!valid) {
@@ -710,7 +708,9 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
      * @param nodeID The nodeID to convert.
      * @return The fixed length nodeID.
      */
-    function _fixedNodeID(bytes memory nodeID) private pure returns (bytes20) {
+    function _fixedNodeID(
+        bytes memory nodeID
+    ) private pure returns (bytes20) {
         bytes20 fixedID;
         // solhint-disable-next-line no-inline-assembly
         assembly {

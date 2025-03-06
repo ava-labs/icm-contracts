@@ -144,7 +144,9 @@ contract TeleporterMessengerTest is Test {
         return teleporterMessenger.sendCrossChainMessage(messageInput);
     }
 
-    function _sendTestMessageWithNoFee(bytes32 blockchainID) internal returns (bytes32) {
+    function _sendTestMessageWithNoFee(
+        bytes32 blockchainID
+    ) internal returns (bytes32) {
         return _sendTestMessageWithFee(blockchainID, 0);
     }
 
@@ -271,11 +273,9 @@ contract TeleporterMessengerTest is Test {
         return teleporterMessenger.messageNonce() + 1;
     }
 
-    function _formatTeleporterErrorMessage(bytes memory errorMessage)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function _formatTeleporterErrorMessage(
+        bytes memory errorMessage
+    ) internal pure returns (bytes memory) {
         return abi.encodePacked("TeleporterMessenger: ", errorMessage);
     }
 }

@@ -14,7 +14,9 @@ import {ExampleERC20} from "@mocks/ExampleERC20.sol";
 contract ExampleERC20Decimals is ExampleERC20 {
     uint8 public immutable tokenDecimals;
 
-    constructor(uint8 tokenDecimals_) ExampleERC20() {
+    constructor(
+        uint8 tokenDecimals_
+    ) ExampleERC20() {
         tokenDecimals = tokenDecimals_;
     }
 

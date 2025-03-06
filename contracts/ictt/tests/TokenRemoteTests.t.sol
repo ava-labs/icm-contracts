@@ -650,12 +650,9 @@ abstract contract TokenRemoteTest is TokenTransferrerTest {
         return DEFAULT_TOKEN_REMOTE_BLOCKCHAIN_ID;
     }
 
-    function _formatErrorMessage(string memory message)
-        internal
-        pure
-        override
-        returns (bytes memory)
-    {
+    function _formatErrorMessage(
+        string memory message
+    ) internal pure override returns (bytes memory) {
         return bytes(string.concat("TokenRemote: ", message));
     }
 }

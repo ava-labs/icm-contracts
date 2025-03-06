@@ -119,11 +119,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      *
      * Emits a {SendCrossChainMessage} event when message successfully gets sent.
      */
-    function sendCrossChainMessage(TeleporterMessageInput calldata messageInput)
-        external
-        senderNonReentrant
-        returns (bytes32)
-    {
+    function sendCrossChainMessage(
+        TeleporterMessageInput calldata messageInput
+    ) external senderNonReentrant returns (bytes32) {
         // Get the outstanding receipts for messages that have been previously received
         // from the destination chain but not yet acknowledged, and attach the receipts
         // to the Teleporter message to be sent.
@@ -142,10 +140,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      *
      * @inheritdoc ITeleporterMessenger
      */
-    function retrySendCrossChainMessage(TeleporterMessage calldata message)
-        external
-        senderNonReentrant
-    {
+    function retrySendCrossChainMessage(
+        TeleporterMessage calldata message
+    ) external senderNonReentrant {
         // Calculate the message ID based on the message nonce.
         // If the blockchain ID has yet to be initialized, no messages have ever been sent by
         // this contract, meaning that the message to be retried will not be found in any event.
@@ -470,7 +467,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      *
      * @inheritdoc ITeleporterMessenger
      */
-    function redeemRelayerRewards(address feeAsset) external {
+    function redeemRelayerRewards(
+        address feeAsset
+    ) external {
         uint256 rewardAmount = _relayerRewardAmounts[msg.sender][feeAsset];
         require(rewardAmount > 0, "TeleporterMessenger: no reward to redeem");
 
@@ -489,21 +488,27 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
     /**
      * @inheritdoc ITeleporterMessenger
      */
-    function getMessageHash(bytes32 messageID) external view returns (bytes32) {
+    function getMessageHash(
+        bytes32 messageID
+    ) external view returns (bytes32) {
         return sentMessageInfo[messageID].messageHash;
     }
 
     /**
      * @inheritdoc ITeleporterMessenger
      */
-    function messageReceived(bytes32 messageID) external view returns (bool) {
+    function messageReceived(
+        bytes32 messageID
+    ) external view returns (bool) {
         return _messageReceived(messageID);
     }
 
     /**
      * @inheritdoc ITeleporterMessenger
      */
-    function getRelayerRewardAddress(bytes32 messageID) external view returns (address) {
+    function getRelayerRewardAddress(
+        bytes32 messageID
+    ) external view returns (address) {
         require(_messageReceived(messageID), "TeleporterMessenger: message not received");
         return _relayerRewardAddresses[messageID];
     }
@@ -521,7 +526,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
     /**
      * @inheritdoc ITeleporterMessenger
      */
-    function getFeeInfo(bytes32 messageID) external view returns (address, uint256) {
+    function getFeeInfo(
+        bytes32 messageID
+    ) external view returns (address, uint256) {
         TeleporterFeeInfo memory feeInfo = sentMessageInfo[messageID].feeInfo;
         return (feeInfo.feeTokenAddress, feeInfo.amount);
     }
@@ -530,7 +537,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      * @notice Gets the next message ID to be used for a message sent from the contract instance.
      * @return The next message ID to be used for a message sent from the contract instance.
      */
-    function getNextMessageID(bytes32 destinationBlockchainID) external view returns (bytes32) {
+    function getNextMessageID(
+        bytes32 destinationBlockchainID
+    ) external view returns (bytes32) {
         bytes32 blockchainID_ = blockchainID;
         require(blockchainID_ != bytes32(0), "TeleporterMessenger: zero blockchain ID");
         uint256 nextMessageNonce = messageNonce + 1;
@@ -540,7 +549,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
     /**
      * @inheritdoc ITeleporterMessenger
      */
-    function getReceiptQueueSize(bytes32 sourceBlockchainID) external view returns (uint256) {
+    function getReceiptQueueSize(
+        bytes32 sourceBlockchainID
+    ) external view returns (uint256) {
         return receiptQueues[sourceBlockchainID].size();
     }
 
@@ -831,7 +842,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      * @dev Checks if a given message has been received.
      * @return A boolean representing if the given message has been received or not.
      */
-    function _messageReceived(bytes32 messageID) private view returns (bool) {
+    function _messageReceived(
+        bytes32 messageID
+    ) private view returns (bool) {
         return _receivedMessageNonces[messageID] != 0;
     }
 }

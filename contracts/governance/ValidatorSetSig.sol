@@ -84,14 +84,18 @@ contract ValidatorSetSig is ReentrancyGuard {
      */
     event Delivered(address indexed targetContractAddress, uint256 indexed nonce);
 
-    constructor(bytes32 validatorBlockchainID_) {
+    constructor(
+        bytes32 validatorBlockchainID_
+    ) {
         validatorBlockchainID = validatorBlockchainID_;
         blockchainID = WARP_MESSENGER.getBlockchainID();
     }
 
     receive() external payable {}
 
-    function executeCall(uint32 messageIndex) external payable nonReentrant {
+    function executeCall(
+        uint32 messageIndex
+    ) external payable nonReentrant {
         // Get the WarpMessage from the WarpMessenger precompile and verify that it is valid
         (WarpMessage memory message, bool valid) =
             WARP_MESSENGER.getVerifiedWarpMessage(messageIndex);
@@ -127,7 +131,9 @@ contract ValidatorSetSig is ReentrancyGuard {
         emit Delivered(validatorSetSigMessage.targetContractAddress, validatorSetSigMessage.nonce);
     }
 
-    function validateMessage(ValidatorSetSigMessage memory message) public view {
+    function validateMessage(
+        ValidatorSetSigMessage memory message
+    ) public view {
         require(
             message.targetBlockchainID == blockchainID,
             "ValidatorSetSig: invalid targetBlockchainID"

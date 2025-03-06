@@ -148,7 +148,7 @@ The `TeleporterRegistryApp.updateMinTeleporterVersion` function updates the `min
 
 > Example: Update the minimum TeleporterMessenger version to 2
 >
-> ```
+> ```bash
 > cast send <DAPP_ADDRESS> "updateMinTeleporterVersion(uint256)" 2
 > ```
 
@@ -162,7 +162,7 @@ The `TeleporterMessenger` address corresponding to a `TeleporterMessenger` versi
 
 > Example: Pause TeleporterMessenger version 3
 >
-> ```
+> ```bash
 > versionThreeAddress=$(cast call <REGISTRY_ADDRESS> "getAddressFromVersion(uint256)(address)" 3)
 > cast send <DAPP_ADDRESS> "pauseTeleporterAddress(address)" $versionThreeAddress
 > ```
@@ -173,7 +173,7 @@ To pause all `TeleporterMessenger` interactions, `TeleporterRegistryApp.pauseTel
 
 > Example: Pause all registered TeleporterMessenger versions
 >
-> ```
+> ```bash
 > # Fetch the minimum TeleporterMessenger version
 > minVersion=$(cast call <DAPP_ADDRESS> "getMinTeleporterVersion()(uint256)")
 >
@@ -204,7 +204,7 @@ Note that receiving `TeleporterMessenger` messages is still governed by the `min
 
 > Example: Unpause TeleporterMessenger version 3
 >
-> ```
+> ```bash
 > versionThreeAddress=$(cast call <REGISTRY_ADDRESS> "getAddressFromVersion(uint256)(address)" 3)
 > cast send <DAPP_ADDRESS> "unpauseTeleporterAddress(address)" $versionThreeAddress
 > ```

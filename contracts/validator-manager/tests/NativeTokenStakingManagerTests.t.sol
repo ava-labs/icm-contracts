@@ -245,13 +245,17 @@ contract NativeTokenStakingManagerTest is StakingManagerTest {
         return validatorManager;
     }
 
-    function _getStakeAssetBalance(address account) internal view override returns (uint256) {
+    function _getStakeAssetBalance(
+        address account
+    ) internal view override returns (uint256) {
         return account.balance;
     }
 }
 
 contract TestableNativeTokenStakingManager is NativeTokenStakingManager, Test {
-    constructor(ICMInitializable init) NativeTokenStakingManager(init) {}
+    constructor(
+        ICMInitializable init
+    ) NativeTokenStakingManager(init) {}
 
     function _reward(address account, uint256 amount) internal virtual override {
         super._reward(account, amount);

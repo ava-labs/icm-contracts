@@ -104,7 +104,9 @@ contract RedeemRelayerRewardsTest is TeleporterMessengerTest {
     // Mocks sending a message with the given fee info to another L1, and then
     // receiving back a message with receipt of that message such that the relayer
     // is able to redeem the reward.
-    function _setUpRelayerRewards(FeeRewardInfo memory feeRewardInfo) private {
+    function _setUpRelayerRewards(
+        FeeRewardInfo memory feeRewardInfo
+    ) private {
         uint256 messageNonce = _getNextMessageNonce();
         _sendTestMessageWithFee(DEFAULT_SOURCE_BLOCKCHAIN_ID, feeRewardInfo.feeAmount);
 

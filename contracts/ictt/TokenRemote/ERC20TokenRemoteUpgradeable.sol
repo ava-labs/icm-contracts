@@ -59,7 +59,9 @@ contract ERC20TokenRemoteUpgradeable is IERC20TokenTransferrer, ERC20Upgradeable
         }
     }
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -95,7 +97,9 @@ contract ERC20TokenRemoteUpgradeable is IERC20TokenTransferrer, ERC20Upgradeable
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __ERC20TokenRemote_init_unchained(uint8 tokenDecimals) internal {
+    function __ERC20TokenRemote_init_unchained(
+        uint8 tokenDecimals
+    ) internal {
         _getERC20TokenRemoteStorage()._decimals = tokenDecimals;
     }
     // solhint-enable ordering
@@ -145,7 +149,9 @@ contract ERC20TokenRemoteUpgradeable is IERC20TokenTransferrer, ERC20Upgradeable
      * Child contracts with different {_burn} implementations may need to override this
      * implemenation to ensure the amount returned is correct.
      */
-    function _burn(uint256 amount) internal virtual override returns (uint256) {
+    function _burn(
+        uint256 amount
+    ) internal virtual override returns (uint256) {
         _spendAllowance(_msgSender(), address(this), amount);
         _burn(_msgSender(), amount);
         return amount;

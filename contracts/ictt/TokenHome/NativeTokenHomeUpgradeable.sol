@@ -58,7 +58,9 @@ contract NativeTokenHomeUpgradeable is INativeTokenHome, TokenHome {
         }
     }
 
-    constructor(ICMInitializable init) {
+    constructor(
+        ICMInitializable init
+    ) {
         if (init == ICMInitializable.Disallowed) {
             _disableInitializers();
         }
@@ -104,10 +106,9 @@ contract NativeTokenHomeUpgradeable is INativeTokenHome, TokenHome {
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function __NativeTokenHome_init_unchained(address wrappedTokenAddress)
-        internal
-        onlyInitializing
-    {
+    function __NativeTokenHome_init_unchained(
+        address wrappedTokenAddress
+    ) internal onlyInitializing {
         _getNativeTokenHomeStorage()._wrappedToken = IWrappedNativeToken(wrappedTokenAddress);
     }
     // solhint-enable ordering
@@ -129,14 +130,18 @@ contract NativeTokenHomeUpgradeable is INativeTokenHome, TokenHome {
     /**
      * @dev See {INativeTokenTransferrer-send}
      */
-    function send(SendTokensInput calldata input) external payable {
+    function send(
+        SendTokensInput calldata input
+    ) external payable {
         _send(input, msg.value);
     }
 
     /**
      * @dev See {INativeTokenTransferrer-sendAndCall}
      */
-    function sendAndCall(SendAndCallInput calldata input) external payable {
+    function sendAndCall(
+        SendAndCallInput calldata input
+    ) external payable {
         _sendAndCall({
             sourceBlockchainID: getBlockchainID(),
             originTokenTransferrerAddress: address(this),
@@ -160,7 +165,9 @@ contract NativeTokenHomeUpgradeable is INativeTokenHome, TokenHome {
      * @dev See {TokenHome-_deposit}
      * Deposits the native tokens sent to this contract
      */
-    function _deposit(uint256 amount) internal virtual override returns (uint256) {
+    function _deposit(
+        uint256 amount
+    ) internal virtual override returns (uint256) {
         NativeTokenHomeStorage storage $ = _getNativeTokenHomeStorage();
         return SafeWrappedNativeTokenDeposit.safeDeposit($._wrappedToken, amount);
     }

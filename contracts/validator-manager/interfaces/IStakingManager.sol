@@ -142,7 +142,9 @@ interface IStakingManager {
      * This is forwarded to the ValidatorManager to be parsed.
      * @return The ID of the validator that was registered.
      */
-    function completeValidatorRegistration(uint32 messageIndex) external returns (bytes32);
+    function completeValidatorRegistration(
+        uint32 messageIndex
+    ) external returns (bytes32);
 
     /**
      * @notice Begins the process of ending an active validation period, and reverts if the validation period is not eligible
@@ -208,7 +210,9 @@ interface IStakingManager {
      * This is forwarded to the ValidatorManager to be parsed.
      * @return The ID of the validator that was removed.
      */
-    function completeValidatorRemoval(uint32 messageIndex) external returns (bytes32);
+    function completeValidatorRemoval(
+        uint32 messageIndex
+    ) external returns (bytes32);
 
     /**
      * @notice Completes the delegator registration process by submitting an acknowledgement of the registration of a
@@ -291,7 +295,9 @@ interface IStakingManager {
      * Only necessary if the original message can't be delivered due to validator churn.
      * @param delegationID The ID of the delegation.
      */
-    function resendUpdateDelegator(bytes32 delegationID) external;
+    function resendUpdateDelegator(
+        bytes32 delegationID
+    ) external;
 
     /**
      * @notice Completes the process of ending a delegation by receiving an acknowledgement from the P-Chain.
@@ -309,7 +315,9 @@ interface IStakingManager {
      * @notice Withdraws the delegation fees from completed delegations to the owner of the validator.
      * @param validationID The ID of the validation period being ended.
      */
-    function claimDelegationFees(bytes32 validationID) external;
+    function claimDelegationFees(
+        bytes32 validationID
+    ) external;
 
     /**
      * @notice Changes the address of the recipient of the validator's rewards for a validation period. This method can be called any time before {completeEndValidation}.

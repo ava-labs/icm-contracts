@@ -204,7 +204,9 @@ abstract contract TokenRemote is
      * instance. TokenRemote instances must be registered with their home contract prior to being able to receive
      * tokens from them.
      */
-    function registerWithHome(TeleporterFeeInfo calldata feeInfo) external virtual {
+    function registerWithHome(
+        TeleporterFeeInfo calldata feeInfo
+    ) external virtual {
         TokenRemoteStorage storage $ = _getTokenRemoteStorage();
         require(!$._isRegistered, "TokenRemote: already registered");
 
@@ -236,7 +238,9 @@ abstract contract TokenRemote is
      * @dev Calculates the number of 32-byte words required to fit a payload of a given length.
      * The payloads are padded to have a length that is a multiple of 32.
      */
-    function calculateNumWords(uint256 payloadSize) public pure returns (uint256) {
+    function calculateNumWords(
+        uint256 payloadSize
+    ) public pure returns (uint256) {
         // Add 31 to effectively round up to the nearest multiple of 32.
         // Right-shift by 5 bits to divide by 32.
         return (payloadSize + 31) >> 5;
@@ -376,7 +380,9 @@ abstract contract TokenRemote is
      * @return The amount of tokens burned, which is the amount to credit
      * for the token transfer.
      */
-    function _burn(uint256 amount) internal virtual returns (uint256);
+    function _burn(
+        uint256 amount
+    ) internal virtual returns (uint256);
 
     /**
      * @notice Processes a send and call message by calling the recipient contract.
@@ -674,7 +680,9 @@ abstract contract TokenRemote is
         require(multiHopFallback != address(0), "TokenRemote: zero multi-hop fallback");
     }
 
-    function _validateSendTokensInput(SendTokensInput calldata input) private pure {
+    function _validateSendTokensInput(
+        SendTokensInput calldata input
+    ) private pure {
         require(input.recipient != address(0), "TokenRemote: zero recipient address");
         require(input.requiredGasLimit > 0, "TokenRemote: zero required gas limit");
         require(
@@ -687,7 +695,9 @@ abstract contract TokenRemote is
         );
     }
 
-    function _validateSendAndCallInput(SendAndCallInput calldata input) private pure {
+    function _validateSendAndCallInput(
+        SendAndCallInput calldata input
+    ) private pure {
         require(
             input.destinationBlockchainID != bytes32(0),
             "TokenRemote: zero destination blockchain ID"

@@ -17,12 +17,16 @@ interface INativeTokenTransferrer is ITokenTransferrer {
      * @notice Sends native tokens to the specified destination.
      * @param input Specifies information for delivery of the tokens
      */
-    function send(SendTokensInput calldata input) external payable;
+    function send(
+        SendTokensInput calldata input
+    ) external payable;
 
     /**
      * @notice Sends native tokens to the specified destination to be used in a smart contract interaction.
      * @param input Specifies information for delivery of the tokens to the remote contract and contract to be called
      * on the remote chain.
      */
-    function sendAndCall(SendAndCallInput calldata input) external payable;
+    function sendAndCall(
+        SendAndCallInput calldata input
+    ) external payable;
 }

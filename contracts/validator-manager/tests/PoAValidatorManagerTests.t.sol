@@ -93,12 +93,9 @@ contract PoAValidatorManagerTest is ValidatorManagerTest {
         });
     }
 
-    function _completeValidatorRegistration(uint32 messageIndex)
-        internal
-        virtual
-        override
-        returns (bytes32)
-    {
+    function _completeValidatorRegistration(
+        uint32 messageIndex
+    ) internal virtual override returns (bytes32) {
         return app.completeValidatorRegistration(messageIndex);
     }
 
@@ -118,12 +115,9 @@ contract PoAValidatorManagerTest is ValidatorManagerTest {
         return app.initiateValidatorRemoval(validationID);
     }
 
-    function _completeValidatorRemoval(uint32 messageIndex)
-        internal
-        virtual
-        override
-        returns (bytes32)
-    {
+    function _completeValidatorRemoval(
+        uint32 messageIndex
+    ) internal virtual override returns (bytes32) {
         return app.completeValidatorRemoval(messageIndex);
     }
 
