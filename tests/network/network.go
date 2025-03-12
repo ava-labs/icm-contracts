@@ -319,7 +319,7 @@ func (n *LocalNetwork) ConvertSubnet(
 		Expect(err).Should(BeNil())
 		for _, node := range n.Network.Nodes {
 			if node.NodeID == vdr.NodeID {
-				port := getTmpnetNodePort(node)
+				port := GetTmpnetNodePort(node)
 				node.Flags[config.HTTPPortKey] = port
 				goLog.Println("Restarting bootstrap node", node.NodeID)
 				n.Network.RestartNode(ctx, n.logger, node)
@@ -562,7 +562,7 @@ func (n *LocalNetwork) SetChainConfigs(chainConfigs map[string]string) {
 	// unusable
 	// TODO: remove once tmpnet supports static port option across restarts
 	for _, tmpnetNode := range n.Network.Nodes {
-		port := getTmpnetNodePort(tmpnetNode)
+		port := GetTmpnetNodePort(tmpnetNode)
 		tmpnetNode.Flags[config.HTTPPortKey] = port
 	}
 
@@ -610,7 +610,7 @@ func (n *LocalNetwork) GetTwoL1s() (
 }
 
 // TODO: once tmpnet supports static port option across restarts, remove this function
-func getTmpnetNodePort(node *tmpnet.Node) string {
+func GetTmpnetNodePort(node *tmpnet.Node) string {
 	hostPort := strings.TrimPrefix(node.URI, "http://")
 	Expect(hostPort).ShouldNot(BeEmpty())
 	_, port, err := net.SplitHostPort(hostPort)
