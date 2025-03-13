@@ -270,7 +270,11 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
             totalWeight += initialValidator.weight;
 
             emit RegisteredInitialValidator(
-                validationID, _fixedNodeID(initialValidator.nodeID), initialValidator.weight
+                validationID,
+                _fixedNodeID(initialValidator.nodeID),
+                conversionData.subnetID,
+                initialValidator.weight,
+                i
             );
         }
         $._churnTracker.totalWeight = totalWeight;
@@ -401,9 +405,14 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         $._validationPeriods[validationID].startTime = 0; // The validation period only starts once the registration is acknowledged.
         $._validationPeriods[validationID].endTime = 0;
 
-        emit InitiatedValidatorRegistration(
-            validationID, _fixedNodeID(nodeID), messageID, registrationExpiry, weight
-        );
+        emit InitiatedValidatorRegistration({
+            validationID: validationID,
+            nodeID: _fixedNodeID(nodeID),
+            registrationMessageID: messageID,
+            registrationExpiry: registrationExpiry,
+            weight: weight,
+            registerL1ValidatorMessage: registerL1ValidatorMessage
+        });
 
         return validationID;
     }

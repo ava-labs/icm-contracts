@@ -339,6 +339,7 @@ func InitializeValidatorSet(
 	}
 
 	Expect(initialValidatorCreatedEvent.Weight).Should(Equal(nodes[0].Weight))
+	Expect(initialValidatorCreatedEvent.SubnetID[:]).Should(Equal(l1Info.SubnetID[:]))
 
 	emittedValidationID := ids.ID(initialValidatorCreatedEvent.ValidationID)
 	Expect(emittedValidationID).Should(Equal(validationIDs[0]))
@@ -381,7 +382,7 @@ func InitiateNativeValidatorRegistration(
 	expiry uint64,
 	stakingManager *nativetokenstakingmanager.NativeTokenStakingManager,
 	validatorManagerAddress common.Address,
-) (*types.Receipt, ids.ID) {
+) (*types.Receipt, ids.ID, []byte) {
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
 	opts.Value = stakeAmount
@@ -406,7 +407,7 @@ func InitiateNativeValidatorRegistration(
 	)
 	Expect(err).Should(BeNil())
 	Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
-	return receipt, ids.ID(registrationInitiatedEvent.ValidationID)
+	return receipt, ids.ID(registrationInitiatedEvent.ValidationID), registrationInitiatedEvent.RegisterL1ValidatorMessage
 }
 
 func InitiateERC20ValidatorRegistration(
@@ -420,7 +421,7 @@ func InitiateERC20ValidatorRegistration(
 	expiry uint64,
 	stakingManager *erc20tokenstakingmanager.ERC20TokenStakingManager,
 	validatorManagerAddress common.Address,
-) (*types.Receipt, ids.ID) {
+) (*types.Receipt, ids.ID, []byte) {
 	ERC20Approve(
 		ctx,
 		token,
@@ -454,7 +455,7 @@ func InitiateERC20ValidatorRegistration(
 	)
 	Expect(err).Should(BeNil())
 	Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
-	return receipt, ids.ID(registrationInitiatedEvent.ValidationID)
+	return receipt, ids.ID(registrationInitiatedEvent.ValidationID), registrationInitiatedEvent.RegisterL1ValidatorMessage
 }
 
 func InitiatePoAValidatorRegistration(
@@ -465,7 +466,7 @@ func InitiatePoAValidatorRegistration(
 	expiry uint64,
 	validatorManager *validatormanager.ValidatorManager,
 	validatorManagerAddress common.Address,
-) (*types.Receipt, ids.ID) {
+) (*types.Receipt, ids.ID, []byte) {
 	opts, err := bind.NewKeyedTransactorWithChainID(ownerKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
 
@@ -488,7 +489,7 @@ func InitiatePoAValidatorRegistration(
 	)
 	Expect(err).Should(BeNil())
 	Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
-	return receipt, ids.ID(registrationInitiatedEvent.ValidationID)
+	return receipt, ids.ID(registrationInitiatedEvent.ValidationID), registrationInitiatedEvent.RegisterL1ValidatorMessage
 }
 
 func CompleteValidatorRegistration(
@@ -552,14 +553,14 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	node Node,
 	pchainWallet pwallet.Wallet,
 	networkID uint32,
-) ids.ID {
+) (ids.ID, []byte) {
 	stakeAmount, err := stakingManager.WeightToValue(
 		&bind.CallOpts{},
 		node.Weight,
 	)
 	Expect(err).Should(BeNil())
 	// Initiate validator registration
-	receipt, validationID := InitiateNativeValidatorRegistration(
+	receipt, validationID, registerL1ValidatorMessageBytes := InitiateNativeValidatorRegistration(
 		ctx,
 		fundedKey,
 		l1Info,
@@ -587,8 +588,7 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	log.Println("Completing validator registration")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
 		validationID,
-		expiry,
-		node,
+		registerL1ValidatorMessageBytes,
 		true,
 		l1Info,
 		pChainInfo,
@@ -614,7 +614,7 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	Expect(err).Should(BeNil())
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
 
-	return validationID
+	return validationID, registerL1ValidatorMessageBytes
 }
 
 func InitiateAndCompleteERC20ValidatorRegistration(
@@ -631,7 +631,7 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	node Node,
 	pchainWallet pwallet.Wallet,
 	networkID uint32,
-) ids.ID {
+) (ids.ID, []byte) {
 	stakeAmount, err := stakingManager.WeightToValue(
 		&bind.CallOpts{},
 		node.Weight,
@@ -640,7 +640,7 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	// Initiate validator registration
 	var receipt *types.Receipt
 	log.Println("Initializing validator registration")
-	receipt, validationID := InitiateERC20ValidatorRegistration(
+	receipt, validationID, registerL1ValidatorMessageBytes := InitiateERC20ValidatorRegistration(
 		ctx,
 		fundedKey,
 		l1Info,
@@ -669,8 +669,7 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	log.Println("Completing validator registration")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
 		validationID,
-		expiry,
-		node,
+		registerL1ValidatorMessageBytes,
 		true,
 		l1Info,
 		pChainInfo,
@@ -696,7 +695,7 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	Expect(err).Should(BeNil())
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
 
-	return validationID
+	return validationID, registerL1ValidatorMessageBytes
 }
 
 func InitiateAndCompletePoAValidatorRegistration(
@@ -711,9 +710,9 @@ func InitiateAndCompletePoAValidatorRegistration(
 	node Node,
 	pchainWallet pwallet.Wallet,
 	networkID uint32,
-) ids.ID {
+) (ids.ID, []byte) {
 	// Initiate validator registration
-	receipt, validationID := InitiatePoAValidatorRegistration(
+	receipt, validationID, registerL1ValidatorMessageBytes := InitiatePoAValidatorRegistration(
 		ctx,
 		ownerKey,
 		l1Info,
@@ -739,8 +738,7 @@ func InitiateAndCompletePoAValidatorRegistration(
 	log.Println("Completing validator registration")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
 		validationID,
-		expiry,
-		node,
+		registerL1ValidatorMessageBytes,
 		true,
 		l1Info,
 		pChainInfo,
@@ -766,7 +764,7 @@ func InitiateAndCompletePoAValidatorRegistration(
 	Expect(err).Should(BeNil())
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
 
-	return validationID
+	return validationID, registerL1ValidatorMessageBytes
 }
 
 func InitiateEndPoSValidation(
@@ -1178,7 +1176,7 @@ func InitiateAndCompleteEndPoSValidation(
 	stakingManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
-	expiry uint64,
+	registerL1ValidatorMessageBytes []byte,
 	node Node,
 	nonce uint64,
 	includeUptime bool,
@@ -1241,8 +1239,7 @@ func InitiateAndCompleteEndPoSValidation(
 	log.Println("Completing validator removal")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
 		validationID,
-		expiry,
-		node,
+		registerL1ValidatorMessageBytes,
 		false,
 		l1Info,
 		pChainInfo,
@@ -1356,6 +1353,7 @@ func InitiateAndCompleteEndPoAValidation(
 	validatorManager *validatormanager.ValidatorManager,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
+	registerL1ValidatorMessageBytes []byte,
 	weight uint64,
 	nonce uint64,
 	networkID uint32,
@@ -1388,8 +1386,7 @@ func InitiateAndCompleteEndPoAValidation(
 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
 		validationID,
-		0,
-		Node{},
+		registerL1ValidatorMessageBytes,
 		false,
 		l1Info,
 		pChainInfo,
@@ -1463,27 +1460,16 @@ func ConstructL1ValidatorRegistrationMessageForInitialValidator(
 
 func ConstructL1ValidatorRegistrationMessage(
 	validationID ids.ID,
-	expiry uint64,
-	node Node,
+	registerL1ValidatorMessageBytes []byte,
 	valid bool,
 	l1 interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
 	networkID uint32,
 	signatureAggregator *SignatureAggregator,
 ) *avalancheWarp.Message {
-	msg, err := warpMessage.NewRegisterL1Validator(
-		l1.SubnetID,
-		node.NodeID,
-		node.NodePoP.PublicKey,
-		expiry,
-		warpMessage.PChainOwner{},
-		warpMessage.PChainOwner{},
-		node.Weight,
-	)
-	Expect(err).Should(BeNil())
 	justification := platformvm.L1ValidatorRegistrationJustification{
 		Preimage: &platformvm.L1ValidatorRegistrationJustification_RegisterL1ValidatorMessage{
-			RegisterL1ValidatorMessage: msg.Bytes(),
+			RegisterL1ValidatorMessage: registerL1ValidatorMessageBytes,
 		},
 	}
 	justificationBytes, err := proto.Marshal(&justification)

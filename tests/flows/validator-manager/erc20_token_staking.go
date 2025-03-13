@@ -94,7 +94,7 @@ func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
 	// Register the validator as PoS
 	//
 	expiry := uint64(time.Now().Add(24 * time.Hour).Unix())
-	validationID := utils.InitiateAndCompleteERC20ValidatorRegistration(
+	validationID, registerL1ValidatorMessageBytes := utils.InitiateAndCompleteERC20ValidatorRegistration(
 		ctx,
 		signatureAggregator,
 		fundedKey,
@@ -276,7 +276,7 @@ func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
 		stakingManagerProxy.Address,
 		validatorManagerProxy.Address,
 		validationID,
-		expiry,
+		registerL1ValidatorMessageBytes,
 		nodes[0],
 		1,
 		true,
