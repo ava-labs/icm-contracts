@@ -3,7 +3,7 @@ module github.com/ava-labs/icm-contracts
 go 1.23.6
 
 require (
-	github.com/ava-labs/avalanchego v1.12.3-0.20250302035717-8bd7a2c4cc81
+	github.com/ava-labs/avalanchego v1.13.0-fuji-rc.2.0.20250313194317-c78027fe41c9
 	github.com/supranational/blst v0.3.13 // indirect
 )
 
@@ -24,7 +24,7 @@ require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.1 // indirect
-	github.com/ava-labs/coreth v0.14.1-rc.1.0.20250219185827-6a9db205a450 // indirect
+	github.com/ava-labs/coreth v0.14.1-rc.2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
