@@ -1281,6 +1281,58 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         });
     }
 
+    function testReplayValidatorRegistration() public virtual override {
+        bytes32 validationID = _registerDefaultValidator();
+        bytes memory setWeightMessage =
+            ValidatorMessages.packL1ValidatorWeightMessage(validationID, 1, 0);
+        bytes memory uptimeMessage = ValidatorMessages.packValidationUptimeMessage(
+            validationID, DEFAULT_COMPLETION_TIMESTAMP - DEFAULT_REGISTRATION_TIMESTAMP
+        );
+        _initiateValidatorRemoval({
+            validationID: validationID,
+            completionTimestamp: DEFAULT_COMPLETION_TIMESTAMP,
+            setWeightMessage: setWeightMessage,
+            includeUptime: true,
+            uptimeMessage: uptimeMessage,
+            force: false
+        });
+
+        uint256 expectedReward = rewardCalculator.calculateReward({
+            stakeAmount: _weightToValue(DEFAULT_WEIGHT),
+            validatorStartTime: DEFAULT_REGISTRATION_TIMESTAMP,
+            stakingStartTime: DEFAULT_REGISTRATION_TIMESTAMP,
+            stakingEndTime: DEFAULT_COMPLETION_TIMESTAMP,
+            uptimeSeconds: DEFAULT_COMPLETION_TIMESTAMP - DEFAULT_REGISTRATION_TIMESTAMP
+        });
+
+        address validatorOwner = address(this);
+
+        _completeEndValidationWithChecks({
+            validationID: validationID,
+            validatorOwner: validatorOwner,
+            expectedReward: expectedReward,
+            validatorWeight: DEFAULT_WEIGHT,
+            rewardRecipient: validatorOwner
+        });
+
+        vm.warp(DEFAULT_EXPIRY - 1);
+        _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
+            )
+        );
+        _initiateValidatorRegistration({
+            nodeID: DEFAULT_NODE_ID,
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER,
+            registrationExpiry: DEFAULT_EXPIRY,
+            weight: DEFAULT_WEIGHT
+        });
+    }
+
     function testCompleteEndValidationWithNonValidatorRewardRecipient() public virtual {
         bytes32 validationID = _registerDefaultValidator();
         bytes memory setWeightMessage =

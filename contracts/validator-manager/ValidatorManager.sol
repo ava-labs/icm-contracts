@@ -94,7 +94,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         0xe92546d698950ddd38910d2e15ed1d923cd0a7b3dde9e2a6a3f380565559cb00;
 
     uint8 public constant MAXIMUM_CHURN_PERCENTAGE_LIMIT = 20;
-    uint64 public constant MAXIMUM_REGISTRATION_EXPIRY_LENGTH = 2 days;
+    uint64 public constant MAXIMUM_REGISTRATION_EXPIRY_LENGTH = 1 days;
     uint32 public constant ADDRESS_LENGTH = 20; // This is only used as a packed uint32
     uint32 public constant NODE_ID_LENGTH = 20;
     uint8 public constant BLS_PUBLIC_KEY_LENGTH = 48;
@@ -388,6 +388,12 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
                 weight: weight
             })
         );
+
+        // Ensure that this validation ID has not been used before to prevent replays
+        if ($._validationPeriods[validationID].status != ValidatorStatus.Unknown) {
+            revert InvalidValidatorStatus($._validationPeriods[validationID].status);
+        }
+
         $._pendingRegisterValidationMessages[validationID] = registerL1ValidatorMessage;
         $._registeredValidators[nodeID] = validationID;
 
