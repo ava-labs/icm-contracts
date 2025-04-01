@@ -54,8 +54,8 @@ abstract contract StakingManager is
         uint256 _weightToValueFactor;
         /// @notice The ID of the blockchain that submits uptime proofs. This must be a blockchain validated by the subnetID that this contract manages.
         bytes32 _uptimeBlockchainID;
-        /// @notice Validator removal admin address
-        address _validatorRemovalAdmin;
+        /// @notice admin address
+        address _admin;
         /// @notice The duration of an epoch in seconds
         uint64 _epochDuration;
         /// @notice The duration of the unlock period in seconds
@@ -77,7 +77,14 @@ abstract contract StakingManager is
         mapping(uint64 epoch => mapping(address account => mapping(address token => uint256))) _rewardWithdrawnNFT;
 
         mapping(uint64 epoch => mapping(address token => uint256)) _rewardPools; 
-        mapping(uint64 epoch => mapping(address token => uint256)) _rewardPoolsNFT; 
+        mapping(uint64 epoch => mapping(address token => uint256)) _rewardPoolsNFT;
+
+        uint64 _epochOffset;
+
+        mapping(bytes32 ID => bool) _unlocked;
+        mapping(uint64 epoch => mapping(bytes32 validationID => uint256)) _validationUptimes;
+
+        address _uptimeKeeper;
     }
     // solhint-enable private-vars-leading-underscore
 
@@ -112,7 +119,6 @@ abstract contract StakingManager is
     error InvalidValidatorStatus(ValidatorStatus status);
     error InvalidNonce(uint64 nonce);
     error InvalidWarpMessage();
-    error UnauthorizedInitialValidatorRemoval(address sender);
 
     // solhint-disable ordering
     /**
@@ -140,12 +146,14 @@ abstract contract StakingManager is
             minimumStakeDuration: settings.minimumStakeDuration,
             minimumDelegationAmount: settings.minimumDelegationAmount,
             minimumDelegationFeeBips: settings.minimumDelegationFeeBips,
-            validatorRemovalAdmin: settings.validatorRemovalAdmin,
+            admin: settings.admin,
             weightToValueFactor: settings.weightToValueFactor,
             uptimeBlockchainID: settings.uptimeBlockchainID,
             unlockDuration: settings.unlockDuration,
             epochDuration: settings.epochDuration,
-            maximumNFTAmount: settings.maximumNFTAmount
+            maximumNFTAmount: settings.maximumNFTAmount,
+            uptimeKeeper: settings.uptimeKeeper,
+            epochOffset: settings.epochOffset
         });
     }
 
@@ -158,11 +166,13 @@ abstract contract StakingManager is
         uint64 minimumStakeDuration,
         uint256 minimumDelegationAmount,
         uint16 minimumDelegationFeeBips,
-        address validatorRemovalAdmin,
+        address admin,
         uint256 weightToValueFactor,
         bytes32 uptimeBlockchainID,
         uint64 unlockDuration,
-        uint64 epochDuration
+        uint64 epochDuration,
+        address uptimeKeeper,
+        uint64 epochOffset
     ) internal onlyInitializing {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
         if (minimumDelegationFeeBips == 0 || minimumDelegationFeeBips > MAXIMUM_DELEGATION_FEE_BIPS)
@@ -190,11 +200,13 @@ abstract contract StakingManager is
         $._minimumStakeDuration = minimumStakeDuration;
         $._minimumDelegationAmount = minimumDelegationAmount;
         $._minimumDelegationFeeBips = minimumDelegationFeeBips;
-        $._validatorRemovalAdmin = validatorRemovalAdmin;
+        $._admin = admin;
         $._weightToValueFactor = weightToValueFactor;
         $._uptimeBlockchainID = uptimeBlockchainID;
         $._unlockDuration = unlockDuration;
         $._epochDuration = epochDuration;
+        $._uptimeKeeper = uptimeKeeper;
+        $._epochOffset = epochOffset;
     }
 
     /**
@@ -238,8 +250,8 @@ abstract contract StakingManager is
         // Non-PoS validators are required to boostrap the network, but are not eligible for rewards.
         if (!_isPoSValidator(validationID)) {
             // Initial Validators can only be removed by the removal admin
-            if ($._validatorRemovalAdmin != _msgSender()) {
-                revert UnauthorizedInitialValidatorRemoval(_msgSender());
+            if ($._admin != _msgSender()) {
+                revert UnauthorizedOwner(_msgSender());
             }
             return;
         }
@@ -273,18 +285,6 @@ abstract contract StakingManager is
 
         // Check if the validator has been already been removed from the validator manager.
         bytes32 validationID = $._manager.completeValidatorRemoval(messageIndex);
-        Validator memory validator = $._manager.getValidator(validationID);
-
-        // Return now if this was originally a PoA validator that was later migrated to this PoS manager,
-        // or the validator was part of the initial validator set.
-        if (!_isPoSValidator(validationID)) {
-            return validationID;
-        }
-
-        address owner = $._posValidatorInfo[validationID].owner;
-
-        // The stake is unlocked whether the validation period is completed or invalidated.
-        _unlock(owner, weightToValue(validator.startingWeight));
 
         return validationID;
     }
@@ -533,8 +533,6 @@ abstract contract StakingManager is
         $._delegatorStakes[delegationID].status = DelegatorStatus.Active;
         $._delegatorStakes[delegationID].startTime = uint64(block.timestamp);
 
-        $._posValidatorInfo[validationID].activeDelegations.push(delegationID);
-
         emit CompletedDelegatorRegistration({
             delegationID: delegationID,
             validationID: validationID,
@@ -547,49 +545,19 @@ abstract contract StakingManager is
      */
     function initiateRedelegation(
         bytes32 delegationID,
-        uint32 messageIndex,
         bytes32 validationID
     ) external returns (bytes32) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
         Delegator memory delegator = $._delegatorStakes[delegationID];
 
-        // Ensure the delegator is pending removed. Since anybody can call this function once
-        // end delegation has been initiated, we need to make sure that this function is only
-        // callable after that has been done.
-        if (delegator.status != DelegatorStatus.PendingRemoved) {
+        // Ensure the delegator is removed and tokens are not unlocked yet
+        if (delegator.status != DelegatorStatus.Removed || $._unlocked[delegationID]) {
             revert InvalidDelegatorStatus(delegator.status);
         }
 
-        // We only expect an ICM message if we haven't received a weight update with a nonce greater than the delegation's ending nonce
-        if (
-            $._manager.getValidator(delegator.validationID).status != ValidatorStatus.Completed
-                && $._manager.getValidator(delegator.validationID).receivedNonce < delegator.endingNonce
-        ) {
-            (bytes32 unpackedValidationID, uint64 unpackedNonce) =
-                $._manager.completeValidatorWeightUpdate(messageIndex);
-            if (delegator.validationID != unpackedValidationID) {
-                revert UnexpectedValidationID(unpackedValidationID, delegator.validationID);
-            }
+        $._unlocked[delegationID] = true;
+        emit UnlockedDelegation(delegationID);
 
-            // The received nonce should be at least as high as the delegation's ending nonce. This allows a weight
-            // update using a higher nonce (which implicitly includes the delegation's weight update) to be used to
-            // complete delisting for an earlier delegation. This is necessary because the P-Chain is only willing
-            // to sign the latest weight update.
-            if (delegator.endingNonce > unpackedNonce) {
-                revert InvalidNonce(unpackedNonce);
-            }
-        }
-
-        // To prevent churn tracker abuse, check that one full churn period has passed,
-        // so a delegator may not stake twice in the same churn period.
-        if (block.timestamp < delegator.startTime + $._manager.getChurnPeriodSeconds()) {
-            revert MinStakeDurationNotPassed(uint64(block.timestamp));
-        }
-
-        $._delegatorStakes[delegationID].status = DelegatorStatus.Removed;
-        emit CompletedDelegatorRemoval(delegationID, validationID, 0, 0);
-
-        // Ensure the validation period is active
         // Ensure the validation period is active
         Validator memory validator = $._manager.getValidator(validationID);
         // Check that the validation ID is a PoS validator
@@ -646,10 +614,13 @@ abstract contract StakingManager is
     }
 
     /**
-     * @dev Helper function that initiates the end of a PoS delegation period.
-     * Returns false if it is possible for the delegator to claim rewards, but it is not eligible.
-     * Returns true otherwise.
-     */
+    * @notice Initiates the process of ending an delegation for a given delegation ID.
+    * @dev This function ensures that the delegation is active and validates that the caller is authorized to end it.
+    *      If the validator status is valid, the delegation status is updated to `PendingRemoved`. If the validator
+    *      is complete, then removal is completed directly. Status is updated to `Completed` and initate
+    *      `InitiatedDelegatorRemoval` is not emitted. 
+    * @param delegationID The unique identifier of the delegation to be ended.
+    **/
     function _initiateDelegatorRemoval(
         bytes32 delegationID
     ) internal {
@@ -668,7 +639,7 @@ abstract contract StakingManager is
             revert UnauthorizedOwner(_msgSender());
         }
 
-        if (validator.status == ValidatorStatus.Active || validator.status == ValidatorStatus.PendingRemoved) {
+        if (validator.status == ValidatorStatus.Active) {
             // Check that minimum stake duration has passed.
             if (block.timestamp < delegator.startTime + $._minimumStakeDuration) {
                 revert MinStakeDurationNotPassed(uint64(block.timestamp));
@@ -687,6 +658,7 @@ abstract contract StakingManager is
             emit InitiatedDelegatorRemoval({delegationID: delegationID, validationID: validationID});
             return;
         } else if (validator.status == ValidatorStatus.Completed) {
+            $._delegatorStakes[delegationID].endTime = validator.endTime; 
             _completeDelegatorRemoval(delegationID);
             // If the validator has completed, then no further uptimes may be submitted, so we always
             // end the delegation.
@@ -764,11 +736,62 @@ abstract contract StakingManager is
             }
         }
 
-        if(block.timestamp < delegator.endTime + $._unlockDuration) {
+        _completeDelegatorRemoval(delegationID);
+    }
+
+    /**
+     * @notice unlocks the validator stake, to be called after removal and passing of unlock duration
+     * @param validationID The unique identifier of the validator to unlock.
+     */ 
+    function unlockValidator(bytes32 validationID) external virtual nonReentrant {
+        _unlockValidator(validationID);
+    }
+    
+    /**
+     * @notice unlocks the delegator stake, to be called after removal and passing of unlock duration
+     * @param delegationID The unique identifier of the delegator to unlock.
+     */ 
+    function unlockDelegator(bytes32 delegationID) external nonReentrant {
+        StakingManagerStorage storage $ = _getStakingManagerStorage();
+        Delegator memory delegator = $._delegatorStakes[delegationID]; 
+
+        if (delegator.status != DelegatorStatus.Removed || $._unlocked[delegationID]) {
+            revert InvalidDelegatorStatus(delegator.status);
+        }
+
+        if(delegator.startTime != 0 && block.timestamp < delegator.endTime + $._unlockDuration) {
             revert UnlockDurationNotPassed(uint64(block.timestamp));
         }
 
-        _completeDelegatorRemoval(delegationID);
+        $._unlocked[delegationID] = true;
+
+        emit UnlockedDelegation(delegationID);
+        // Unlock the delegator's stake.
+        _unlock(delegator.owner, weightToValue(delegator.weight));
+    }
+
+    function _unlockValidator(bytes32 validationID) internal {
+        StakingManagerStorage storage $ = _getStakingManagerStorage();
+        Validator memory validator = $._manager.getValidator(validationID);
+
+        if ((validator.status != ValidatorStatus.Completed && validator.status != ValidatorStatus.Invalidated) 
+                || $._unlocked[validationID]) {
+            revert InvalidValidatorStatus(validator.status);
+        }
+
+        if (!_isPoSValidator(validationID)) {
+            revert ValidatorNotPoS(validationID);
+        }
+
+        if(validator.startTime != 0 && block.timestamp < validator.endTime + $._unlockDuration) {
+            revert UnlockDurationNotPassed(uint64(block.timestamp));
+        }
+
+        $._unlocked[validationID] = true;
+
+        emit UnlockedValidation(validationID);
+        // The stake is unlocked whether the validation period is completed or invalidated.
+        _unlock($._posValidatorInfo[validationID].owner, weightToValue(validator.startingWeight)); 
     }
 
     function _completeDelegatorRemoval(bytes32 delegationID) internal {
@@ -785,9 +808,6 @@ abstract contract StakingManager is
 
         $._delegatorStakes[delegationID].status = DelegatorStatus.Removed;
 
-        // Unlock the delegator's stake.
-        _unlock(delegator.owner, weightToValue(delegator.weight));
-
         emit CompletedDelegatorRemoval(delegationID, validationID, 0, 0);
     }
 
@@ -803,25 +823,5 @@ abstract contract StakingManager is
     function _isPoSValidator(bytes32 validationID) internal view returns (bool) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
         return $._posValidatorInfo[validationID].owner != address(0);
-    }
-
-        /**
-     * @dev Removes a delegation ID from a validator's delegation list
-     * @param validationID The validator's ID
-     * @param delegationID The delegation ID to remove
-     */
-    function _removeDelegationFromValidator(bytes32 validationID, bytes32 delegationID) internal {
-        StakingManagerStorage storage $ = _getStakingManagerStorage();
-        bytes32[] storage delegations = $._posValidatorInfo[validationID].activeDelegations;
-
-        // Find and remove the delegation ID
-        for (uint256 i = 0; i < delegations.length; i++) {
-            if (delegations[i] == delegationID) {
-                // Move the last element to this position and pop
-                delegations[i] = delegations[delegations.length - 1];
-                delegations.pop();
-                break;
-            }
-        }
     }
 }

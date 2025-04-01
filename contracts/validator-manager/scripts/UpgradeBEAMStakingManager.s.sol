@@ -29,22 +29,23 @@ import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts@5.0.2/proxy/
  */
 contract UpgradeBEAMStakingManager is Script {
     // Update these addresses with your deployed contract addresses
-    address constant _PROXY_ADDRESS = address(0x27791E2Df9aB9e6D4Fb34972634724A45131C2aa);
-    address constant _PROXY_ADMIN_ADDRESS = address(0x06f373D6298398697d359ab5aA93DA24FB5D3cd0);
+    address constant _PROXY_ADDRESS = address(0xF4B5869AabE19a106C0df25E1537d855b54EEcBD);
+    address constant _PROXY_ADMIN_ADDRESS = address(0x4CDd1785908756dc515aFc766E3e3A9630761fa1);
 
     // Add necessary constants
-    address constant _NFT_TOKEN_ADDRESS = address(0xA74e49F3fB56b2Eaa61AC74FBe300b8ff2003098);
-    address constant _ADMIN_ADDRESS = address(0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC);
-    address constant _VALIDATOR_MANAGER_ADDRESS = address(0xfAcadE0000000000000000000000000000000000);
-    uint64 constant _MINIMUM_STAKE_DURATION = 1 hours;
-    uint256 constant _MINIMUM_STAKE_AMOUNT = 20e18;
-    uint256 constant _MAXIMUM_STAKE_AMOUNT = 50e24;
-    uint64 constant _UNLOCK_PERIOD = 1 hours;
-    uint16 constant _MINIMUM_DELEGATION_FEE = 100;
-    uint64 constant _EPOCH_DURATION = 7 days;
-    uint256 constant _MAXIMUM_NFT_AMOUNT = 1000;
-    uint256 constant _MINIMUM_DELEGATION_AMOUNT = 1e18;
-    bytes32 constant _UPTIME_BLOCKCHAIN_ID = bytes32(hex"0d5c3cfbccc694b3d5490a2de71d43d391f6c73dac86ed5169572d7646c7ece2");
+    address constant NFT_TOKEN_ADDRESS = address(0x732080D7aD6A9C50039d7Ad7F5BD0a79670f7654);
+    address constant ADMIN_ADDRESS = address(0xd68F802fD0B6f56524F379805DD8FcC152DB9d5c);
+    address constant VALIDATOR_MANAGER_ADDRESS = address(0x33B9785E20ec582d5009965FB3346F1716e8A423);
+    uint64 constant MINIMUM_STAKE_DURATION = 1 hours;
+    uint256 constant MINIMUM_STAKE_AMOUNT = 20_000e18;
+    uint256 constant MAXIMUM_STAKE_AMOUNT = 200_000_000e18;
+    uint64 constant UNLOCK_PERIOD = 1 hours;
+    uint16 constant MINIMUM_DELEGATION_FEE = 100; // 0.1% in basis points
+    uint64 constant EPOCH_DURATION = 2 days;
+    uint256 constant MAXIMUM_NFT_AMOUNT = 1000;
+    uint256 constant MINIMUM_DELEGATION_AMOUNT = 100e18;
+    uint256 constant WEIGHT_TO_VALUE_FACTOR = 1e18;
+    bytes32 constant UPTIME_BLOCKCHAIN_ID = bytes32(hex"7f78fe8ca06cefa186ef29c15231e45e1056cd8319ceca0695ca61099e610355");
 
     function run() external {
         vm.startBroadcast();
@@ -57,28 +58,32 @@ contract UpgradeBEAMStakingManager is Script {
 
         // Add settings struct for initialization
         StakingManagerSettings memory settings = StakingManagerSettings({
-            manager: ValidatorManager(_VALIDATOR_MANAGER_ADDRESS),
-            minimumStakeAmount: _MINIMUM_STAKE_AMOUNT,
-            maximumStakeAmount: _MAXIMUM_STAKE_AMOUNT,
-            maximumNFTAmount: _MAXIMUM_NFT_AMOUNT,
-            minimumStakeDuration: _MINIMUM_STAKE_DURATION,
-            minimumDelegationAmount: _MINIMUM_DELEGATION_AMOUNT,
-            minimumDelegationFeeBips: _MINIMUM_DELEGATION_FEE,
-            weightToValueFactor: 1,
-            validatorRemovalAdmin: _ADMIN_ADDRESS,
-            uptimeBlockchainID: _UPTIME_BLOCKCHAIN_ID,
-            epochDuration: _EPOCH_DURATION,
-            unlockDuration: _UNLOCK_PERIOD
+            manager: ValidatorManager(VALIDATOR_MANAGER_ADDRESS),
+            minimumStakeAmount: MINIMUM_STAKE_AMOUNT,
+            maximumStakeAmount: MAXIMUM_STAKE_AMOUNT,
+            maximumNFTAmount: MAXIMUM_NFT_AMOUNT,
+            minimumStakeDuration: MINIMUM_STAKE_DURATION,
+            minimumDelegationAmount: MINIMUM_DELEGATION_AMOUNT,
+            minimumDelegationFeeBips: MINIMUM_DELEGATION_FEE,
+            weightToValueFactor: WEIGHT_TO_VALUE_FACTOR,
+            admin: ADMIN_ADDRESS,
+            uptimeBlockchainID: UPTIME_BLOCKCHAIN_ID,
+            epochDuration: EPOCH_DURATION,
+            unlockDuration: UNLOCK_PERIOD,
+            uptimeKeeper: ADMIN_ADDRESS,
+            epochOffset: 0
         });
 
        // Get ProxyAdmin instance
         ProxyAdmin proxyAdmin = ProxyAdmin(_PROXY_ADMIN_ADDRESS);
-
+        
+        // bytes memory selector;
         // Upgrade proxy to new implementation
         proxyAdmin.upgradeAndCall(
             ITransparentUpgradeableProxy(_PROXY_ADDRESS),
             address(newImplementation),
-            abi.encodeWithSelector(Native721TokenStakingManager.initialize.selector, settings, address(_NFT_TOKEN_ADDRESS))
+            // selector
+            abi.encodeWithSelector(Native721TokenStakingManager.initialize.selector, settings, address(NFT_TOKEN_ADDRESS))
         );
         console.log("Upgraded proxy to new implementation");
 

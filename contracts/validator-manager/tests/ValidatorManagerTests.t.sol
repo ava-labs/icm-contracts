@@ -35,8 +35,6 @@ abstract contract ValidatorManagerTest is Test {
         bytes32(hex"67e8531265d8e97bd5c23534a37f4ea42d41934ddf8fe2c77c27fac9ef89f973");
     address public constant WARP_PRECOMPILE_ADDRESS = 0x0200000000000000000000000000000000000005;
 
-    address public constant DEFAULT_VALIDATOR_REMOVAL_ADMIN = address(0x123);
-
     uint64 public constant DEFAULT_WEIGHT = 1e6;
     // Set the default weight to 1e10 to avoid churn issues
     uint64 public constant DEFAULT_INITIAL_VALIDATOR_WEIGHT = DEFAULT_WEIGHT * 1e4;
@@ -52,7 +50,6 @@ abstract contract ValidatorManagerTest is Test {
     uint256 public constant DEFAULT_STARTING_TOTAL_WEIGHT = 1e10 + DEFAULT_WEIGHT;
     uint64 public constant DEFAULT_MINIMUM_VALIDATION_DURATION = 24 hours;
     uint64 public constant DEFAULT_COMPLETION_TIMESTAMP = 100_000;
-    uint64 public constant DEFAULT_UNLOCK_DURATION = 1 days;
     // solhint-disable-next-line var-name-mixedcase
     PChainOwner public DEFAULT_P_CHAIN_OWNER;
 
@@ -298,7 +295,6 @@ abstract contract ValidatorManagerTest is Test {
         vm.expectEmit(true, true, true, true, address(validatorManager));
         emit CompletedValidatorRemoval(validationID);
 
-        vm.warp(block.timestamp + DEFAULT_UNLOCK_DURATION);
         _completeValidatorRemoval(0);
     }
 

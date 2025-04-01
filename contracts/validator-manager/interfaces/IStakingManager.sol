@@ -40,10 +40,12 @@ struct StakingManagerSettings {
     uint256 minimumDelegationAmount;
     uint16 minimumDelegationFeeBips;
     uint256 weightToValueFactor;
-    address validatorRemovalAdmin;
+    address admin;
     bytes32 uptimeBlockchainID;
     uint64 unlockDuration;
     uint64 epochDuration;
+    address uptimeKeeper;
+    uint64 epochOffset;
 }
 
 /**
@@ -134,6 +136,25 @@ interface IStakingManager {
     event UptimeUpdated(bytes32 indexed validationID, uint64 uptime, uint64 epoch);
 
     /**
+     * @notice Event emitted when the validator stake is unlocked
+     * @param validationID The ID of the validation period
+     */
+    event UnlockedValidation(bytes32 indexed validationID);
+
+    /**
+     * @notice Event emitted when the delegator stake is unlocked
+     * @param delegationID The ID of the delegation period
+     */
+    event UnlockedDelegation(bytes32 indexed delegationID);
+
+    /**
+     * @notice Event emitted when the delegator reward weight is resolved
+     * @param delegationID The ID of the delegation period
+     * @param epoch The current reward epoch
+     */ 
+    event RewardResolved(bytes32 indexed delegationID, uint64 epoch);
+
+    /**
      * @notice Updates the uptime of the validationID if the submitted proof is greated than the stored uptime.
      * Anybody may call this function to ensure the stored uptime is accurate. Callable only when the validation period is active.
      * @param validationID The ID of the validation period
@@ -217,13 +238,11 @@ interface IStakingManager {
      * removal of previous delegation. This skips the locking and unlocking of tokens.
      * Note: This function can only be called by the address that registered the delegation.
      * @param delegationID The ID of the delegation being redelegated.
-     * @param messageIndex The index of the ICM message to be received providing the uptime proof.
      * @param validationID The ID of the validation period the delegation is being redelegated to.
      * @return The ID of the redelegation.
      */
     function initiateRedelegation(
         bytes32 delegationID,
-        uint32 messageIndex,
         bytes32 validationID
     ) external returns (bytes32);
 

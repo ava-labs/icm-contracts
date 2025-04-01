@@ -40,8 +40,13 @@ import {console} from "forge-std/console.sol";
  */
 contract DeployValidatorManager is Script {
     // Example initialization parameters - adjust as needed
+    // address private constant _ADMIN_ADDRESS = address(0xd68F802fD0B6f56524F379805DD8FcC152DB9d5c); // Replace with admin address
+    // bytes32 private constant _SUBNET_ID = bytes32(hex"55437b606820ab92499f5f44a72d9a17c777eec4e103fec17d48bb0283197cf2"); // mainnet
+    // uint64 private constant _CHURN_PERIOD = 1 hours;
+    // uint8 private constant _MAX_CHURN_PERCENTAGE = 20;
+
     address private constant _ADMIN_ADDRESS = address(0xd68F802fD0B6f56524F379805DD8FcC152DB9d5c); // Replace with admin address
-    bytes32 private constant _SUBNET_ID = bytes32(hex"55437b606820ab92499f5f44a72d9a17c777eec4e103fec17d48bb0283197cf2"); // mainnet
+    bytes32 private constant _SUBNET_ID = bytes32(hex"5e8b6e2e8155e93739f2fa6a7f8a32c6bb2e1dce2e471b56dcc60aac49bf3435"); // mainnet
     uint64 private constant _CHURN_PERIOD = 1 hours;
     uint8 private constant _MAX_CHURN_PERCENTAGE = 20;
 
