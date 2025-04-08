@@ -12,7 +12,13 @@ import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.0/contracts/interfaces/IWarpMessenger.sol";
-import {ACP99Manager, ConversionData, InitialValidator, PChainOwner} from "../ACP99Manager.sol";
+import {
+    ACP99Manager,
+    ConversionData,
+    InitialValidator,
+    PChainOwner,
+    ValidatorStatus
+} from "../ACP99Manager.sol";
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
@@ -279,6 +285,48 @@ abstract contract ValidatorManagerTest is Test {
         _completeValidatorRemoval(0);
     }
 
+    function testReplayValidatorRegistration() public virtual {
+        bytes32 validationID = _registerDefaultValidator();
+        bytes memory setWeightMessage =
+            ValidatorMessages.packL1ValidatorWeightMessage(validationID, 1, 0);
+        bytes memory uptimeMessage;
+        _initiateValidatorRemoval({
+            validationID: validationID,
+            completionTimestamp: DEFAULT_COMPLETION_TIMESTAMP,
+            setWeightMessage: setWeightMessage,
+            includeUptime: false,
+            uptimeMessage: uptimeMessage,
+            force: false
+        });
+
+        bytes memory l1ValidatorRegistrationMessage =
+            ValidatorMessages.packL1ValidatorRegistrationMessage(validationID, false);
+
+        _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
+
+        vm.expectEmit(true, true, true, true, address(validatorManager));
+        emit CompletedValidatorRemoval(validationID);
+
+        _completeValidatorRemoval(0);
+
+        vm.warp(DEFAULT_EXPIRY - 1);
+        _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
+            )
+        );
+        _initiateValidatorRegistration({
+            nodeID: DEFAULT_NODE_ID,
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER,
+            registrationExpiry: DEFAULT_EXPIRY,
+            weight: DEFAULT_WEIGHT
+        });
+    }
+
     function testCompleteInvalidatedValidation() public {
         bytes32 validationID = _setUpInitializeValidatorRegistration(
             DEFAULT_NODE_ID,
@@ -482,24 +530,12 @@ abstract contract ValidatorManagerTest is Test {
         uint64 weight,
         uint64 registrationExpiry,
         bytes memory blsPublicKey
-    ) internal returns (bytes32 validationID) {
-        (validationID,) = ValidatorMessages.packRegisterL1ValidatorMessage(
-            ValidatorMessages.ValidationPeriod({
-                nodeID: nodeID,
-                subnetID: subnetID,
-                blsPublicKey: blsPublicKey,
-                registrationExpiry: registrationExpiry,
-                remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
-                disableOwner: DEFAULT_P_CHAIN_OWNER,
-                weight: weight
-            })
-        );
-        bytes20 fixedID = _fixedNodeID(nodeID);
-        (, bytes memory registerL1ValidatorMessage) = ValidatorMessages
+    ) internal returns (bytes32) {
+        (bytes32 validationID, bytes memory registerL1ValidatorMessage) = ValidatorMessages
             .packRegisterL1ValidatorMessage(
             ValidatorMessages.ValidationPeriod({
-                subnetID: subnetID,
                 nodeID: nodeID,
+                subnetID: subnetID,
                 blsPublicKey: blsPublicKey,
                 registrationExpiry: registrationExpiry,
                 remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
@@ -507,6 +543,8 @@ abstract contract ValidatorManagerTest is Test {
                 weight: weight
             })
         );
+
+        bytes20 fixedID = _fixedNodeID(nodeID);
         vm.warp(registrationExpiry - 1);
         _mockSendWarpMessage(registerL1ValidatorMessage, bytes32(0));
 
@@ -524,6 +562,8 @@ abstract contract ValidatorManagerTest is Test {
             registrationExpiry: registrationExpiry,
             weight: weight
         });
+
+        return validationID;
     }
 
     function _registerValidator(
