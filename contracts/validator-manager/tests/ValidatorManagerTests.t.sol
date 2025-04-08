@@ -59,7 +59,11 @@ abstract contract ValidatorManagerTest is Test {
     uint64 public nodeIDCounter = 0;
 
     event RegisteredInitialValidator(
-        bytes32 indexed validationID, bytes20 indexed nodeID, uint64 weight
+        bytes32 indexed validationID,
+        bytes20 indexed nodeID,
+        bytes32 indexed subnetID,
+        uint64 weight,
+        uint32 index
     );
 
     event InitiatedValidatorRegistration(
@@ -67,7 +71,8 @@ abstract contract ValidatorManagerTest is Test {
         bytes20 indexed nodeID,
         bytes32 registrationMessageID,
         uint64 registrationExpiry,
-        uint64 weight
+        uint64 weight,
+        bytes registerL1ValidatorMessage
     );
 
     event CompletedValidatorRegistration(bytes32 indexed validationID, uint64 weight);
@@ -512,9 +517,14 @@ abstract contract ValidatorManagerTest is Test {
 
         _beforeSend(_weightToValue(weight), address(this));
         vm.expectEmit(true, true, true, true, address(validatorManager));
-        emit InitiatedValidatorRegistration(
-            validationID, fixedID, bytes32(0), registrationExpiry, weight
-        );
+        emit InitiatedValidatorRegistration({
+            validationID: validationID,
+            nodeID: fixedID,
+            registrationMessageID: bytes32(0),
+            registrationExpiry: registrationExpiry,
+            weight: weight,
+            registerL1ValidatorMessage: registerL1ValidatorMessage
+        });
 
         _initiateValidatorRegistration({
             nodeID: nodeID,
