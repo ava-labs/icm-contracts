@@ -93,6 +93,10 @@ PoS validator management is provided by the abstract contract `StakingManager`, 
 >    - Ex: `value=1001` and `weightToValueFactor=1e3`. The resulting weight will be `1`. Converting the weight back to a value results in `value=1000`.
 > 3. The validator's weight is represented on the P-Chain as a `uint64`. `StakingManager` restricts values such that the calculated weight does not exceed the maximum value for that type.
 
+### Migrating from Proof-of-Authority to Proof-of-Stake
+
+See the [migration guide](./PoAMigration.md) for details.
+
 #### NativeTokenStakingManager
 
 `NativeTokenStakingManager` allows permissionless addition and removal of validators that post the L1's native token as stake. Staking rewards are minted via the Native Minter Precompile, which is configured with a set of addresses with minting privileges. As such, the address that `NativeTokenStakingManager` is deployed to must be added as an admin to the precompile. This can be done by either calling the precompile's `setAdmin` method from an admin address, or setting the address in the Native Minter precompile settings in the chain's genesis (`config.contractNativeMinterConfig.adminAddresses`). There are a couple of methods to get this address: one is to calculate the resulting deployed address based on the deployer's address and account nonce: `keccak256(rlp.encode(address, nonce))`. The second method involves manually placing the `NativeTokenStakingManager` bytecode at a particular address in the genesis, then setting that address as an admin.
