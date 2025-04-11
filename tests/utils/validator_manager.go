@@ -333,6 +333,8 @@ func InitializeValidatorSet(
 	)
 	Expect(err).Should(BeNil())
 	Expect(ids.NodeID(initialValidatorCreatedEvent.NodeID)).Should(Equal(nodes[0].NodeID))
+
+	// Compute the initial validationIDs as the hash of the concatenated subnetID and validator index
 	var validationIDs []ids.ID
 	for i := range nodes {
 		validationIDs = append(validationIDs, l1Info.SubnetID.Append(uint32(i)))
