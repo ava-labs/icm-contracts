@@ -118,7 +118,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     error NodeAlreadyRegistered(bytes nodeID);
     error UnexpectedRegistrationStatus(bool validRegistration);
     error InvalidPChainOwnerThreshold(uint256 threshold, uint256 addressesLength);
-    error PChainOwnerAddressesNotSorted();
+    error InvalidPChainOwnerAddresses();
     error ZeroAddress();
 
     // solhint-disable ordering
@@ -311,8 +311,8 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
         // Addresses must be sorted in ascending order
         for (uint256 i = 1; i < pChainOwner.addresses.length; i++) {
             // Compare current address with the previous one
-            if (pChainOwner.addresses[i] < pChainOwner.addresses[i - 1]) {
-                revert PChainOwnerAddressesNotSorted();
+            if (pChainOwner.addresses[i] <= pChainOwner.addresses[i - 1]) {
+                revert InvalidPChainOwnerAddresses();
             }
         }
     }
