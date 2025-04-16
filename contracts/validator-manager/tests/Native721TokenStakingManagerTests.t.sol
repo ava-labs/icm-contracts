@@ -473,11 +473,12 @@ contract Native721TokenStakingManagerTest is StakingManagerTest, IERC721Receiver
             rewardRecipient: address(this)
         });
 
-        // Validator is Completed, so this will also complete the delegation.
         _initiateNFTDelegatorRemoval({
             delegatorAddress: DEFAULT_DELEGATOR_ADDRESS,
             delegationID: delegationID
         });
+        vm.warp(block.timestamp + DEFAULT_UNLOCK_DURATION);
+        _completeNFTDelegatorRemoval(DEFAULT_DELEGATOR_ADDRESS, delegationID);
 
         _expectNFTStakeUnlock(DEFAULT_DELEGATOR_ADDRESS, 1);
 
@@ -569,11 +570,12 @@ contract Native721TokenStakingManagerTest is StakingManagerTest, IERC721Receiver
             rewardRecipient: address(this)
         });
 
-        // Validator is Completed, so this will also complete the delegation.
         _initiateNFTDelegatorRemoval({
             delegatorAddress: DEFAULT_DELEGATOR_ADDRESS,
             delegationID: nftDelegationID
         });
+        vm.warp(block.timestamp + DEFAULT_UNLOCK_DURATION);
+        _completeNFTDelegatorRemoval(DEFAULT_DELEGATOR_ADDRESS, nftDelegationID);
 
         _expectNFTStakeUnlock(DEFAULT_DELEGATOR_ADDRESS, 1);
 
@@ -629,6 +631,37 @@ contract Native721TokenStakingManagerTest is StakingManagerTest, IERC721Receiver
         app.registerNFTRedelegation(delegationID, nextValidationID);
     }
 
+    function testNFTRedelegationAfterValidatorRemoval() public {
+        bytes32 validationID = _registerDefaultValidator();
+        bytes32 delegationID = _registerNFTDelegation(validationID, DEFAULT_DELEGATOR_ADDRESS);
+
+        address rewardRecipient = address(42);
+
+        bytes32 nextValidationID = _registerValidator({
+            nodeID: _newNodeID(),
+            subnetID: DEFAULT_SUBNET_ID,
+            weight: DEFAULT_WEIGHT,
+            registrationExpiry: DEFAULT_EXPIRY,
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            registrationTimestamp: DEFAULT_REGISTRATION_TIMESTAMP
+        });
+
+        _endValidationWithChecks({
+            validationID: validationID,
+            validatorOwner: address(this),
+            completeRegistrationTimestamp: DEFAULT_REGISTRATION_TIMESTAMP,
+            completionTimestamp: DEFAULT_COMPLETION_TIMESTAMP,
+            validatorWeight: DEFAULT_WEIGHT,
+            expectedNonce: 1,
+            rewardRecipient: address(this)
+        });
+
+        vm.warp(block.timestamp + DEFAULT_MINIMUM_STAKE_DURATION + 1);
+
+        vm.prank(DEFAULT_DELEGATOR_ADDRESS);
+        app.registerNFTRedelegation(delegationID, nextValidationID);
+    }
+
     function testEndDelegationNFTBeforeUnlock() public {
         bytes32 validationID = _registerDefaultValidator();
         bytes32 delegationID = _registerNFTDelegation(validationID, DEFAULT_DELEGATOR_ADDRESS);
@@ -670,6 +703,8 @@ contract Native721TokenStakingManagerTest is StakingManagerTest, IERC721Receiver
             delegatorAddress: DEFAULT_DELEGATOR_ADDRESS,
             delegationID: delegationID
         });
+        vm.warp(block.timestamp + DEFAULT_UNLOCK_DURATION);
+        _completeNFTDelegatorRemoval(DEFAULT_DELEGATOR_ADDRESS, delegationID);
 
         vm.expectRevert(
             abi.encodeWithSelector(
