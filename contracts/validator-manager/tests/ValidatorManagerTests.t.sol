@@ -6,19 +6,21 @@
 pragma solidity 0.8.25;
 
 import {Test} from "@forge-std/Test.sol";
-import {ValidatorManager, ValidatorManagerSettings} from "../ValidatorManager.sol";
+import {
+    IValidatorManager, ValidatorManager, ValidatorManagerSettings
+} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {
-    ACP99Manager,
+    IACP99Manager,
     ConversionData,
     InitialValidator,
     PChainOwner,
     ValidatorStatus
-} from "../ACP99Manager.sol";
+} from "../interfaces/IACP99Manager.sol";
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
@@ -138,7 +140,7 @@ abstract contract ValidatorManagerTest is Test {
         PChainOwner memory invalidPChainOwner1 = PChainOwner({threshold: 2, addresses: addresses});
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
         vm.expectRevert(
-            abi.encodeWithSelector(ValidatorManager.InvalidPChainOwnerThreshold.selector, 2, 1)
+            abi.encodeWithSelector(IValidatorManager.InvalidPChainOwnerThreshold.selector, 2, 1)
         );
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -156,7 +158,7 @@ abstract contract ValidatorManagerTest is Test {
         PChainOwner memory invalidPChainOwner1 = PChainOwner({threshold: 0, addresses: addresses});
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
         vm.expectRevert(
-            abi.encodeWithSelector(ValidatorManager.InvalidPChainOwnerThreshold.selector, 0, 1)
+            abi.encodeWithSelector(IValidatorManager.InvalidPChainOwnerThreshold.selector, 0, 1)
         );
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -176,7 +178,7 @@ abstract contract ValidatorManagerTest is Test {
 
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
         vm.expectRevert(
-            abi.encodeWithSelector(ValidatorManager.InvalidPChainOwnerAddresses.selector)
+            abi.encodeWithSelector(IValidatorManager.InvalidPChainOwnerAddresses.selector)
         );
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -196,7 +198,7 @@ abstract contract ValidatorManagerTest is Test {
 
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
         vm.expectRevert(
-            abi.encodeWithSelector(ValidatorManager.InvalidPChainOwnerAddresses.selector)
+            abi.encodeWithSelector(IValidatorManager.InvalidPChainOwnerAddresses.selector)
         );
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -214,7 +216,7 @@ abstract contract ValidatorManagerTest is Test {
         PChainOwner memory invalidPChainOwner1 = PChainOwner({threshold: 1, addresses: addresses});
 
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.ZeroAddress.selector));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.ZeroAddress.selector));
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
             blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
@@ -320,7 +322,9 @@ abstract contract ValidatorManagerTest is Test {
         vm.warp(initialTimestamp);
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidValidatorStatus.selector, 4));
+        vm.expectRevert(
+            abi.encodeWithSelector(IValidatorManager.InvalidValidatorStatus.selector, 4)
+        );
 
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -353,7 +357,7 @@ abstract contract ValidatorManagerTest is Test {
 
     function testInitialWeightsTooLow() public {
         vm.prank(address(0x123));
-        ACP99Manager manager = _setUp();
+        IACP99Manager manager = _setUp();
 
         _mockGetBlockchainID();
 
@@ -361,14 +365,14 @@ abstract contract ValidatorManagerTest is Test {
         bytes32 id = sha256(ValidatorMessages.packConversionData(conversionData));
 
         _mockGetPChainWarpMessage(ValidatorMessages.packSubnetToL1ConversionMessage(id), true);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidTotalWeight.selector, 4));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidTotalWeight.selector, 4));
         manager.initializeValidatorSet(conversionData, 0);
     }
 
     function testRemoveValidatorTotalWeight5() public {
         // Use prank here, because otherwise each test will end up with a different contract address, leading to a different subnet conversion hash.
         vm.prank(address(0x123));
-        ACP99Manager manager = _setUp();
+        IACP99Manager manager = _setUp();
 
         _mockGetBlockchainID();
 
@@ -378,7 +382,7 @@ abstract contract ValidatorManagerTest is Test {
         manager.initializeValidatorSet(conversion, 0);
 
         bytes32 validationID = sha256(abi.encodePacked(DEFAULT_SUBNET_ID, uint32(0)));
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidTotalWeight.selector, 4));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidTotalWeight.selector, 4));
         _forceInitiateValidatorRemoval(validationID, false, address(0));
     }
 
@@ -401,7 +405,7 @@ abstract contract ValidatorManagerTest is Test {
         // Second call should fail
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.MaxChurnRateExceeded.selector,
+                IValidatorManager.MaxChurnRateExceeded.selector,
                 churnThreshold + _valueToWeight(DEFAULT_MINIMUM_STAKE_AMOUNT)
             )
         );
@@ -444,7 +448,7 @@ abstract contract ValidatorManagerTest is Test {
         // a new churn period has started.
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.MaxChurnRateExceeded.selector,
+                IValidatorManager.MaxChurnRateExceeded.selector,
                 _valueToWeight(DEFAULT_MINIMUM_STAKE_AMOUNT) + churnThreshold
             )
         );
@@ -493,7 +497,7 @@ abstract contract ValidatorManagerTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
             )
         );
         validatorManager.initiateValidatorWeightUpdate(validationID, 100);
@@ -781,7 +785,7 @@ abstract contract ValidatorManagerTest is Test {
         uint32 messageIndex
     ) internal virtual returns (bytes32);
 
-    function _setUp() internal virtual returns (ACP99Manager);
+    function _setUp() internal virtual returns (IACP99Manager);
 
     function _beforeSend(uint256 amount, address spender) internal virtual;
 

@@ -5,8 +5,8 @@
 
 pragma solidity 0.8.25;
 
-import {ValidatorManager} from "./ValidatorManager.sol";
 import {ValidatorMessages} from "./ValidatorMessages.sol";
+import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {
     Delegator,
     DelegatorStatus,
@@ -14,7 +14,7 @@ import {
     PoSValidatorInfo,
     StakingManagerSettings
 } from "./interfaces/IStakingManager.sol";
-import {Validator, ValidatorStatus, PChainOwner} from "./ACP99Manager.sol";
+import {Validator, ValidatorStatus, PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {IRewardCalculator} from "./interfaces/IRewardCalculator.sol";
 import {
     IWarpMessenger,
@@ -38,7 +38,7 @@ abstract contract StakingManager is
     // solhint-disable private-vars-leading-underscore
     /// @custom:storage-location erc7201:avalanche-icm.storage.StakingManager
     struct StakingManagerStorage {
-        ValidatorManager _manager;
+        IValidatorManager _manager;
         /// @notice The minimum amount of stake required to be a validator.
         uint256 _minimumStakeAmount;
         /// @notice The maximum amount of stake allowed to be a validator.
@@ -144,7 +144,7 @@ abstract contract StakingManager is
 
     // solhint-disable-next-line func-name-mixedcase
     function __StakingManager_init_unchained(
-        ValidatorManager manager,
+        IValidatorManager manager,
         uint256 minimumStakeAmount,
         uint256 maximumStakeAmount,
         uint64 minimumStakeDuration,

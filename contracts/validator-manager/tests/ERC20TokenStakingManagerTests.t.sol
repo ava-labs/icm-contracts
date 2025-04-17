@@ -16,7 +16,7 @@ import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {Initializable} from "@openzeppelin/contracts@5.0.2/proxy/utils/Initializable.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
-import {ACP99Manager, PChainOwner, ConversionData} from "../ACP99Manager.sol";
+import {IACP99Manager, PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
 import {ValidatorManager} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 
@@ -289,7 +289,7 @@ contract ERC20TokenStakingManagerTest is StakingManagerTest {
         vm.expectCall(address(token), abi.encodeCall(IERC20Mintable.mint, (account, amount)));
     }
 
-    function _setUp() internal override returns (ACP99Manager) {
+    function _setUp() internal override returns (IACP99Manager) {
         // Construct the object under test
         app = new ERC20TokenStakingManager(ICMInitializable.Allowed);
         token = new ExampleERC20();

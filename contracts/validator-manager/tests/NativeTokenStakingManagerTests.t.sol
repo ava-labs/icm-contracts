@@ -15,7 +15,7 @@ import {INativeMinter} from
     "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/INativeMinter.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
 import {Initializable} from "@openzeppelin/contracts@5.0.2/proxy/utils/Initializable.sol";
-import {ACP99Manager, PChainOwner, ConversionData} from "../ACP99Manager.sol";
+import {IACP99Manager, PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
 import {ValidatorManager} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 
@@ -242,7 +242,7 @@ contract NativeTokenStakingManagerTest is StakingManagerTest {
         vm.expectCall(nativeMinter, callData);
     }
 
-    function _setUp() internal override returns (ACP99Manager) {
+    function _setUp() internal override returns (IACP99Manager) {
         // Construct the object under test
         app = new TestableNativeTokenStakingManager(ICMInitializable.Allowed);
         rewardCalculator = new ExampleRewardCalculator(DEFAULT_REWARD_RATE);

@@ -5,15 +5,16 @@
 
 pragma solidity 0.8.25;
 
+import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {ValidatorMessages} from "./ValidatorMessages.sol";
 import {
-    ACP99Manager,
     InitialValidator,
     PChainOwner,
     ConversionData,
     Validator,
     ValidatorStatus
-} from "./ACP99Manager.sol";
+} from "./interfaces/IACP99Manager.sol";
+import {ACP99Manager} from "./ACP99Manager.sol";
 import {
     IWarpMessenger,
     WarpMessage
@@ -63,7 +64,7 @@ struct ValidatorLegacy {
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
  */
-contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
+contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeable, ACP99Manager {
     // solhint-disable private-vars-leading-underscore
     /// @custom:storage-location erc7201:avalanche-icm.storage.ValidatorManager
     struct ValidatorManagerStorage {
@@ -97,27 +98,6 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     uint32 public constant NODE_ID_LENGTH = 20;
     uint8 public constant BLS_PUBLIC_KEY_LENGTH = 48;
     bytes32 public constant P_CHAIN_BLOCKCHAIN_ID = bytes32(0);
-
-    error InvalidValidatorManagerAddress(address validatorManagerAddress);
-    error InvalidWarpOriginSenderAddress(address senderAddress);
-    error InvalidValidatorManagerBlockchainID(bytes32 blockchainID);
-    error InvalidWarpSourceChainID(bytes32 sourceChainID);
-    error InvalidInitializationStatus();
-    error InvalidMaximumChurnPercentage(uint8 maximumChurnPercentage);
-    error InvalidBLSKeyLength(uint256 length);
-    error InvalidNodeID(bytes nodeID);
-    error InvalidConversionID(bytes32 encodedConversionID, bytes32 expectedConversionID);
-    error InvalidTotalWeight(uint64 weight);
-    error InvalidValidationID(bytes32 validationID);
-    error InvalidValidatorStatus(ValidatorStatus status);
-    error InvalidNonce(uint64 nonce);
-    error InvalidWarpMessage();
-    error MaxChurnRateExceeded(uint64 churnAmount);
-    error NodeAlreadyRegistered(bytes nodeID);
-    error UnexpectedRegistrationStatus(bool validRegistration);
-    error InvalidPChainOwnerThreshold(uint256 threshold, uint256 addressesLength);
-    error InvalidPChainOwnerAddresses();
-    error ZeroAddress();
 
     // solhint-disable ordering
     /**
@@ -220,7 +200,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-initializeValidatorSet}.
+     * @notice See {IACP99Manager-initializeValidatorSet}.
      */
     function initializeValidatorSet(
         ConversionData calldata conversionData,
@@ -431,7 +411,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-completeValidatorRegistration}.
+     * @notice See {IACP99Manager-completeValidatorRegistration}.
      */
     function completeValidatorRegistration(
         uint32 messageIndex
@@ -471,7 +451,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-getValidator}.
+     * @notice See {IACP99Manager-getValidator}.
      */
     function getValidator(
         bytes32 validationID
@@ -481,14 +461,14 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-l1TotalWeight}.
+     * @notice See {IACP99Manager-l1TotalWeight}.
      */
     function l1TotalWeight() public view virtual override returns (uint64) {
         return _getValidatorManagerStorage()._churnTracker.totalWeight;
     }
 
     /**
-     * @notice See {ACP99Manager-subnetID}.
+     * @notice See {IACP99Manager-subnetID}.
      */
     function subnetID() public view virtual override returns (bytes32) {
         return _getValidatorManagerStorage()._subnetID;
@@ -557,7 +537,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-completeValidatorRemoval}.
+     * @notice See {IACP99Manager-completeValidatorRemoval}.
      */
     function completeValidatorRemoval(
         uint32 messageIndex
@@ -674,7 +654,7 @@ contract ValidatorManager is Initializable, OwnableUpgradeable, ACP99Manager {
     }
 
     /**
-     * @notice See {ACP99Manager-completeValidatorWeightUpdate}.
+     * @notice See {IACP99Manager-completeValidatorWeightUpdate}.
      */
     function completeValidatorWeightUpdate(
         uint32 messageIndex

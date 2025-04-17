@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: LicenseRef-Ecosystem
 pragma solidity 0.8.25;
 
-import {PChainOwner, ConversionData} from "./ACP99Manager.sol";
+import {PChainOwner, ConversionData} from "./interfaces/IACP99Manager.sol";
 
 /**
  * @dev Packing utilities for the ICM message types used by the Validator Manager contracts, as specified in ACP-77:

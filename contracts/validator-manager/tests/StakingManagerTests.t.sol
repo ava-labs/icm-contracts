@@ -9,7 +9,7 @@ import {IRewardCalculator} from "../interfaces/IRewardCalculator.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
 import {StakingManager} from "../StakingManager.sol";
 import {DelegatorStatus, StakingManagerSettings} from "../interfaces/IStakingManager.sol";
-import {ValidatorManager, ValidatorStatus} from "../ValidatorManager.sol";
+import {IValidatorManager, ValidatorManager, ValidatorStatus} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {
     WarpMessage,
@@ -181,7 +181,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         _mockGetUptimeWarpMessage(new bytes(0), false);
         vm.warp(DEFAULT_COMPLETION_TIMESTAMP);
-        vm.expectRevert(ValidatorManager.InvalidWarpMessage.selector);
+        vm.expectRevert(IValidatorManager.InvalidWarpMessage.selector);
         stakingManager.initiateValidatorRemoval(validationID, true, 0);
     }
 
@@ -207,7 +207,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         vm.warp(DEFAULT_COMPLETION_TIMESTAMP);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidWarpOriginSenderAddress.selector, address(this)
+                IValidatorManager.InvalidWarpOriginSenderAddress.selector, address(this)
             )
         );
         stakingManager.initiateValidatorRemoval(validationID, true, 0);
@@ -292,7 +292,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
             )
         );
         _initiateDelegatorRegistration(
@@ -357,7 +357,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         _mockGetPChainWarpMessage(setValidatorWeightPayload, true);
 
         vm.warp(DEFAULT_DELEGATOR_COMPLETE_REGISTRATION_TIMESTAMP);
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidNonce.selector, nonce));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidNonce.selector, nonce));
         stakingManager.completeDelegatorRegistration(delegationID2, 0);
     }
 
@@ -637,7 +637,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Active
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Active
             )
         );
 
@@ -955,7 +955,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
             )
         );
         _initiateDelegatorRegistration(
@@ -1021,7 +1021,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
             )
         );
         _initiateDelegatorRegistration(
@@ -1099,7 +1099,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         vm.warp(DEFAULT_COMPLETION_TIMESTAMP + 1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.Completed
             )
         );
         _initiateDelegatorRegistration(
@@ -1272,7 +1272,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         );
         _mockGetPChainWarpMessage(setValidatorWeightPayload, true);
 
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidNonce.selector, nonce));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidNonce.selector, nonce));
         stakingManager.completeDelegatorRemoval(delegationID2, 0);
     }
 
@@ -1428,7 +1428,9 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         vm.warp(initialTimestamp);
         _beforeSend(_weightToValue(DEFAULT_WEIGHT), address(this));
 
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidValidatorStatus.selector, 4));
+        vm.expectRevert(
+            abi.encodeWithSelector(IValidatorManager.InvalidValidatorStatus.selector, 4)
+        );
 
         _initiateValidatorRegistration({
             nodeID: DEFAULT_NODE_ID,
@@ -1758,7 +1760,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
             )
         );
         stakingManager.submitUptimeProof(validationID, 0);
@@ -1845,7 +1847,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         _mockGetPChainWarpMessage(setValidatorWeightPayload, true);
 
         // The invalid validationID has sent no weight updates, so its nonce should be 0
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidNonce.selector, 1));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidNonce.selector, 1));
 
         vm.warp(DEFAULT_DELEGATOR_COMPLETE_REGISTRATION_TIMESTAMP);
         stakingManager.completeDelegatorRegistration(delegationID, 0);
@@ -1872,7 +1874,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
             ValidatorMessages.packL1ValidatorWeightMessage(delegationID, 2, DEFAULT_WEIGHT);
         _mockGetPChainWarpMessage(setValidatorWeightPayload, true);
 
-        vm.expectRevert(abi.encodeWithSelector(ValidatorManager.InvalidNonce.selector, 2));
+        vm.expectRevert(abi.encodeWithSelector(IValidatorManager.InvalidNonce.selector, 2));
 
         stakingManager.completeDelegatorRemoval(delegationID, 0);
     }
@@ -1985,7 +1987,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
+                IValidatorManager.InvalidValidatorStatus.selector, ValidatorStatus.PendingRemoved
             )
         );
 

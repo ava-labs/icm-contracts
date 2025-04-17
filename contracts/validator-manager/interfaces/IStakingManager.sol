@@ -5,7 +5,7 @@
 
 pragma solidity 0.8.25;
 
-import {ValidatorManager} from "../ValidatorManager.sol";
+import {IValidatorManager} from "../interfaces/IValidatorManager.sol";
 import {IRewardCalculator} from "./IRewardCalculator.sol";
 
 /**
@@ -20,7 +20,7 @@ enum DelegatorStatus {
 
 /**
  * @notice PoS Validator Manager settings, used to initialize the PoS Validator Manager
- * @notice baseSettings specified the base settings for the Validator Manager. See {ValidatorManager-ValidatorManagerSettings}
+ * @notice baseSettings specified the base settings for the Validator Manager. See {IValidatorManager-ValidatorManagerSettings}
  * @notice minimumStakeAmount is the minimum amount of stake required to stake to a validator
  * @notice maximumStakeAmount is the maximum amount of stake that can be staked to a validator
  * @notice minimumStakeDuration is the minimum duration that validators must stake for
@@ -33,7 +33,7 @@ enum DelegatorStatus {
  * This must be a blockchain validated by the subnetID that this contract manages.
  */
 struct StakingManagerSettings {
-    ValidatorManager manager;
+    IValidatorManager manager;
     uint256 minimumStakeAmount;
     uint256 maximumStakeAmount;
     uint64 minimumStakeDuration;
@@ -58,7 +58,7 @@ struct Delegator {
 }
 
 /**
- * @dev Describes the active state of a PoS Validator in addition the information in {ValidatorManager-Validator}
+ * @dev Describes the active state of a PoS Validator in addition the information in {IValidatorManager-Validator}
  */
 struct PoSValidatorInfo {
     address owner;
@@ -175,11 +175,11 @@ interface IStakingManager {
     function submitUptimeProof(bytes32 validationID, uint32 messageIndex) external;
 
     /**
-     * @notice Completes validator registration by dispatching to the ValidatorManager to update the validator status,
+     * @notice Completes validator registration by dispatching to the IValidatorManager to update the validator status,
      * and locking stake.
      *
      * @param messageIndex The index of the ICM message to be received providing the acknowledgement from the P-Chain.
-     * This is forwarded to the ValidatorManager to be parsed.
+     * This is forwarded to the IValidatorManager to be parsed.
      * @return The ID of the validator that was registered.
      */
     function completeValidatorRegistration(
@@ -243,11 +243,11 @@ interface IStakingManager {
     ) external;
 
     /**
-     * @notice Completes validator removal by dispatching to the ValidatorManager to update the validator status,
+     * @notice Completes validator removal by dispatching to the IValidatorManager to update the validator status,
      * and unlocking stake.
      *
      * @param messageIndex The index of the ICM message to be received providing the acknowledgement from the P-Chain.
-     * This is forwarded to the ValidatorManager to be parsed.
+     * This is forwarded to the IValidatorManager to be parsed.
      * @return The ID of the validator that was removed.
      */
     function completeValidatorRemoval(
