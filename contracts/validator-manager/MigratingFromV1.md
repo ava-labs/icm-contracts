@@ -1,6 +1,8 @@
 # Migrating From V1 Validator Manager Contracts
 
-The V1 Validator Manager contracts are implemented as a single deployed contract consisting of multiple contracts related through inheritance. The V2 Validator Manager, on the other hand, may be consist of multiple deployed contracts that interact via external function calls. 
+The V1 Validator Manager contracts are implemented as a single deployed contract consisting of multiple contracts related through inheritance. The V2 Validator Manager, on the other hand, may be consist of multiple deployed contracts that interact via external function calls.
+
+> Note: This guide only applies to validator manager contracts at or above [validator-manager-v1.0.0](https://github.com/ava-labs/icm-contracts/releases/tag/validator-manager-v1.0.0). Contracts at commits before then must use other methods to convert to V2.
 
 ## Migrating Proof-of-Authority
 
