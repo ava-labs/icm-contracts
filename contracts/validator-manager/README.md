@@ -159,9 +159,13 @@ Validator exit is initiated with a call to `ValidatorManager.initiateValidatorRe
 
 ### PoS
 
-Similar to the validator registration flow, PoS validator removal is the same as the PoA case apply, with the only difference being that `StakingManager.initiateValidatorRemoval` and `StakingManager.completeValidatorRemoval` must be called instead.
+PoS validator removal follows the same flow as the PoA case, except that `StakingManager.initiateValidatorRemoval` and `StakingManager.completeValidatorRemoval` must be called instead.
 
-A [`ValidationUptimeMessage`](./UptimeMessageSpec.md) Warp message may optionally be provided in the call to `StakingManager.initiateValidatorRemoval` in order to calculate the staking rewards; otherwise the latest received uptime will be used (see [(PoS only) Submit and Uptime Proof](#pos-only-submit-an-uptime-proof)). This proof may be requested directly from the L1 validators, which will provide it in a `ValidationUptimeMessage` Warp message. If the uptime is not sufficient to earn validation rewards, the call to `initiateValidatorRemoval` will fail. `forceInitiateValidatorRemoval` acts the same as `initiateValidatorRemoval`, but bypasses the uptime-based rewards check. Once `initiateValidatorRemoval` or `forceInitiateValidatorRemoval` is called, staking rewards cease accruing for `StakingManagers`.
+There are two additional considerations:
+
+- A [`ValidationUptimeMessage`](./UptimeMessageSpec.md) Warp message may optionally be provided in the call to `StakingManager.initiateValidatorRemoval` in order to calculate the staking rewards; otherwise the latest received uptime will be used (see [(PoS only) Submit and Uptime Proof](#pos-only-submit-an-uptime-proof)). This proof may be requested directly from the L1 validators, which will provide it in a `ValidationUptimeMessage` Warp message. If the uptime is not sufficient to earn validation rewards, the call to `initiateValidatorRemoval` will fail. `forceInitiateValidatorRemoval` acts the same as `initiateValidatorRemoval`, but bypasses the uptime-based rewards check. Once `initiateValidatorRemoval` or `forceInitiateValidatorRemoval` is called, staking rewards cease accruing for `StakingManagers`.
+
+- Unlike with PoA, PoS validators are not able to decrease their weight. This can lead to a scenario in which a PoS validator manager with a high proportion of the L1's weight is not able to exit the validator set due to churn restrictions. Additional validators or delegators will need to first be registered to more evenly distribute weight across the L1's validator set.
 
 Once acknowledgement from the P-Chain has been received via a call to  `StakingManager.completeValidatorRemoval`, staking rewards are disbursed and stake is returned.
 
