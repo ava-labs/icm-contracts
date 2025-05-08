@@ -306,11 +306,11 @@ contract Native721TokenStakingManagerTest is StakingManagerTest, IERC721Receiver
     function testRewardCancellationTooLate() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                Native721TokenStakingManager.TooLate.selector, 2 * DEFAULT_EPOCH_DURATION, 604800
+                Native721TokenStakingManager.TooLate.selector, 3 * DEFAULT_EPOCH_DURATION, 3196800
             )
         );
 
-        vm.warp(2 * DEFAULT_EPOCH_DURATION);
+        vm.warp(3 * DEFAULT_EPOCH_DURATION);
         app.cancelRewards(true, 0, address(rewardToken));    
     }
 
