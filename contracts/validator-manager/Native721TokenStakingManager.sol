@@ -244,7 +244,7 @@ contract Native721TokenStakingManager is
      *      It supports both primary and NFT-based reward pools.
      * @param primary A boolean indicating whether to retrieve rewards from the primary pool (true) or the NFT pool (false).
      * @param epoch The staking epoch for which to retrieve rewards.
-     * @param tokens An array of token addresses for which to check the rewards.
+     * @param token An array of token addresses for which to check the rewards.
      * @param account The account for which the rewards are being queried.
      * @return rewards An array of reward amounts corresponding to the provided token addresses.
      *
@@ -255,26 +255,24 @@ contract Native721TokenStakingManager is
     function getRewards(
         bool primary,
         uint64 epoch,
-        address[] memory tokens,
+        address token,
         address account
-    ) public view returns (uint256[] memory) {
+    ) public view returns (uint256) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
 
-        uint256[] memory rewards = new uint256[](tokens.length);
+        uint256 reward;
 
-        if(primary && $._totalRewardWeight[epoch] == 0){ return rewards; }
-        if(!primary && $._totalRewardWeightNFT[epoch] == 0){ return rewards; }
+        if(primary && $._totalRewardWeight[epoch] == 0){ return reward; }
+        if(!primary && $._totalRewardWeightNFT[epoch] == 0){ return reward; }
 
-        for(uint256 i = 0; i < tokens.length; i++){
-            if(primary){
-                rewards[i] = (($._rewardPools[epoch][tokens[i]] * $._accountRewardWeight[epoch][account])
-                    / $._totalRewardWeight[epoch]) - $._rewardWithdrawn[epoch][account][tokens[i]];
-            } else {
-                rewards[i] = (($._rewardPoolsNFT[epoch][tokens[i]] * $._accountRewardWeightNFT[epoch][account])
-                    / $._totalRewardWeightNFT[epoch]) - $._rewardWithdrawnNFT[epoch][account][tokens[i]];
-            }
+        if(primary){
+            reward = (($._rewardPools[epoch][token] * $._accountRewardWeight[epoch][account])
+                / $._totalRewardWeight[epoch]) - $._rewardWithdrawn[epoch][account][token];
+        } else {
+            reward = (($._rewardPoolsNFT[epoch][token] * $._accountRewardWeightNFT[epoch][account])
+                / $._totalRewardWeightNFT[epoch]) - $._rewardWithdrawnNFT[epoch][account][token];
         }
-        return rewards;
+        return reward;
     }
 
     /**
@@ -294,15 +292,15 @@ contract Native721TokenStakingManager is
         }
         
         address sender = _msgSender();
-        uint256[] memory rewards = getRewards(primary, epoch, tokens, sender);
         for(uint256 i = 0; i < tokens.length; i++){
+            uint256 reward = getRewards(primary, epoch, tokens[i], sender);
             if(primary){
-                $._rewardWithdrawn[epoch][sender][tokens[i]] += rewards[i];
+                $._rewardWithdrawn[epoch][sender][tokens[i]] += reward;
             } else {
-                $._rewardWithdrawnNFT[epoch][sender][tokens[i]] += rewards[i];
+                $._rewardWithdrawnNFT[epoch][sender][tokens[i]] += reward;
             }
-            emit RewardClaimed(primary, epoch, sender, tokens[i], rewards[i]);
-            IERC20(tokens[i]).transfer(recipient, rewards[i]);
+            emit RewardClaimed(primary, epoch, sender, tokens[i], reward);
+            IERC20(tokens[i]).transfer(recipient, reward);
         }
     }
 
