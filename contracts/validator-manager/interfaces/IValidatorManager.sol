@@ -81,7 +81,7 @@ interface IValidatorManager is IACP99Manager {
      * @notice Returns a validation ID registered to the given nodeID
      * @param nodeID ID of the node associated with the validation ID
      */
-    function registeredValidators(
+    function getNodeValidationID(
         bytes calldata nodeID
     ) external view returns (bytes32);
 

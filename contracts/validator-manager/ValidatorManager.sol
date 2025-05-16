@@ -446,17 +446,6 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
     }
 
     /**
-     * @notice Returns a validation ID registered to the given nodeID
-     * @param nodeID ID of the node associated with the validation ID
-     */
-    function registeredValidators(
-        bytes calldata nodeID
-    ) public view returns (bytes32) {
-        ValidatorManagerStorage storage $ = _getValidatorManagerStorage();
-        return $._registeredValidators[nodeID];
-    }
-
-    /**
      * @notice See {IACP99Manager-getValidator}.
      */
     function getValidator(
@@ -493,6 +482,7 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
 
     /**
      * @notice Returns the validationID that the provided nodeID is registered under
+     * @param nodeID ID of the node associated with the validation ID
      */
     function getNodeValidationID(
         bytes calldata nodeID
