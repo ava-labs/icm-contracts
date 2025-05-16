@@ -264,7 +264,10 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
             totalWeight += initialValidator.weight;
 
             emit RegisteredInitialValidator(
-                validationID, _fixedNodeID(initialValidator.nodeID), initialValidator.weight
+                validationID,
+                _fixedNodeID(initialValidator.nodeID),
+                conversionData.subnetID,
+                initialValidator.weight
             );
         }
         $._churnTracker.totalWeight = totalWeight;
