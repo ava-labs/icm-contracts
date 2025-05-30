@@ -25,6 +25,7 @@ import (
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
+	poamanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/PoAManager"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
 	istakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/IStakingManager"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
@@ -35,6 +36,7 @@ import (
 	subnetEvmUtils "github.com/ava-labs/subnet-evm/tests/utils"
 	"github.com/ava-labs/subnet-evm/warp/messages"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/onsi/gomega"
@@ -238,6 +240,37 @@ func DeployAndInitializeValidatorManagerSpecialization(
 			},
 		)
 		Expect(err).Should(BeNil())
+	case PoAValidatorManager:
+		poamanager.PoAManagerBin = poamanager.PoAManagerMetaData.Bin
+
+		var manager *poamanager.PoAManager
+		address, tx, manager, err = poamanager.DeployPoAManager(
+			opts,
+			l1.RPCClient,
+			0, // ICMInitializable.Allowed
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
+
+		if proxy {
+			// Overwrite the manager address with the proxy address
+			address, proxyAdmin = DeployTransparentUpgradeableProxy(
+				ctx,
+				l1,
+				senderKey,
+				address,
+			)
+			manager, err = poamanager.NewPoAManager(address, l1.RPCClient)
+			Expect(err).Should(BeNil())
+		}
+
+		tx, err = manager.Initialize(
+			opts,
+			crypto.PubkeyToAddress(senderKey.PublicKey),
+			validatorManagerAddress,
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
 	}
 	return address, proxyAdmin
 }
@@ -461,7 +494,7 @@ func InitiatePoAValidatorRegistration(
 	ownerKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
 	node Node,
-	validatorManager *validatormanager.ValidatorManager,
+	validatorManager *poamanager.PoAManager,
 	validatorManagerAddress common.Address,
 ) (*types.Receipt, *acp99manager.ACP99ManagerInitiatedValidatorRegistration) {
 	opts, err := bind.NewKeyedTransactorWithChainID(ownerKey, l1.EVMChainID)
@@ -471,8 +504,8 @@ func InitiatePoAValidatorRegistration(
 		opts,
 		node.NodeID[:],
 		node.NodePoP.PublicKey[:],
-		validatormanager.PChainOwner{},
-		validatormanager.PChainOwner{},
+		poamanager.PChainOwner{},
+		poamanager.PChainOwner{},
 		node.Weight,
 	)
 	Expect(err).Should(BeNil())
@@ -700,7 +733,8 @@ func InitiateAndCompletePoAValidatorRegistration(
 	ownerKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
+	poaManager *poamanager.PoAManager,
+	poaManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	expiry uint64,
 	node Node,
@@ -713,8 +747,8 @@ func InitiateAndCompletePoAValidatorRegistration(
 		ownerKey,
 		l1Info,
 		node,
-		validatorManager,
-		validatorManagerAddress,
+		poaManager,
+		poaManagerAddress,
 	)
 	validationID := registrationInitiatedEvent.ValidationID
 
@@ -748,7 +782,7 @@ func InitiateAndCompletePoAValidatorRegistration(
 		ctx,
 		ownerKey,
 		l1Info,
-		validatorManagerAddress,
+		poaManagerAddress,
 		registrationSignedMessage,
 	)
 	// Check that the validator is registered in the staking contract
@@ -898,7 +932,7 @@ func InitiateEndPoAValidation(
 	ctx context.Context,
 	ownerKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
+	validatorManager *poamanager.PoAManager,
 	validationID ids.ID,
 ) *types.Receipt {
 	opts, err := bind.NewKeyedTransactorWithChainID(ownerKey, l1.EVMChainID)
@@ -1270,7 +1304,8 @@ func InitiateAndCompleteEndInitialPoAValidation(
 	ownerKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
+	poaManager *poamanager.PoAManager,
+	poaManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
 	index uint32,
@@ -1284,7 +1319,7 @@ func InitiateAndCompleteEndInitialPoAValidation(
 		ctx,
 		ownerKey,
 		l1Info,
-		validatorManager,
+		poaManager,
 		validationID,
 	)
 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
@@ -1330,7 +1365,7 @@ func InitiateAndCompleteEndInitialPoAValidation(
 		ctx,
 		ownerKey,
 		l1Info,
-		validatorManagerAddress,
+		poaManagerAddress,
 		registrationSignedMessage,
 	)
 
@@ -1349,7 +1384,8 @@ func InitiateAndCompleteEndPoAValidation(
 	ownerKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
+	poaManager *poamanager.PoAManager,
+	poaManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
 	weight uint64,
@@ -1360,7 +1396,7 @@ func InitiateAndCompleteEndPoAValidation(
 		ctx,
 		ownerKey,
 		l1Info,
-		validatorManager,
+		poaManager,
 		validationID,
 	)
 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
@@ -1398,7 +1434,7 @@ func InitiateAndCompleteEndPoAValidation(
 		ctx,
 		ownerKey,
 		l1Info,
-		validatorManagerAddress,
+		poaManagerAddress,
 		registrationSignedMessage,
 	)
 

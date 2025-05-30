@@ -225,30 +225,28 @@ func (n *LocalNetwork) ConvertSubnet(
 		ProxyAdmin: vdrManagerProxyAdmin,
 	}
 
-	if managerType != utils.PoAValidatorManager {
-		specializationAddress, specializationProxyAdmin := utils.DeployAndInitializeValidatorManagerSpecialization(
-			ctx,
-			senderKey,
-			l1,
-			vdrManagerAddress,
-			managerType,
-			proxy,
-		)
+	specializationAddress, specializationProxyAdmin := utils.DeployAndInitializeValidatorManagerSpecialization(
+		ctx,
+		senderKey,
+		l1,
+		vdrManagerAddress,
+		managerType,
+		proxy,
+	)
 
-		ownable, err := ownableupgradeable.NewOwnableUpgradeable(vdrManagerAddress, l1.RPCClient)
-		Expect(err).Should(BeNil())
+	ownable, err := ownableupgradeable.NewOwnableUpgradeable(vdrManagerAddress, l1.RPCClient)
+	Expect(err).Should(BeNil())
 
-		opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
-		Expect(err).Should(BeNil())
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
 
-		tx, err := ownable.TransferOwnership(opts, specializationAddress)
-		Expect(err).Should(BeNil())
-		utils.WaitForTransactionSuccess(context.Background(), l1, tx.Hash())
+	tx, err := ownable.TransferOwnership(opts, specializationAddress)
+	Expect(err).Should(BeNil())
+	utils.WaitForTransactionSuccess(context.Background(), l1, tx.Hash())
 
-		n.validatorManagerSpecializations[l1.SubnetID] = ProxyAddress{
-			Address:    specializationAddress,
-			ProxyAdmin: specializationProxyAdmin,
-		}
+	n.validatorManagerSpecializations[l1.SubnetID] = ProxyAddress{
+		Address:    specializationAddress,
+		ProxyAdmin: specializationProxyAdmin,
 	}
 
 	tmpnetNodes := n.GetExtraNodes(len(weights))

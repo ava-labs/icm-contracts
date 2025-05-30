@@ -76,7 +76,7 @@ The E2E test script also supports a `--components` flag, making it easy to run a
 The E2E tests written in Golang interface with the solidity contracts by use of generated ABI bindings. To regenerate Golang ABI bindings for the Solidity smart contracts, run:
 
 ```bash
-./scripts/abi_go_bindings.sh
+./scripts/abi_bindings.sh
 ```
 
 The auto-generated bindings should be written under the `abi-bindings/` directory.
