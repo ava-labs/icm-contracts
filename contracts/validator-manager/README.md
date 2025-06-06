@@ -30,6 +30,16 @@ class ValidatorManager {
     +initiateValidatorWeightUpdate() onlyOwner
 }
 
+class PoAManager {
+    +completeValidatorRegistration()
+    +completeValidatorRemoval()
+    +completeValidatorWeightUpdate()
+    +initiateValidatorRegistration() onlyOwner
+    +initiateValidatorRemoval() onlyOwner
+    +initiateValidatorWeightUpdate() onlyOwner
+    +transferValidatorManagerOwnership() onlyOwner
+}
+
 class StakingManager {
     +completeValidatorRegistration()
     +initiateValidatorRemoval()
@@ -51,7 +61,8 @@ class NativeTokenStakingManager {
 }
 
 ACP99Manager <|-- ValidatorManager
-ValidatorManager --o  StakingManager : owner
+ValidatorManager --o PoAManager : owner
+ValidatorManager --o StakingManager : owner
 StakingManager <|-- ERC20TokenStakingManager
 StakingManager <|-- NativeTokenStakingManager
 ```
