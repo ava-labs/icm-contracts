@@ -90,13 +90,10 @@ else
 fi
 
 cd "$ICM_CONTRACTS_PATH"
-# Build ginkgo
-# to install the ginkgo binary (required for test build and run)
-go install -v github.com/onsi/ginkgo/v2/ginkgo@${GINKGO_VERSION}
 
 for component in $(echo $components | tr ',' ' '); do
     echo "Building e2e tests for $component"
-    ginkgo build ./tests/suites/$component
+    go run github.com/onsi/ginkgo/v2/ginkgo build ./tests/suites/$component
 
     echo "Running e2e tests for $component"
 
