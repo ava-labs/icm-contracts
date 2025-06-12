@@ -23,6 +23,7 @@ import (
 	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
 	acp99manager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ACP99Manager"
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
+	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
@@ -59,6 +60,7 @@ const (
 	PoAValidatorManager ValidatorManagerConcreteType = iota
 	ERC20TokenStakingManager
 	NativeTokenStakingManager
+	SlotAuctionManager
 )
 
 //
@@ -138,7 +140,18 @@ func DeployAndInitializeValidatorManagerSpecialization(
 		address    common.Address
 		proxyAdmin *proxyadmin.ProxyAdmin
 	)
+
 	switch managerType {
+	case SlotAuctionManager:
+		slotauctionmanager.SlotAuctionManagerBin = slotauctionmanager.SlotAuctionManagerMetaData.Bin
+
+		address, tx, _, err = slotauctionmanager.DeploySlotAuctionManager(
+			opts,
+			l1.RPCClient,
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
+
 	case ERC20TokenStakingManager:
 		// Reset the global binary data for better test isolation
 		erc20tokenstakingmanager.ERC20TokenStakingManagerBin = erc20tokenstakingmanager.ERC20TokenStakingManagerMetaData.Bin

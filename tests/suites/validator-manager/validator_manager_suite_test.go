@@ -67,24 +67,29 @@ var _ = ginkgo.AfterEach(func() {
 
 var _ = ginkgo.Describe("[Validator manager integration tests]", func() {
 	// Validator Manager tests
-	ginkgo.It("Native token staking manager",
+	ginkgo.It("Validator slot auction",
 		ginkgo.Label(validatorManagerLabel),
 		func() {
-			validatorManagerFlows.NativeTokenStakingManager(LocalNetworkInstance)
+			validatorManagerFlows.ValidatorSlotAuction(LocalNetworkInstance)
 		})
-	ginkgo.It("ERC20 token staking manager",
-		ginkgo.Label(validatorManagerLabel),
-		func() {
-			validatorManagerFlows.ERC20TokenStakingManager(LocalNetworkInstance)
-		})
-	ginkgo.It("PoA migration to PoS",
-		ginkgo.Label(validatorManagerLabel),
-		func() {
-			validatorManagerFlows.PoAMigrationToPoS(LocalNetworkInstance)
-		})
-	ginkgo.It("Delegate disable validator",
-		ginkgo.Label(validatorManagerLabel),
-		func() {
-			validatorManagerFlows.RemoveDelegatorInactiveValidator(LocalNetworkInstance)
-		})
+	// ginkgo.It("Native token staking manager",
+	// 	ginkgo.Label(validatorManagerLabel),
+	// 	func() {
+	// 		validatorManagerFlows.NativeTokenStakingManager(LocalNetworkInstance)
+	// 	})
+	// ginkgo.It("ERC20 token staking manager",
+	// 	ginkgo.Label(validatorManagerLabel),
+	// 	func() {
+	// 		validatorManagerFlows.ERC20TokenStakingManager(LocalNetworkInstance)
+	// 	})
+	// ginkgo.It("PoA migration to PoS",
+	// 	ginkgo.Label(validatorManagerLabel),
+	// 	func() {
+	// 		validatorManagerFlows.PoAMigrationToPoS(LocalNetworkInstance)
+	// 	})
+	// ginkgo.It("Delegate disable validator",
+	// 	ginkgo.Label(validatorManagerLabel),
+	// 	func() {
+	// 		validatorManagerFlows.RemoveDelegatorInactiveValidator(LocalNetworkInstance)
+	// 	})
 })

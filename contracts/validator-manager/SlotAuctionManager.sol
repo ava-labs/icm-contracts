@@ -10,7 +10,7 @@ import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {EmCoin} from "./EmCoin.sol";
 
-contract EmreValidator {
+contract SlotAuctionManager {
     address public constant EM_TOKEN_ADDRESS = address(0x0); //once I deploy I should be able to put the address here
     address public constant VALIDATOR_MANAGER_ADDRESS = address(0x0);
 
