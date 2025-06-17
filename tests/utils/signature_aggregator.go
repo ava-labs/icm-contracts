@@ -15,7 +15,7 @@ import (
 
 	"github.com/ava-labs/avalanchego/ids"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/ava-labs/libevm/log"
 
 	. "github.com/onsi/gomega"
 )
@@ -115,6 +115,24 @@ func NewSignatureAggregator(apiUri string, subnetIDs []ids.ID) *SignatureAggrega
 }
 
 func (s *SignatureAggregator) CreateSignedMessage(
+	unsignedMessage *avalancheWarp.UnsignedMessage,
+	justification []byte,
+	inputSigningSubnet ids.ID,
+	quorumPercentage uint64,
+) (*avalancheWarp.Message, error) {
+	var err error
+	var signedMessage *avalancheWarp.Message
+	for i := 0; i < 3; i++ {
+		signedMessage, err = s.createSignedMessage(unsignedMessage, justification, inputSigningSubnet, quorumPercentage)
+		if err == nil {
+			return signedMessage, nil
+		}
+		time.Sleep(time.Second * 1)
+	}
+	return nil, err
+}
+
+func (s *SignatureAggregator) createSignedMessage(
 	unsignedMessage *avalancheWarp.UnsignedMessage,
 	justification []byte,
 	inputSigningSubnet ids.ID,

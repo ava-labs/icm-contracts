@@ -10,10 +10,9 @@ import (
 	poamanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/PoAManager"
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/log"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	subnetEvmUtils "github.com/ava-labs/subnet-evm/tests/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/log"
 	. "github.com/onsi/gomega"
 )
 
@@ -124,8 +123,8 @@ func ValidatorChurn(network *localnetwork.LocalNetwork, teleporter utils.Telepor
 	// We have to update all L1s, not just the ones directly involved in this test to ensure that the
 	// proposer VM is updated on all L1s.
 	for _, l1Info := range network.GetL1Infos() {
-		err = subnetEvmUtils.IssueTxsToActivateProposerVMFork(
-			ctx, l1Info.EVMChainID, fundedKey, l1Info.WSClient,
+		err = utils.IssueTxsToAdvanceChain(
+			ctx, l1Info.EVMChainID, fundedKey, l1Info.WSClient, 5,
 		)
 		Expect(err).Should(BeNil())
 	}
