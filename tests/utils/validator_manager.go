@@ -23,9 +23,10 @@ import (
 	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
 	acp99manager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ACP99Manager"
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
-	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
+	emcoin "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/EmCoin"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
+	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
 	istakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/IStakingManager"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
@@ -143,11 +144,17 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 	switch managerType {
 	case SlotAuctionManager:
-		slotauctionmanager.SlotAuctionManagerBin = slotauctionmanager.SlotAuctionManagerMetaData.Bin
+		emCoinAddr, transactionInfo, _, err := emcoin.DeployEmCoin(opts, l1.RPCClient)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, transactionInfo.Hash())
 
+		slotauctionmanager.SlotAuctionManagerBin = slotauctionmanager.SlotAuctionManagerMetaData.Bin
+		//Emre: this was throwing error and im not sure how to fix it so im just putting this here to see if itll be fine (the common.Address{} x 2)
 		address, tx, _, err = slotauctionmanager.DeploySlotAuctionManager(
 			opts,
 			l1.RPCClient,
+			emCoinAddr,
+			validatorManagerAddress,
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())

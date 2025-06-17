@@ -5,17 +5,24 @@
 
 pragma solidity 0.8.25;
 
-// import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {EmCoin} from "./EmCoin.sol";
-
+//TODO: make these constant and also public, prob some way to store it in memory or something from here
 contract SlotAuctionManager {
-    address public constant EM_TOKEN_ADDRESS = address(0x0); //once I deploy I should be able to put the address here
-    address public constant VALIDATOR_MANAGER_ADDRESS = address(0x0);
+    IERC20 public TOKEN_CONTRACT;
+    IValidatorManager public VALIDATOR_MANAGER;
 
     uint8 public validatorCount = 0;
     mapping(address validator => bytes32 validationID) public validators;
+    mapping(bytes32 validationID => address validator) public validationIDs;
+    bytes32 public zilch;
+
+    constructor(address tokenAddress, address vmAddress) {
+        TOKEN_CONTRACT = IERC20(tokenAddress);
+        VALIDATOR_MANAGER = IValidatorManager(vmAddress);
+    }
 
     function becomeValidator(
         bytes memory nodeID,
@@ -24,21 +31,21 @@ contract SlotAuctionManager {
         PChainOwner memory disableOwner
     ) public returns (bytes32) {
         require(validatorCount < 10, "Max validator limit reached");
-        require(validators[msg.sender] == 0, "Sender is already a validator");
+        require(validators[msg.sender] == bytes32(0), "Sender is already a validator");
         validatorCount++;
 
-        EmCoin(EM_TOKEN_ADDRESS).transferFrom(msg.sender, address(this), 10);
+        require(
+            TOKEN_CONTRACT.transferFrom(msg.sender, address(this), 10) == true,
+            "Tokens failed to transfer"
+        );
+
         //potential problem, dont want to make them a validator before marking them as a validator
         //might be smart to have it point to a struct that says if its a validator and holds its validationID, but for now well try this out
-        bytes32 validationID = IValidatorManager(VALIDATOR_MANAGER_ADDRESS)
-        .initiateValidatorRegistration(
-            nodeID,
-            blsPublicKey,
-            remainingBalanceOwner, 
-            disableOwner, 
-            100
+        bytes32 validationID = VALIDATOR_MANAGER.initiateValidatorRegistration(
+            nodeID, blsPublicKey, remainingBalanceOwner, disableOwner, 100
         );
         validators[msg.sender] = validationID;
+        validationIDs[validationID] = msg.sender;
         return validationID;
     }
 
@@ -47,9 +54,22 @@ contract SlotAuctionManager {
     ) public {
         require(validatorCount > 0, "Currently no validators");
         require(validators[msg.sender] == validationID, "Invalid sender, sender is not a validator");
-        validators[msg.sender] = 0;
+        validators[msg.sender];
         validatorCount--;
-        IValidatorManager(VALIDATOR_MANAGER_ADDRESS).initiateValidatorRemoval(validationID);
-        EmCoin(EM_TOKEN_ADDRESS).transfer(msg.sender, 10);
+        VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
+        require(TOKEN_CONTRACT.transfer(msg.sender, 10), "Funds failed to send");
+    }
+
+    function initiateRemoveInitialValidator(
+        bytes32 validationID
+    ) public {
+        require (validationIDs[validationID] == address(0), "Validator not initial Validator");
+        VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
+    }
+
+    function completeRemoveInitialValidator(
+        uint32 messageIndex
+    ) public {
+        VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
 }
