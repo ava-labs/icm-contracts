@@ -19,11 +19,12 @@ contract SlotAuctionManager {
     mapping(bytes32 validationID => address validator) public validationIDs;
     bytes32 public zilch;
 
-    constructor(address tokenAddress, address vmAddress) {
+    constructor(address tokenAddress, address vmAddress, bytes32[] memory initialValidationIDs) {
         TOKEN_CONTRACT = IERC20(tokenAddress);
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
-    }
 
+    }
+    
     function becomeValidator(
         bytes memory nodeID,
         bytes memory blsPublicKey,
@@ -60,14 +61,14 @@ contract SlotAuctionManager {
         require(TOKEN_CONTRACT.transfer(msg.sender, 10), "Funds failed to send");
     }
 
-    function initiateRemoveInitialValidator(
+    function initiateRemoveValidator(
         bytes32 validationID
     ) public {
         require (validationIDs[validationID] == address(0), "Validator not initial Validator");
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
 
-    function completeRemoveInitialValidator(
+    function completeRemoveValidator(
         uint32 messageIndex
     ) public {
         VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);

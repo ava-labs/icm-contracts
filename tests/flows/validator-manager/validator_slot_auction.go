@@ -17,6 +17,7 @@ import (
 	"github.com/ava-labs/icm-contracts/tests/utils"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
+	"github.com/ava-labs/subnet-evm/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/onsi/gomega"
 )
@@ -44,7 +45,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	_, fundedKey := network.GetFundedAccountInfo()
 	ctx := context.Background()
 
-	nodes, _ := network.ConvertSubnet(
+	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
 		utils.SlotAuctionManager,
@@ -52,7 +53,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		fundedKey,
 		false,
 	)
-
+	
 	validatorManagerProxy, slotAuctionManagerAddress := network.GetValidatorManager(l1AInfo.SubnetID)
 	slotAuctionAddress := slotAuctionManagerAddress.Address
 
@@ -67,6 +68,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	slotAuctionManager, err := slotauctionmanager.NewSlotAuctionManager(
 		slotAuctionAddress,
 		l1AInfo.RPCClient,
+		initialValidationIDs,
 	)
 	Expect(err).Should(BeNil())
 
@@ -103,6 +105,8 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	log.Println("Number of validators", val)
 
 	//Remove validator
+
+	validatorManager.
 
 	log.Println("Initializing initial validator removal")
 	
@@ -148,16 +152,16 @@ func InitiateAndCompleteEndInitialPoPValidation(
 ) {
 	log.Println("Initializing initial validator removal")
 	utils.WaitMinStakeDuration(ctx, l1Info, fundedKey)
-	receipt := utils.ForceInitiateEndPoSValidation(
+	receipt := ForceInitiateEndPoPValidation(
 		ctx,
 		fundedKey,
 		l1Info,
-		stakingManager,
+		slotAuctionManager,
 		validationID,
 	)
 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
 	Expect(err).Should(BeNil())
-	validatorRemovalEvent, err := GetEventFromLogs(
+	validatorRemovalEvent, err := utils.GetEventFromLogs(
 		receipt.Logs,
 		acp99Manager.ParseInitiatedValidatorRemoval,
 	)
@@ -167,7 +171,7 @@ func InitiateAndCompleteEndInitialPoPValidation(
 
 	// Gather subnet-evm Warp signatures for the SetL1ValidatorWeightMessage & relay to the P-Chain
 	// (Sending to the P-Chain will be skipped for now)
-	unsignedMessage := ExtractWarpMessageFromLog(ctx, receipt, l1Info)
+	unsignedMessage := utils.ExtractWarpMessageFromLog(ctx, receipt, l1Info)
 	signedWarpMessage, err := signatureAggregator.CreateSignedMessage(
 		unsignedMessage,
 		nil,
@@ -178,12 +182,12 @@ func InitiateAndCompleteEndInitialPoPValidation(
 
 	// Deliver the Warp message to the P-Chain
 	pchainWallet.IssueSetL1ValidatorWeightTx(signedWarpMessage.Bytes())
-	PChainProposerVMWorkaround(pchainWallet)
-	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+	utils.PChainProposerVMWorkaround(pchainWallet)
+	utils.AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
 
 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
 	log.Println("Completing initial validator removal")
-	registrationSignedMessage := ConstructL1ValidatorRegistrationMessageForInitialValidator(
+	registrationSignedMessage := utils.ConstructL1ValidatorRegistrationMessageForInitialValidator(
 		validationID,
 		index,
 		false,
@@ -203,10 +207,27 @@ func InitiateAndCompleteEndInitialPoPValidation(
 	)
 
 	// Check that the validator is has been delisted from the staking contract
-	validationEndedEvent, err := GetEventFromLogs(
+	validationEndedEvent, err := utils.GetEventFromLogs(
 		receipt.Logs,
 		acp99Manager.ParseCompletedValidatorRemoval,
 	)
 	Expect(err).Should(BeNil())
 	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
+}
+
+func ForceInitiateEndPoPValidation(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1 interfaces.L1TestInfo,
+	slotAuctionManager *slotauctionmanager.SlotAuctionManager, 
+	validationID ids.ID,
+) *types.Receipt {
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := slotAuctionManager.InitiateRemoveInitialValidator(
+		opts,
+		validationID,
+	)
+	Expect(err).Should(BeNil())
+	return utils.WaitForTransactionSuccess(ctx, l1, tx.Hash())
 }
