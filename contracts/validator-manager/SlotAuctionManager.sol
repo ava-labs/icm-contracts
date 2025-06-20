@@ -13,16 +13,12 @@ import {EmCoin} from "./EmCoin.sol";
 contract SlotAuctionManager {
     IERC20 public TOKEN_CONTRACT;
     IValidatorManager public VALIDATOR_MANAGER;
-
+    bytes32 public TemporaryID = 0;
     uint8 public validatorCount = 0;
-    mapping(address validator => bytes32 validationID) public validators;
-    mapping(bytes32 validationID => address validator) public validationIDs;
-    bytes32 public zilch;
 
-    constructor(address tokenAddress, address vmAddress, bytes32[] memory initialValidationIDs) {
+    constructor(address tokenAddress, address vmAddress) {
         TOKEN_CONTRACT = IERC20(tokenAddress);
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
-
     }
     
     function becomeValidator(
@@ -32,7 +28,6 @@ contract SlotAuctionManager {
         PChainOwner memory disableOwner
     ) public returns (bytes32) {
         require(validatorCount < 10, "Max validator limit reached");
-        require(validators[msg.sender] == bytes32(0), "Sender is already a validator");
         validatorCount++;
 
         require(
@@ -45,32 +40,28 @@ contract SlotAuctionManager {
         bytes32 validationID = VALIDATOR_MANAGER.initiateValidatorRegistration(
             nodeID, blsPublicKey, remainingBalanceOwner, disableOwner, 100
         );
-        validators[msg.sender] = validationID;
-        validationIDs[validationID] = msg.sender;
+        TemporaryID = validationID;
         return validationID;
     }
 
-    function stopValidating(
+    function removeValidator(
         bytes32 validationID
     ) public {
         require(validatorCount > 0, "Currently no validators");
-        require(validators[msg.sender] == validationID, "Invalid sender, sender is not a validator");
-        validators[msg.sender];
         validatorCount--;
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
         require(TOKEN_CONTRACT.transfer(msg.sender, 10), "Funds failed to send");
     }
 
-    function initiateRemoveValidator(
+    function initiateRemoveInitialValidator(
         bytes32 validationID
     ) public {
-        require (validationIDs[validationID] == address(0), "Validator not initial Validator");
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
 
-    function completeRemoveValidator(
+    function completeRemoveInitialValidator(
         uint32 messageIndex
     ) public {
         VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
-}
+}   

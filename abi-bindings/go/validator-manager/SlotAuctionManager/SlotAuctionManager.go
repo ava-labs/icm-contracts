@@ -37,8 +37,8 @@ type PChainOwner struct {
 
 // SlotAuctionManagerMetaData contains all meta data concerning the SlotAuctionManager contract.
 var SlotAuctionManagerMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"vmAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"TOKEN_CONTRACT\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"VALIDATOR_MANAGER\",\"outputs\":[{\"internalType\":\"contractIValidatorManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsPublicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"remainingBalanceOwner\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"disableOwner\",\"type\":\"tuple\"}],\"name\":\"becomeValidator\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"stopValidating\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"validationIDs\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"validator\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"validatorCount\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"validator\",\"type\":\"address\"}],\"name\":\"validators\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"zilch\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
-	Bin: "0x60806040526001805460ff60a01b19169055348015601b575f80fd5b50604051610cb8380380610cb88339810160408190526038916081565b5f80546001600160a01b039384166001600160a01b0319918216179091556001805492909316911617905560ad565b80516001600160a01b0381168114607c575f80fd5b919050565b5f80604083850312156091575f80fd5b6098836067565b915060a4602084016067565b90509250929050565b610bfe806100ba5f395ff3fe608060405234801561000f575f80fd5b506004361061009b575f3560e01c8063a476f67511610063578063a476f6751461013d578063ae9483e014610150578063bebf2eee14610163578063f76236c11461016c578063fa52c7d814610194575f80fd5b806305af82561461009f5780630661ef7e146100b45780630f43a677146100c757806336339388146100f257806337748bdb1461011c575b5f80fd5b6100b26100ad366004610788565b6101b3565b005b6100b26100c23660046107a8565b610228565b6001546100db90600160a01b900460ff1681565b60405160ff90911681526020015b60405180910390f35b5f54610104906001600160a01b031681565b6040516001600160a01b0390911681526020016100e9565b61012f61012a366004610974565b610444565b6040519081526020016100e9565b6100b261014b3660046107a8565b6106b0565b600154610104906001600160a01b031681565b61012f60045481565b61010461017a3660046107a8565b60036020525f90815260409020546001600160a01b031681565b61012f6101a2366004610a1a565b60026020525f908152604090205481565b60015460405163025a076560e61b815263ffffffff831660048201526001600160a01b0390911690639681d940906024016020604051808303815f875af1158015610200573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102249190610a33565b5050565b600154600160a01b900460ff166102865760405162461bcd60e51b815260206004820152601760248201527f43757272656e746c79206e6f2076616c696461746f727300000000000000000060448201526064015b60405180910390fd5b335f9081526002602052604090205481146102f55760405162461bcd60e51b815260206004820152602960248201527f496e76616c69642073656e6465722c2073656e646572206973206e6f742061206044820152683b30b634b230ba37b960b91b606482015260840161027d565b335f52600260205260018054600160a01b900460ff1690601461031783610a5e565b825460ff9182166101009390930a928302919092021990911617905550600154604051635b73516560e11b8152600481018390526001600160a01b039091169063b6e6a2ca906024015f604051808303815f87803b158015610377575f80fd5b505af1158015610389573d5f803e3d5ffd5b50505f5460405163a9059cbb60e01b8152336004820152600a60248201526001600160a01b03909116925063a9059cbb91506044016020604051808303815f875af11580156103da573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906103fe9190610a79565b6104415760405162461bcd60e51b8152602060048201526014602482015273119d5b991cc819985a5b1959081d1bc81cd95b9960621b604482015260640161027d565b50565b6001545f90600a600160a01b90910460ff16106104a35760405162461bcd60e51b815260206004820152601b60248201527f4d61782076616c696461746f72206c696d697420726561636865640000000000604482015260640161027d565b335f90815260026020526040902054156104ff5760405162461bcd60e51b815260206004820152601d60248201527f53656e64657220697320616c726561647920612076616c696461746f72000000604482015260640161027d565b60018054600160a01b900460ff1690601461051983610a98565b825460ff9182166101009390930a9283029190920219909116179055505f546040516323b872dd60e01b8152336004820152306024820152600a60448201526001600160a01b03909116906323b872dd906064016020604051808303815f875af1158015610589573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906105ad9190610a79565b15156001146105fe5760405162461bcd60e51b815260206004820152601960248201527f546f6b656e73206661696c656420746f207472616e7366657200000000000000604482015260640161027d565b600154604051634e5bb12760e11b81525f916001600160a01b031690639cb7624e90610637908990899089908990606490600401610b5f565b6020604051808303815f875af1158015610653573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906106779190610a33565b335f8181526002602090815260408083208590558483526003909152902080546001600160a01b03191690911790559695505050505050565b5f818152600360205260409020546001600160a01b0316156107145760405162461bcd60e51b815260206004820152601f60248201527f56616c696461746f72206e6f7420696e697469616c2056616c696461746f7200604482015260640161027d565b600154604051635b73516560e11b8152600481018390526001600160a01b039091169063b6e6a2ca906024015f604051808303815f87803b158015610757575f80fd5b505af1158015610769573d5f803e3d5ffd5b5050505050565b803563ffffffff81168114610783575f80fd5b919050565b5f60208284031215610798575f80fd5b6107a182610770565b9392505050565b5f602082840312156107b8575f80fd5b5035919050565b634e487b7160e01b5f52604160045260245ffd5b6040805190810167ffffffffffffffff811182821017156107f6576107f66107bf565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715610825576108256107bf565b604052919050565b5f82601f83011261083c575f80fd5b813567ffffffffffffffff811115610856576108566107bf565b610869601f8201601f19166020016107fc565b81815284602083860101111561087d575f80fd5b816020850160208301375f918101602001919091529392505050565b80356001600160a01b0381168114610783575f80fd5b5f604082840312156108bf575f80fd5b6108c76107d3565b90506108d282610770565b815260208083013567ffffffffffffffff808211156108ef575f80fd5b818501915085601f830112610902575f80fd5b813581811115610914576109146107bf565b8060051b91506109258483016107fc565b818152918301840191848101908884111561093e575f80fd5b938501935b838510156109635761095485610899565b82529385019390850190610943565b808688015250505050505092915050565b5f805f8060808587031215610987575f80fd5b843567ffffffffffffffff8082111561099e575f80fd5b6109aa8883890161082d565b955060208701359150808211156109bf575f80fd5b6109cb8883890161082d565b945060408701359150808211156109e0575f80fd5b6109ec888389016108af565b93506060870135915080821115610a01575f80fd5b50610a0e878288016108af565b91505092959194509250565b5f60208284031215610a2a575f80fd5b6107a182610899565b5f60208284031215610a43575f80fd5b5051919050565b634e487b7160e01b5f52601160045260245ffd5b5f60ff821680610a7057610a70610a4a565b5f190192915050565b5f60208284031215610a89575f80fd5b815180151581146107a1575f80fd5b5f60ff821660ff8103610aad57610aad610a4a565b60010192915050565b5f81518084525f5b81811015610ada57602081850181015186830182015201610abe565b505f602082860101526020601f19601f83011685010191505092915050565b5f6040830163ffffffff8351168452602080840151604060208701528281518085526060880191506020830194505f92505b80831015610b545784516001600160a01b03168252938301936001929092019190830190610b2b565b509695505050505050565b60a081525f610b7160a0830188610ab6565b8281036020840152610b838188610ab6565b90508281036040840152610b978187610af9565b90508281036060840152610bab8186610af9565b91505067ffffffffffffffff83166080830152969550505050505056fea26469706673582212208d190e73c4d40d339d2b792b43e5c012fb2af39442ee5edb333b0b42a75d352064736f6c63430008190033",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"vmAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"TOKEN_CONTRACT\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TemporaryID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"VALIDATOR_MANAGER\",\"outputs\":[{\"internalType\":\"contractIValidatorManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsPublicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"remainingBalanceOwner\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"disableOwner\",\"type\":\"tuple\"}],\"name\":\"becomeValidator\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"removeValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"validatorCount\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	Bin: "0x60806040525f6002556003805460ff19169055348015601c575f80fd5b50604051610ab8380380610ab88339810160408190526039916082565b5f80546001600160a01b039384166001600160a01b0319918216179091556001805492909316911617905560ae565b80516001600160a01b0381168114607d575f80fd5b919050565b5f80604083850312156092575f80fd5b6099836068565b915060a5602084016068565b90509250929050565b6109fd806100bb5f395ff3fe608060405234801561000f575f80fd5b5060043610610085575f3560e01c80636fb191f0116100585780636fb191f01461010d578063a476f67514610116578063ae9483e014610129578063cd993ba51461013c575f80fd5b806305af8256146100895780630f43a6771461009e57806336339388146100c257806337748bdb146100ec575b5f80fd5b61009c6100973660046105a6565b61014f565b005b6003546100ab9060ff1681565b60405160ff90911681526020015b60405180910390f35b5f546100d4906001600160a01b031681565b6040516001600160a01b0390911681526020016100b9565b6100ff6100fa366004610775565b6101c4565b6040519081526020016100b9565b6100ff60025481565b61009c61012436600461081b565b6103a1565b6001546100d4906001600160a01b031681565b61009c61014a36600461081b565b6103fd565b60015460405163025a076560e61b815263ffffffff831660048201526001600160a01b0390911690639681d940906024016020604051808303815f875af115801561019c573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906101c09190610832565b5050565b6003545f90600a60ff909116106102225760405162461bcd60e51b815260206004820152601b60248201527f4d61782076616c696461746f72206c696d69742072656163686564000000000060448201526064015b60405180910390fd5b6003805460ff16905f6102348361085d565b825460ff9182166101009390930a9283029190920219909116179055505f546040516323b872dd60e01b8152336004820152306024820152600a60448201526001600160a01b03909116906323b872dd906064016020604051808303815f875af11580156102a4573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102c8919061087b565b15156001146103195760405162461bcd60e51b815260206004820152601960248201527f546f6b656e73206661696c656420746f207472616e73666572000000000000006044820152606401610219565b600154604051634e5bb12760e11b81525f916001600160a01b031690639cb7624e90610352908990899089908990606490600401610943565b6020604051808303815f875af115801561036e573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906103929190610832565b60028190559695505050505050565b600154604051635b73516560e11b8152600481018390526001600160a01b039091169063b6e6a2ca906024015f604051808303815f87803b1580156103e4575f80fd5b505af11580156103f6573d5f803e3d5ffd5b5050505050565b60035460ff1661044f5760405162461bcd60e51b815260206004820152601760248201527f43757272656e746c79206e6f2076616c696461746f72730000000000000000006044820152606401610219565b6003805460ff16905f610461836109ac565b825460ff9182166101009390930a928302919092021990911617905550600154604051635b73516560e11b8152600481018390526001600160a01b039091169063b6e6a2ca906024015f604051808303815f87803b1580156104c1575f80fd5b505af11580156104d3573d5f803e3d5ffd5b50505f5460405163a9059cbb60e01b8152336004820152600a60248201526001600160a01b03909116925063a9059cbb91506044016020604051808303815f875af1158015610524573d5f803e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610548919061087b565b61058b5760405162461bcd60e51b8152602060048201526014602482015273119d5b991cc819985a5b1959081d1bc81cd95b9960621b6044820152606401610219565b50565b803563ffffffff811681146105a1575f80fd5b919050565b5f602082840312156105b6575f80fd5b6105bf8261058e565b9392505050565b634e487b7160e01b5f52604160045260245ffd5b6040805190810167ffffffffffffffff811182821017156105fd576105fd6105c6565b60405290565b604051601f8201601f1916810167ffffffffffffffff8111828210171561062c5761062c6105c6565b604052919050565b5f82601f830112610643575f80fd5b813567ffffffffffffffff81111561065d5761065d6105c6565b610670601f8201601f1916602001610603565b818152846020838601011115610684575f80fd5b816020850160208301375f918101602001919091529392505050565b5f604082840312156106b0575f80fd5b6106b86105da565b90506106c38261058e565b815260208083013567ffffffffffffffff808211156106e0575f80fd5b818501915085601f8301126106f3575f80fd5b813581811115610705576107056105c6565b8060051b9150610716848301610603565b818152918301840191848101908884111561072f575f80fd5b938501935b8385101561076457843592506001600160a01b0383168314610754575f80fd5b8282529385019390850190610734565b808688015250505050505092915050565b5f805f8060808587031215610788575f80fd5b843567ffffffffffffffff8082111561079f575f80fd5b6107ab88838901610634565b955060208701359150808211156107c0575f80fd5b6107cc88838901610634565b945060408701359150808211156107e1575f80fd5b6107ed888389016106a0565b93506060870135915080821115610802575f80fd5b5061080f878288016106a0565b91505092959194509250565b5f6020828403121561082b575f80fd5b5035919050565b5f60208284031215610842575f80fd5b5051919050565b634e487b7160e01b5f52601160045260245ffd5b5f60ff821660ff810361087257610872610849565b60010192915050565b5f6020828403121561088b575f80fd5b815180151581146105bf575f80fd5b5f81518084525f5b818110156108be576020818501810151868301820152016108a2565b505f602082860101526020601f19601f83011685010191505092915050565b5f6040830163ffffffff8351168452602080840151604060208701528281518085526060880191506020830194505f92505b808310156109385784516001600160a01b0316825293830193600192909201919083019061090f565b509695505050505050565b60a081525f61095560a083018861089a565b8281036020840152610967818861089a565b9050828103604084015261097b81876108dd565b9050828103606084015261098f81866108dd565b91505067ffffffffffffffff831660808301529695505050505050565b5f60ff8216806109be576109be610849565b5f19019291505056fea26469706673582212202bc2bee7aa2372cc43d2611e489baeec803b86b9fc29cd64b5a781b02ff4aa4164736f6c63430008190033",
 }
 
 // SlotAuctionManagerABI is the input ABI used to generate the binding from.
@@ -239,6 +239,37 @@ func (_SlotAuctionManager *SlotAuctionManagerCallerSession) TOKENCONTRACT() (com
 	return _SlotAuctionManager.Contract.TOKENCONTRACT(&_SlotAuctionManager.CallOpts)
 }
 
+// TemporaryID is a free data retrieval call binding the contract method 0x6fb191f0.
+//
+// Solidity: function TemporaryID() view returns(bytes32)
+func (_SlotAuctionManager *SlotAuctionManagerCaller) TemporaryID(opts *bind.CallOpts) ([32]byte, error) {
+	var out []interface{}
+	err := _SlotAuctionManager.contract.Call(opts, &out, "TemporaryID")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// TemporaryID is a free data retrieval call binding the contract method 0x6fb191f0.
+//
+// Solidity: function TemporaryID() view returns(bytes32)
+func (_SlotAuctionManager *SlotAuctionManagerSession) TemporaryID() ([32]byte, error) {
+	return _SlotAuctionManager.Contract.TemporaryID(&_SlotAuctionManager.CallOpts)
+}
+
+// TemporaryID is a free data retrieval call binding the contract method 0x6fb191f0.
+//
+// Solidity: function TemporaryID() view returns(bytes32)
+func (_SlotAuctionManager *SlotAuctionManagerCallerSession) TemporaryID() ([32]byte, error) {
+	return _SlotAuctionManager.Contract.TemporaryID(&_SlotAuctionManager.CallOpts)
+}
+
 // VALIDATORMANAGER is a free data retrieval call binding the contract method 0xae9483e0.
 //
 // Solidity: function VALIDATOR_MANAGER() view returns(address)
@@ -270,37 +301,6 @@ func (_SlotAuctionManager *SlotAuctionManagerCallerSession) VALIDATORMANAGER() (
 	return _SlotAuctionManager.Contract.VALIDATORMANAGER(&_SlotAuctionManager.CallOpts)
 }
 
-// ValidationIDs is a free data retrieval call binding the contract method 0xf76236c1.
-//
-// Solidity: function validationIDs(bytes32 validationID) view returns(address validator)
-func (_SlotAuctionManager *SlotAuctionManagerCaller) ValidationIDs(opts *bind.CallOpts, validationID [32]byte) (common.Address, error) {
-	var out []interface{}
-	err := _SlotAuctionManager.contract.Call(opts, &out, "validationIDs", validationID)
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// ValidationIDs is a free data retrieval call binding the contract method 0xf76236c1.
-//
-// Solidity: function validationIDs(bytes32 validationID) view returns(address validator)
-func (_SlotAuctionManager *SlotAuctionManagerSession) ValidationIDs(validationID [32]byte) (common.Address, error) {
-	return _SlotAuctionManager.Contract.ValidationIDs(&_SlotAuctionManager.CallOpts, validationID)
-}
-
-// ValidationIDs is a free data retrieval call binding the contract method 0xf76236c1.
-//
-// Solidity: function validationIDs(bytes32 validationID) view returns(address validator)
-func (_SlotAuctionManager *SlotAuctionManagerCallerSession) ValidationIDs(validationID [32]byte) (common.Address, error) {
-	return _SlotAuctionManager.Contract.ValidationIDs(&_SlotAuctionManager.CallOpts, validationID)
-}
-
 // ValidatorCount is a free data retrieval call binding the contract method 0x0f43a677.
 //
 // Solidity: function validatorCount() view returns(uint8)
@@ -330,68 +330,6 @@ func (_SlotAuctionManager *SlotAuctionManagerSession) ValidatorCount() (uint8, e
 // Solidity: function validatorCount() view returns(uint8)
 func (_SlotAuctionManager *SlotAuctionManagerCallerSession) ValidatorCount() (uint8, error) {
 	return _SlotAuctionManager.Contract.ValidatorCount(&_SlotAuctionManager.CallOpts)
-}
-
-// Validators is a free data retrieval call binding the contract method 0xfa52c7d8.
-//
-// Solidity: function validators(address validator) view returns(bytes32 validationID)
-func (_SlotAuctionManager *SlotAuctionManagerCaller) Validators(opts *bind.CallOpts, validator common.Address) ([32]byte, error) {
-	var out []interface{}
-	err := _SlotAuctionManager.contract.Call(opts, &out, "validators", validator)
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// Validators is a free data retrieval call binding the contract method 0xfa52c7d8.
-//
-// Solidity: function validators(address validator) view returns(bytes32 validationID)
-func (_SlotAuctionManager *SlotAuctionManagerSession) Validators(validator common.Address) ([32]byte, error) {
-	return _SlotAuctionManager.Contract.Validators(&_SlotAuctionManager.CallOpts, validator)
-}
-
-// Validators is a free data retrieval call binding the contract method 0xfa52c7d8.
-//
-// Solidity: function validators(address validator) view returns(bytes32 validationID)
-func (_SlotAuctionManager *SlotAuctionManagerCallerSession) Validators(validator common.Address) ([32]byte, error) {
-	return _SlotAuctionManager.Contract.Validators(&_SlotAuctionManager.CallOpts, validator)
-}
-
-// Zilch is a free data retrieval call binding the contract method 0xbebf2eee.
-//
-// Solidity: function zilch() view returns(bytes32)
-func (_SlotAuctionManager *SlotAuctionManagerCaller) Zilch(opts *bind.CallOpts) ([32]byte, error) {
-	var out []interface{}
-	err := _SlotAuctionManager.contract.Call(opts, &out, "zilch")
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// Zilch is a free data retrieval call binding the contract method 0xbebf2eee.
-//
-// Solidity: function zilch() view returns(bytes32)
-func (_SlotAuctionManager *SlotAuctionManagerSession) Zilch() ([32]byte, error) {
-	return _SlotAuctionManager.Contract.Zilch(&_SlotAuctionManager.CallOpts)
-}
-
-// Zilch is a free data retrieval call binding the contract method 0xbebf2eee.
-//
-// Solidity: function zilch() view returns(bytes32)
-func (_SlotAuctionManager *SlotAuctionManagerCallerSession) Zilch() ([32]byte, error) {
-	return _SlotAuctionManager.Contract.Zilch(&_SlotAuctionManager.CallOpts)
 }
 
 // BecomeValidator is a paid mutator transaction binding the contract method 0x37748bdb.
@@ -457,23 +395,23 @@ func (_SlotAuctionManager *SlotAuctionManagerTransactorSession) InitiateRemoveIn
 	return _SlotAuctionManager.Contract.InitiateRemoveInitialValidator(&_SlotAuctionManager.TransactOpts, validationID)
 }
 
-// StopValidating is a paid mutator transaction binding the contract method 0x0661ef7e.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xcd993ba5.
 //
-// Solidity: function stopValidating(bytes32 validationID) returns()
-func (_SlotAuctionManager *SlotAuctionManagerTransactor) StopValidating(opts *bind.TransactOpts, validationID [32]byte) (*types.Transaction, error) {
-	return _SlotAuctionManager.contract.Transact(opts, "stopValidating", validationID)
+// Solidity: function removeValidator(bytes32 validationID) returns()
+func (_SlotAuctionManager *SlotAuctionManagerTransactor) RemoveValidator(opts *bind.TransactOpts, validationID [32]byte) (*types.Transaction, error) {
+	return _SlotAuctionManager.contract.Transact(opts, "removeValidator", validationID)
 }
 
-// StopValidating is a paid mutator transaction binding the contract method 0x0661ef7e.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xcd993ba5.
 //
-// Solidity: function stopValidating(bytes32 validationID) returns()
-func (_SlotAuctionManager *SlotAuctionManagerSession) StopValidating(validationID [32]byte) (*types.Transaction, error) {
-	return _SlotAuctionManager.Contract.StopValidating(&_SlotAuctionManager.TransactOpts, validationID)
+// Solidity: function removeValidator(bytes32 validationID) returns()
+func (_SlotAuctionManager *SlotAuctionManagerSession) RemoveValidator(validationID [32]byte) (*types.Transaction, error) {
+	return _SlotAuctionManager.Contract.RemoveValidator(&_SlotAuctionManager.TransactOpts, validationID)
 }
 
-// StopValidating is a paid mutator transaction binding the contract method 0x0661ef7e.
+// RemoveValidator is a paid mutator transaction binding the contract method 0xcd993ba5.
 //
-// Solidity: function stopValidating(bytes32 validationID) returns()
-func (_SlotAuctionManager *SlotAuctionManagerTransactorSession) StopValidating(validationID [32]byte) (*types.Transaction, error) {
-	return _SlotAuctionManager.Contract.StopValidating(&_SlotAuctionManager.TransactOpts, validationID)
+// Solidity: function removeValidator(bytes32 validationID) returns()
+func (_SlotAuctionManager *SlotAuctionManagerTransactorSession) RemoveValidator(validationID [32]byte) (*types.Transaction, error) {
+	return _SlotAuctionManager.Contract.RemoveValidator(&_SlotAuctionManager.TransactOpts, validationID)
 }

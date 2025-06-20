@@ -633,6 +633,77 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	return registrationInitiatedEvent
 }
 
+
+func InitiateAndCompletePoAValidatorRegistration(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	ownerKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	validatorManager *validatormanager.ValidatorManager,
+	validatorManagerAddress common.Address,
+	expiry uint64,
+	node Node,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
+	// Initiate validator registration
+	receipt, registrationInitiatedEvent := InitiatePoAValidatorRegistration(
+		ctx,
+		ownerKey,
+		l1Info,
+		node,
+		validatorManager,
+		validatorManagerAddress,
+	)
+	validationID := registrationInitiatedEvent.ValidationID
+
+	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
+	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
+
+	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
+		100*units.Avax,
+		node.NodePoP.ProofOfPossession,
+		signedWarpMessage.Bytes(),
+	)
+	Expect(err).Should(BeNil())
+	PChainProposerVMWorkaround(pchainWallet)
+	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
+
+	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+	log.Println("Completing validator registration")
+	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
+		validationID,
+		expiry,
+		node,
+		true,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+
+	// Deliver the Warp message to the L1
+	receipt = CompleteValidatorRegistration(
+		ctx,
+		ownerKey,
+		l1Info,
+		validatorManagerAddress,
+		registrationSignedMessage,
+	)
+	// Check that the validator is registered in the staking contract
+	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
+	Expect(err).Should(BeNil())
+	registrationEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseCompletedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
+
+	return registrationInitiatedEvent
+}
+
 func InitiateAndCompleteERC20ValidatorRegistration(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
@@ -699,76 +770,6 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 		fundedKey,
 		l1Info,
 		stakingManagerAddress,
-		registrationSignedMessage,
-	)
-	// Check that the validator is registered in the staking contract
-	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
-	Expect(err).Should(BeNil())
-	registrationEvent, err := GetEventFromLogs(
-		receipt.Logs,
-		acp99Manager.ParseCompletedValidatorRegistration,
-	)
-	Expect(err).Should(BeNil())
-	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
-
-	return registrationInitiatedEvent
-}
-
-func InitiateAndCompletePoAValidatorRegistration(
-	ctx context.Context,
-	signatureAggregator *SignatureAggregator,
-	ownerKey *ecdsa.PrivateKey,
-	l1Info interfaces.L1TestInfo,
-	pChainInfo interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
-	validatorManagerAddress common.Address,
-	expiry uint64,
-	node Node,
-	pchainWallet pwallet.Wallet,
-	networkID uint32,
-) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
-	// Initiate validator registration
-	receipt, registrationInitiatedEvent := InitiatePoAValidatorRegistration(
-		ctx,
-		ownerKey,
-		l1Info,
-		node,
-		validatorManager,
-		validatorManagerAddress,
-	)
-	validationID := registrationInitiatedEvent.ValidationID
-
-	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
-	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
-
-	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
-		100*units.Avax,
-		node.NodePoP.ProofOfPossession,
-		signedWarpMessage.Bytes(),
-	)
-	Expect(err).Should(BeNil())
-	PChainProposerVMWorkaround(pchainWallet)
-	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
-
-	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-	log.Println("Completing validator registration")
-	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
-		validationID,
-		expiry,
-		node,
-		true,
-		l1Info,
-		pChainInfo,
-		networkID,
-		signatureAggregator,
-	)
-
-	// Deliver the Warp message to the L1
-	receipt = CompleteValidatorRegistration(
-		ctx,
-		ownerKey,
-		l1Info,
-		validatorManagerAddress,
 		registrationSignedMessage,
 	)
 	// Check that the validator is registered in the staking contract
@@ -1182,6 +1183,125 @@ func InitiateAndCompleteEndInitialPoSValidation(
 	)
 	Expect(err).Should(BeNil())
 	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
+}
+
+func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	fundedKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	slotAuctionManager *slotauctionmanager.SlotAuctionManager, //replace this with auctionManager
+	slotAuctionManagerAddress common.Address,
+	validatorManagerAddress common.Address,
+	validationID ids.ID,
+	index uint32,
+	weight uint64,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+) {
+	log.Println("Initializing initial validator removal")
+	WaitMinStakeDuration(ctx, l1Info, fundedKey)
+	receipt := ForceInitiateEndProofOfPurchaseValidation(
+		ctx,
+		fundedKey,
+		l1Info,
+		slotAuctionManager,
+		validationID,
+	)
+	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
+	Expect(err).Should(BeNil())
+	validatorRemovalEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseInitiatedValidatorRemoval,
+	)
+	Expect(err).Should(BeNil())
+	Expect(validatorRemovalEvent.ValidationID[:]).Should(Equal(validationID[:]))
+	Expect(validatorRemovalEvent.Weight).Should(Equal(weight))
+
+	// Gather subnet-evm Warp signatures for the SetL1ValidatorWeightMessage & relay to the P-Chain
+	// (Sending to the P-Chain will be skipped for now)
+	unsignedMessage := ExtractWarpMessageFromLog(ctx, receipt, l1Info)
+	signedWarpMessage, err := signatureAggregator.CreateSignedMessage(
+		unsignedMessage,
+		nil,
+		l1Info.SubnetID,
+		67,
+	)
+	Expect(err).Should(BeNil())
+
+	// Deliver the Warp message to the P-Chain
+	pchainWallet.IssueSetL1ValidatorWeightTx(signedWarpMessage.Bytes())
+	PChainProposerVMWorkaround(pchainWallet)
+	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+
+	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+	log.Println("Completing initial validator removal")
+	registrationSignedMessage := ConstructL1ValidatorRegistrationMessageForInitialValidator(
+		validationID,
+		index,
+		false,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+	log.Println("Passed construct L1 Validator Reg")
+	// Deliver the Warp message to the L1
+	receipt = CompleteEndProofOfPurchaseValidation(
+		ctx,
+		fundedKey,
+		l1Info,
+		slotAuctionManagerAddress,
+		registrationSignedMessage,
+	)
+	log.Println("passed Complete end proof of purchase")
+	// Check that the validator is has been delisted from the staking contract
+	validationEndedEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseCompletedValidatorRemoval,
+	)
+	Expect(err).Should(BeNil())
+	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
+}
+
+func ForceInitiateEndProofOfPurchaseValidation(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1 interfaces.L1TestInfo,
+	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	validationID ids.ID,
+) *types.Receipt {
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := slotAuctionManager.InitiateRemoveInitialValidator(
+		opts,
+		validationID,
+	)
+	Expect(err).Should(BeNil())
+	return WaitForTransactionSuccess(ctx, l1, tx.Hash())
+}
+
+func CompleteEndProofOfPurchaseValidation(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1 interfaces.L1TestInfo,
+	proofOfPurchaseAddress common.Address,
+	registrationSignedMessage *avalancheWarp.Message,
+) *types.Receipt {
+	abi, err := slotauctionmanager.SlotAuctionManagerMetaData.GetAbi()
+	Expect(err).Should(BeNil())
+
+	callData, err := abi.Pack("completeRemoveInitialValidator", uint32(0))
+	Expect(err).Should(BeNil())
+	return CallWarpReceiver(
+		ctx,
+		callData,
+		senderKey,
+		l1,
+		proofOfPurchaseAddress,
+		registrationSignedMessage.Bytes(),
+	)
 }
 
 func InitiateAndCompleteEndPoSValidation(
