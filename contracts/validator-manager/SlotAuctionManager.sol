@@ -10,11 +10,18 @@ import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {EmCoin} from "./EmCoin.sol";
 //TODO: make these constant and also public, prob some way to store it in memory or something from here
+
+struct ValidationInfo {
+    bytes nodeID;
+    address rewardAddress;
+    //prob more stuff later abt end time and such
+}
+
 contract SlotAuctionManager {
     IERC20 public TOKEN_CONTRACT;
     IValidatorManager public VALIDATOR_MANAGER;
-    bytes32 public TemporaryID = 0;
     uint8 public validatorCount = 0;
+    mapping (bytes32 ValidationID => ValidationInfo) ValidationMap;
 
     constructor(address tokenAddress, address vmAddress) {
         TOKEN_CONTRACT = IERC20(tokenAddress);
@@ -26,12 +33,19 @@ contract SlotAuctionManager {
     ) external returns (bytes32) {
         return VALIDATOR_MANAGER.completeValidatorRegistration(messageIndex);
     }
-    
+
+    function completeValidatorRemoval(
+        uint32 messageIndex
+    ) external returns (bytes32) {
+        return VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
+    }
+
     function initiateValidatorRegistration(
         bytes memory nodeID,
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,
-        PChainOwner memory disableOwner
+        PChainOwner memory disableOwner,
+        address rewardAddress
     ) public returns (bytes32) {
         require(validatorCount < 10, "Max validator limit reached");
         validatorCount++;
@@ -46,11 +60,11 @@ contract SlotAuctionManager {
         bytes32 validationID = VALIDATOR_MANAGER.initiateValidatorRegistration(
             nodeID, blsPublicKey, remainingBalanceOwner, disableOwner, 100
         );
-        TemporaryID = validationID;
+        ValidationMap[validationID] = ValidationInfo(nodeID, rewardAddress);
         return validationID;
     }
 
-    function initiateRemoveValidator(
+    function initiateValidatorRemoval(
         bytes32 validationID
     ) public {
         require(validatorCount > 0, "Currently no validators");

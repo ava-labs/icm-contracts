@@ -80,6 +80,12 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	)
 
 	defer signatureAggregator.Shutdown()
+	opts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
+
+	rewardAddress := opts.From
+
+	balance, _ := exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
+	log.Println("Balance before: ", balance)
 
 	log.Println("Initiating and completing end Initial Proof of Purchase")
 	//Remove initial Validator
@@ -100,7 +106,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	)
 	log.Println("Starting addition of validator")
 
-	utils.InitiateAndCompleteERC20AuctionValidatorRegistration(
+	registrationInitiatedEvent := utils.InitiateAndCompleteERC20AuctionValidatorRegistration(
 		ctx,
 		signatureAggregator,
 		fundedKey,
@@ -110,13 +116,40 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		slotAuctionManager,
 		slotAuctionAddress,
 		validatorManagerProxy.Address,
+		opts.From,
 		exampleERC20,
 		nodes[0],
 		network.GetPChainWallet(),
 		network.GetNetworkID(),
 	)
+	balance, _ = exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
 
-	log.Println("RegisteredValidator")
+	nodes[0].NodeID = registrationInitiatedEvent.NodeID
+	nodes[0].Weight = registrationInitiatedEvent.Weight
+
+	log.Println("Balance after validator registration: ", balance)
+
+	utils.InitiateAndCompleteEndProofOfPurchaseValidation(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		registrationInitiatedEvent.ValidationID,
+		registrationInitiatedEvent.RegistrationExpiry,
+		nodes[0],
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
+	)
+
+	balance, _ = exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
+
+	log.Println("Balance after validator removal: ", balance)
+
+	log.Println("Emre: AAAAAAAAAAAAAAAAAAAAA")
 
 	// Expect(err).Should(BeNil())
 	// utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
