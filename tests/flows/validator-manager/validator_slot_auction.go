@@ -7,7 +7,9 @@ import (
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/units"
-	emcoin "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/EmCoin"
+	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
+
+	//emcoin "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/EmCoin"
 	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
@@ -38,6 +40,8 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	_, fundedKey := network.GetFundedAccountInfo()
 	ctx := context.Background()
 	pChainInfo := utils.GetPChainInfo(cChainInfo)
+	var stakeAmount big.Int
+	stakeAmount.SetInt64(10)
 
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
@@ -62,12 +66,10 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	)
 	Expect(err).Should(BeNil())
 
-	opts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
-
-	emCoinAddress, err := slotAuctionManager.TOKENCONTRACT(&bind.CallOpts{})
+	exampleERC20Address, err := slotAuctionManager.TOKENCONTRACT(&bind.CallOpts{})
 	Expect(err).Should(BeNil())
 
-	emCoin, err := emcoin.NewEmCoin(emCoinAddress, l1AInfo.RPCClient)
+	exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
 	Expect(err).Should(BeNil())
 
 	signatureAggregator := utils.NewSignatureAggregator(
@@ -78,15 +80,6 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	)
 
 	defer signatureAggregator.Shutdown()
-
-	// buys coin and approves it to be sent to slot auction
-	transactionInfo, err := emCoin.BuyCoin(opts, big.NewInt(1000))
-	Expect(err).Should(BeNil())
-	utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
-
-	transactionInfo, err = emCoin.Approve(opts, slotAuctionAddress, big.NewInt(10))
-	Expect(err).Should(BeNil())
-	utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
 
 	log.Println("Initiating and completing end Initial Proof of Purchase")
 	//Remove initial Validator
@@ -107,17 +100,28 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	)
 	log.Println("Starting addition of validator")
 
-	transactionInfo, err = slotAuctionManager.BecomeValidator(
-		opts,
-		nodes[0].NodeID[:],
-		nodes[0].NodePoP.PublicKey[:],
-		slotauctionmanager.PChainOwner{},
-		slotauctionmanager.PChainOwner{},
+	utils.InitiateAndCompleteERC20AuctionValidatorRegistration(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		&stakeAmount,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		exampleERC20,
+		nodes[0],
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
 	)
-	Expect(err).Should(BeNil())
-	utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
-	transactionInfo.Data()
-	log.Println(emCoin.BalanceOf(&bind.CallOpts{}, opts.From))
+
+	log.Println("RegisteredValidator")
+
+	// Expect(err).Should(BeNil())
+	// utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
+	// transactionInfo.Data()
+	// log.Println(emCoin.BalanceOf(&bind.CallOpts{}, opts.From))
 
 	// tempValID, _ := slotAuctionManager.TemporaryID(&bind.CallOpts{})
 

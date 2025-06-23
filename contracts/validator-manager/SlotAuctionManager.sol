@@ -21,7 +21,13 @@ contract SlotAuctionManager {
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
     }
     
-    function becomeValidator(
+    function completeValidatorRegistration(
+        uint32 messageIndex
+    ) external returns (bytes32) {
+        return VALIDATOR_MANAGER.completeValidatorRegistration(messageIndex);
+    }
+    
+    function initiateValidatorRegistration(
         bytes memory nodeID,
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,
@@ -44,7 +50,7 @@ contract SlotAuctionManager {
         return validationID;
     }
 
-    function removeValidator(
+    function initiateRemoveValidator(
         bytes32 validationID
     ) public {
         require(validatorCount > 0, "Currently no validators");
@@ -64,4 +70,5 @@ contract SlotAuctionManager {
     ) public {
         VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
+
 }   

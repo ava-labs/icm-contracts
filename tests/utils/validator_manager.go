@@ -23,7 +23,6 @@ import (
 	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
 	acp99manager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ACP99Manager"
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
-	emcoin "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/EmCoin"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
 	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
@@ -144,7 +143,7 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 	switch managerType {
 	case SlotAuctionManager:
-		emCoinAddr, transactionInfo, _, err := emcoin.DeployEmCoin(opts, l1.RPCClient)
+		erc20Address, transactionInfo, _, err := exampleerc20.DeployExampleERC20(opts, l1.RPCClient)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, transactionInfo.Hash())
 
@@ -153,7 +152,7 @@ func DeployAndInitializeValidatorManagerSpecialization(
 		address, tx, _, err = slotauctionmanager.DeploySlotAuctionManager(
 			opts,
 			l1.RPCClient,
-			emCoinAddr,
+			erc20Address,
 			validatorManagerAddress,
 		)
 		Expect(err).Should(BeNil())
@@ -476,6 +475,53 @@ func InitiateERC20ValidatorRegistration(
 	return receipt, registrationInitiatedEvent
 }
 
+func InitiateERC20AuctionValidatorRegistration(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1 interfaces.L1TestInfo,
+	stakeAmount *big.Int,
+	token *exampleerc20.ExampleERC20,
+	slotAuctionManagerAddress common.Address,
+	node Node,
+	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	validatorManagerAddress common.Address,
+) (*types.Receipt, *acp99manager.ACP99ManagerInitiatedValidatorRegistration) {
+	ERC20Approve(
+		ctx,
+		token,
+		slotAuctionManagerAddress,
+		stakeAmount,
+		l1,
+		senderKey,
+	)
+
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+
+	tx, err := slotAuctionManager.InitiateValidatorRegistration(
+		opts,
+		node.NodeID[:],
+		node.NodePoP.PublicKey[:],
+		slotauctionmanager.PChainOwner{},
+		slotauctionmanager.PChainOwner{},
+		// DefaultMinDelegateFeeBips,
+		// DefaultMinStakeDurationSeconds,
+		// stakeAmount,
+		// common.HexToAddress(DefaultRewardRecipientAddress),
+	)
+	Expect(err).Should(BeNil())
+	receipt := WaitForTransactionSuccess(ctx, l1, tx.Hash())
+	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1.RPCClient)
+	Expect(err).Should(BeNil())
+	registrationInitiatedEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseInitiatedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+	Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
+	return receipt, registrationInitiatedEvent
+}
+
 func InitiatePoAValidatorRegistration(
 	ctx context.Context,
 	ownerKey *ecdsa.PrivateKey,
@@ -633,7 +679,6 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	return registrationInitiatedEvent
 }
 
-
 func InitiateAndCompletePoAValidatorRegistration(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
@@ -781,6 +826,103 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 	)
 	Expect(err).Should(BeNil())
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
+
+	return registrationInitiatedEvent
+}
+
+func InitiateAndCompleteERC20AuctionValidatorRegistration(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	fundedKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	stakeAmount *big.Int,
+	pChainInfo interfaces.L1TestInfo,
+	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	slotAuctionManagerAddress common.Address,
+	validatorManagerAddress common.Address,
+	erc20 *exampleerc20.ExampleERC20,
+	node Node,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
+	// stakeAmount, err := stakingManager.WeightToValue(
+	// 	&bind.CallOpts{},
+	// 	node.Weight,
+	// )
+
+	//weight will be given to the user at auction, not based on amount spent
+
+	// Initiate validator registration
+	var receipt *types.Receipt
+	log.Println("Initializing validator registration")
+	receipt, registrationInitiatedEvent := InitiateERC20AuctionValidatorRegistration(
+		ctx,
+		fundedKey,
+		l1Info,
+		stakeAmount,
+		erc20,
+		slotAuctionManagerAddress,
+		node,
+		slotAuctionManager,
+		validatorManagerAddress,
+	)
+	validationID := registrationInitiatedEvent.ValidationID
+
+	log.Println("Emre: InitiateERC20AuctionValidatorRegistration Passed")
+
+	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
+	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
+
+	log.Println("Emre: ConstructSignedWarpMessage Passed")
+
+	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
+		100*units.Avax,
+		node.NodePoP.ProofOfPossession,
+		signedWarpMessage.Bytes(),
+	)
+	Expect(err).Should(BeNil())
+	PChainProposerVMWorkaround(pchainWallet)
+	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+
+	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+	log.Println("Completing validator registration")
+	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
+		validationID,
+		registrationInitiatedEvent.RegistrationExpiry,
+		node,
+		true,
+		l1Info,
+		pChainInfo,
+		networkID,
+		signatureAggregator,
+	)
+	log.Println("Emre: ConstructL1ValidatorRegistrationMessage Passed")
+
+	// Deliver the Warp message to the L1
+	receipt = CompleteValidatorRegistration(
+		ctx,
+		fundedKey,
+		l1Info,
+		slotAuctionManagerAddress,
+		registrationSignedMessage,
+	)
+
+	log.Println("Emre: CompleteValidatorRegistration Passed")
+
+	// Check that the validator is registered in the staking contract
+	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
+	Expect(err).Should(BeNil())
+
+	log.Println("Emre: NewACP99Manager Passed")
+
+	registrationEvent, err := GetEventFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseCompletedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
+
+	log.Println("Emre: All done")
 
 	return registrationInitiatedEvent
 }
