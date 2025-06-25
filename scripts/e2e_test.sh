@@ -73,6 +73,8 @@ cp ${BASEDIR}/subnet-evm/subnet-evm ${BASEDIR}/avalanchego/plugins/srEXiWaHuhNyG
 echo "Copied ${BASEDIR}/subnet-evm/subnet-evm binary to ${BASEDIR}/avalanchego/plugins/"
 
 export AVALANCHEGO_BUILD_PATH=$BASEDIR/avalanchego
+export AVALANCHEGO_PATH=$AVALANCHEGO_BUILD_PATH/avalanchego
+export AVAGO_PLUGIN_DIR=$AVALANCHEGO_BUILD_PATH/plugins
 
 ICM_SERVICES_BUILD_PATH=$BASEDIR/icm-services
 
