@@ -66,8 +66,8 @@ github.com/ava-labs/avalanchego v1.13.1 h1:sviA3MJbY00xYl77ru4vs9yiz7uTnAYfHpqYF
 github.com/ava-labs/avalanchego v1.13.1/go.mod h1:h8VRoqOhLRzqSlBpgFSOtCIu2Hey2FxgjD3pBkOXOY8=
 github.com/ava-labs/coreth v0.15.1-rc.0.0.20250530184801-28421010abae h1:PPcOEtY3SoXruzMPYJMxoeoExRVhf5UOiH7SvdPHQwY=
 github.com/ava-labs/coreth v0.15.1-rc.0.0.20250530184801-28421010abae/go.mod h1:Tl6TfpOwSq0bXvN7DTENXB4As3hml8ma9OQEWS9DH9I=
-github.com/ava-labs/libevm v1.13.14-0.2.0.release h1:uKGCc5/ceeBbfAPRVtBUxbQt50WzB2pEDb8Uy93ePgQ=
-github.com/ava-labs/libevm v1.13.14-0.2.0.release/go.mod h1:+Iol+sVQ1KyoBsHf3veyrBmHCXr3xXRWq6ZXkgVfNLU=
+github.com/ava-labs/libevm v1.13.14-0.3.0.rc.1 h1:vBMYo+Iazw0rGTr+cwjkBdh5eadLPlv4ywI4lKye3CA=
+github.com/ava-labs/libevm v1.13.14-0.3.0.rc.1/go.mod h1:+Iol+sVQ1KyoBsHf3veyrBmHCXr3xXRWq6ZXkgVfNLU=
 github.com/ava-labs/subnet-evm v0.7.4 h1:CRw9DSTzu3EbLQiXIWHu5okfCMyp0FxFUzYay5CvaCI=
 github.com/ava-labs/subnet-evm v0.7.4/go.mod h1:jHZuNYplgrK5eNJ+XP/N9JeyaVGSsGePyC4JKvx/SbA=
 github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible/go.mod h1:osfaiScAUVup+UC9Nfq76eWqDhXlp+4UYaA8uhTBO6g=
