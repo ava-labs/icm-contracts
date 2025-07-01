@@ -1,21 +1,19 @@
 package staking
 
 import (
-	// "context"
+	"context"
 	"log"
-	// "math/big"
+	"math/big"
 
-	// "github.com/ava-labs/avalanchego/ids"
-	// "github.com/ava-labs/avalanchego/utils/units"
-	// exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
-
-	// //emcoin "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/EmCoin"
-	// slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
+	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/utils/units"
+	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
+	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
+	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
-	// "github.com/ava-labs/icm-contracts/tests/utils"
-	// "github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	// . "github.com/onsi/gomega"
+	"github.com/ava-labs/icm-contracts/tests/utils"
+	. "github.com/onsi/gomega"
 )
 
 /*
@@ -29,142 +27,128 @@ import (
  *
  * Delists the validator from the L1. The steps are as follows:
  * - Initiate validator delisting
- * - Deliver the Warp message to the P-Chain (not implemented)
+* - Deliver the Warp message to the P-Chain (not implemented)
  * - Aggregate P-Chain signatures on the response Warp message
  * - Deliver the Warp message to the L1
  * - Verify that the validator is delisted from the staking contract
- */
+*/
 func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
-	foo := network.NetworkID + 5
-	log.Println(foo)
 	// Get the L1s info
-	// cChainInfo := network.GetPrimaryNetworkInfo()
-	// l1AInfo, _ := network.GetTwoL1s()
-	// _, fundedKey := network.GetFundedAccountInfo()
-	// ctx := context.Background()
-	// pChainInfo := utils.GetPChainInfo(cChainInfo)
-	// var stakeAmount big.Int
-	// stakeAmount.SetInt64(10)
+	cChainInfo := network.GetPrimaryNetworkInfo()
+	l1AInfo, _ := network.GetTwoL1s()
+	fundedAddress, fundedKey := network.GetFundedAccountInfo() //funded address
+	ctx := context.Background()
+	pChainInfo := utils.GetPChainInfo(cChainInfo) //pchainInfo
 
-	// nodes, _ := network.ConvertSubnet( // _ was initial validation ids
-	// 	ctx,
-	// 	l1AInfo,
-	// 	utils.SlotAuctionManager,
-	// 	[]uint64{units.Schmeckle, 1000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
-	// 	fundedKey,
-	// 	false,
-	// )
+	nodes, initialValidationIDs := network.ConvertSubnet(
+		ctx,
+		l1AInfo,
+		utils.SlotAuctionManager,
+		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, 1000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		fundedKey,
+		false,
+	)
 
-	// log.Println("Emre:", len(nodes))
+	val, _ := l1AInfo.RPCClient.BalanceAt(ctx, fundedAddress, nil)
 
-	// _, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID) // _ was validator manager proxy
-	// slotAuctionAddress := slotAuctionManagerProxy.Address
+	log.Println("Emre: funded address balance:", val)
 
-	// // _, err := validatormanager.NewValidatorManager(validatorManagerProxy.Address, l1AInfo.RPCClient)
-	// // Expect(err).Should(BeNil())
+	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
+	slotAuctionAddress := slotAuctionManagerProxy.Address
 
-	// slotAuctionManager, err := slotauctionmanager.NewSlotAuctionManager(
-	// 	slotAuctionAddress,
-	// 	l1AInfo.RPCClient,
-	// )
-	// Expect(err).Should(BeNil())
+	slotAuctionManager, err := slotauctionmanager.NewSlotAuctionManager(
+		slotAuctionAddress,
+		l1AInfo.RPCClient,
+	)
+	Expect(err).Should(BeNil())
 
-	// exampleERC20Address, err := slotAuctionManager.TOKENCONTRACT(&bind.CallOpts{})
-	// Expect(err).Should(BeNil())
+	exampleERC20Address, err := slotAuctionManager.TOKENCONTRACT(&bind.CallOpts{})
+	Expect(err).Should(BeNil())
 
-	// exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
-	// Expect(err).Should(BeNil())
+	exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
+	Expect(err).Should(BeNil())
 
-	// signatureAggregator := utils.NewSignatureAggregator(
-	// 	cChainInfo.NodeURIs[0],
-	// 	[]ids.ID{
-	// 		l1AInfo.SubnetID,
-	// 	},
-	// )
+	// signatureAggregator := network.GetSignatureAggregator()
+	signatureAggregator := utils.NewSignatureAggregator(
+		cChainInfo.NodeURIs[0],
+		[]ids.ID{
+			l1AInfo.SubnetID,
+		},
+	)
+	defer signatureAggregator.Shutdown()
 
-	// defer signatureAggregator.Shutdown()
-	// opts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
+	log.Println("Creating extra accounts with balances")
 
-	// rewardAddress := opts.From
+	Account1PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, exampleERC20, fundedKey, big.NewInt(1000))
+	Account2PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, exampleERC20, fundedKey, big.NewInt(500))
 
-	// balance, _ := exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
-	// log.Println("Balance before: ", balance)
+	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		initialValidationIDs[0],
+		0,
+		nodes[0].Weight,
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
+	)
 
-	// log.Println("Initiating and completing end Initial Proof of Purchase")
-	// //Remove initial Validator
-	// utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
-	// 	ctx,
-	// 	signatureAggregator,
-	// 	fundedKey,
-	// 	l1AInfo,
-	// 	pChainInfo,
-	// 	slotAuctionManager,
-	// 	slotAuctionAddress,
-	// 	validatorManagerProxy.Address,
-	// 	initialValidationIDs[0],
-	// 	0,
-	// 	nodes[0].Weight,
-	// 	network.GetPChainWallet(),
-	// 	network.GetNetworkID(),
-	// )
-	// log.Println("Starting addition of validator")
+	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		initialValidationIDs[1],
+		1,
+		nodes[1].Weight,
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
+	)
 
-	// registrationInitiatedEvent := utils.InitiateAndCompleteERC20AuctionValidatorRegistration(
-	// 	ctx,
-	// 	signatureAggregator,
-	// 	fundedKey,
-	// 	l1AInfo,
-	// 	&stakeAmount,
-	// 	pChainInfo,
-	// 	slotAuctionManager,
-	// 	slotAuctionAddress,
-	// 	validatorManagerProxy.Address,
-	// 	opts.From,
-	// 	exampleERC20,
-	// 	nodes[0],
-	// 	network.GetPChainWallet(),
-	// 	network.GetNetworkID(),
-	// )
-	// balance, _ = exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
+	auctionProgress, _ := slotAuctionManager.AuctionInProgress(&bind.CallOpts{})
 
-	// nodes[0].NodeID = registrationInitiatedEvent.NodeID
-	// nodes[0].Weight = registrationInitiatedEvent.Weight
+	log.Println("Emre: Auction progress:", auctionProgress)
 
-	// log.Println("Balance after validator registration: ", balance)
+	utils.InitiateAuction(ctx, l1AInfo, fundedKey, 1, 10, big.NewInt(30), big.NewInt(31556926), slotAuctionManager)
 
-	// utils.InitiateAndCompleteEndProofOfPurchaseValidation(
-	// 	ctx,
-	// 	signatureAggregator,
-	// 	fundedKey,
-	// 	l1AInfo,
-	// 	pChainInfo,
-	// 	slotAuctionManager,
-	// 	slotAuctionAddress,
-	// 	validatorManagerProxy.Address,
-	// 	registrationInitiatedEvent.ValidationID,
-	// 	registrationInitiatedEvent.RegistrationExpiry,
-	// 	nodes[0],
-	// 	network.GetPChainWallet(),
-	// 	network.GetNetworkID(),
-	// )
+	utils.PlaceBidOnAuction(
+		ctx,
+		Account1PrivKey,
+		l1AInfo,
+		big.NewInt(50),
+		exampleERC20,
+		nodes[0],
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+	)
+	log.Println("Emre: account1 bid 50")
 
-	// balance, _ = exampleERC20.BalanceOf(&bind.CallOpts{}, rewardAddress)
+	utils.PlaceBidOnAuction(
+		ctx,
+		Account2PrivKey,
+		l1AInfo,
+		big.NewInt(10),
+		exampleERC20,
+		nodes[1],
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+	)
 
-	// log.Println("Balance after validator removal: ", balance)
+	topOfHeap, err := slotAuctionManager.PeekTop(&bind.CallOpts{})
 
-	// log.Println("Emre: AAAAAAAAAAAAAAAAAAAAA")
+	log.Println("Emre: top of heap should be 10 =", topOfHeap)
 
-	// Expect(err).Should(BeNil())
-	// utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
-	// transactionInfo.Data()
-	// log.Println(emCoin.BalanceOf(&bind.CallOpts{}, opts.From))
-
-	// tempValID, _ := slotAuctionManager.TemporaryID(&bind.CallOpts{})
-
-	// transactionInfo, err = slotAuctionManager.RemoveValidator(opts, tempValID)
-	// Expect(err).Should(BeNil())
-	// utils.WaitForTransactionSuccess(ctx, l1AInfo, transactionInfo.Hash())
-
-	// log.Println(emCoin.BalanceOf(&bind.CallOpts{}, opts.From))
+	// OwnerOpts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
 
 }
