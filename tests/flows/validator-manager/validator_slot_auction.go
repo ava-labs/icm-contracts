@@ -36,7 +36,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	// Get the L1s info
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
-	fundedAddress, fundedKey := network.GetFundedAccountInfo() //funded address
+	_, fundedKey := network.GetFundedAccountInfo() //funded address
 	ctx := context.Background()
 	pChainInfo := utils.GetPChainInfo(cChainInfo) //pchainInfo
 
@@ -44,14 +44,10 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		utils.SlotAuctionManager,
-		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, 1000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
 		fundedKey,
 		false,
 	)
-
-	val, _ := l1AInfo.RPCClient.BalanceAt(ctx, fundedAddress, nil)
-
-	log.Println("Emre: funded address balance:", val)
 
 	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
 	slotAuctionAddress := slotAuctionManagerProxy.Address
@@ -114,11 +110,32 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		network.GetNetworkID(),
 	)
 
-	auctionProgress, _ := slotAuctionManager.AuctionInProgress(&bind.CallOpts{})
+	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		initialValidationIDs[2],
+		2,
+		nodes[2].Weight,
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
+	)
 
-	log.Println("Emre: Auction progress:", auctionProgress)
-
-	utils.InitiateAuction(ctx, l1AInfo, fundedKey, 1, 10, big.NewInt(30), big.NewInt(31556926), slotAuctionManager)
+	utils.InitiateAuction(
+		ctx,
+		l1AInfo,
+		fundedKey,
+		2,
+		10,
+		big.NewInt(0),
+		big.NewInt(31556926),
+		slotAuctionManager,
+	)
 
 	utils.PlaceBidOnAuction(
 		ctx,
@@ -131,7 +148,6 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		slotAuctionAddress,
 		validatorManagerProxy.Address,
 	)
-	log.Println("Emre: account1 bid 50")
 
 	utils.PlaceBidOnAuction(
 		ctx,
@@ -145,9 +161,32 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		validatorManagerProxy.Address,
 	)
 
-	topOfHeap, err := slotAuctionManager.PeekTop(&bind.CallOpts{})
+	utils.PlaceBidOnAuction(
+		ctx,
+		Account2PrivKey,
+		l1AInfo,
+		big.NewInt(20),
+		exampleERC20,
+		nodes[2],
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+	)
 
-	log.Println("Emre: top of heap should be 10 =", topOfHeap)
+	utils.EndAuction(
+		ctx,
+		signatureAggregator,
+		fundedKey,
+		l1AInfo,
+		pChainInfo,
+		slotAuctionManager,
+		slotAuctionAddress,
+		validatorManagerProxy.Address,
+		exampleERC20,
+		network.GetPChainWallet(),
+		network.GetNetworkID(),
+		nodes,
+	)
 
 	// OwnerOpts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
 

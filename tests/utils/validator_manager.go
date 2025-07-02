@@ -6,10 +6,12 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -474,6 +476,7 @@ func InitiateERC20ValidatorRegistration(
 	)
 	Expect(err).Should(BeNil())
 	Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
+
 	return receipt, registrationInitiatedEvent
 }
 
@@ -830,84 +833,6 @@ func InitiateAndCompleteERC20ValidatorRegistration(
 
 	return registrationInitiatedEvent
 }
-
-// func CompleteERC20AuctionValidatorRegistration(
-// 	ctx context.Context,
-// 	signatureAggregator *SignatureAggregator,
-// 	fundedKey *ecdsa.PrivateKey,
-// 	l1Info interfaces.L1TestInfo,
-// 	stakeAmount *big.Int,
-// 	pChainInfo interfaces.L1TestInfo,
-// 	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
-// 	slotAuctionManagerAddress common.Address,
-// 	validatorManagerAddress common.Address,
-// 	rewardAddress common.Address,
-// 	erc20 *exampleerc20.ExampleERC20,
-// 	node Node,
-// 	pchainWallet pwallet.Wallet,
-// 	networkID uint32,
-// ) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
-
-// 	// Initiate validator registration
-// 	var receipt *types.Receipt
-// 	log.Println("Initializing validator registration")
-
-// 	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
-// 	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
-
-// 	log.Println("Emre: ConstructSignedWarpMessage Passed")
-
-// 	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
-// 		100*units.Avax,
-// 		node.NodePoP.ProofOfPossession,
-// 		signedWarpMessage.Bytes(),
-// 	)
-// 	Expect(err).Should(BeNil())
-// 	PChainProposerVMWorkaround(pchainWallet)
-// 	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
-
-// 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-// 	log.Println("Completing validator registration")
-// 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
-// 		validationID,
-// 		registrationInitiatedEvent.RegistrationExpiry,
-// 		node,
-// 		true,
-// 		l1Info,
-// 		pChainInfo,
-// 		networkID,
-// 		signatureAggregator,
-// 	)
-// 	log.Println("Emre: ConstructL1ValidatorRegistrationMessage Passed")
-
-// 	// Deliver the Warp message to the L1
-// 	receipt = CompleteValidatorRegistration(
-// 		ctx,
-// 		fundedKey,
-// 		l1Info,
-// 		slotAuctionManagerAddress,
-// 		registrationSignedMessage,
-// 	)
-
-// 	log.Println("Emre: CompleteValidatorRegistration Passed")
-
-// 	// Check that the validator is registered in the staking contract
-// 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
-// 	Expect(err).Should(BeNil())
-
-// 	log.Println("Emre: NewACP99Manager Passed")
-
-// 	registrationEvent, err := GetEventFromLogs(
-// 		receipt.Logs,
-// 		acp99Manager.ParseCompletedValidatorRegistration,
-// 	)
-// 	Expect(err).Should(BeNil())
-// 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
-
-// 	log.Println("Emre: All done")
-
-// 	return registrationInitiatedEvent
-// }
 
 func InitiateEndPoSValidation(
 	ctx context.Context,
@@ -1387,7 +1312,6 @@ func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
 		networkID,
 		signatureAggregator,
 	)
-	log.Println("Passed construct L1 Validator Reg")
 	// Deliver the Warp message to the L1
 	receipt = CompleteEndProofOfPurchaseValidation(
 		ctx,
@@ -1396,7 +1320,6 @@ func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
 		slotAuctionManagerAddress,
 		registrationSignedMessage,
 	)
-	log.Println("passed Complete end proof of purchase")
 	// Check that the validator is has been delisted from the staking contract
 	validationEndedEvent, err := GetEventFromLogs(
 		receipt.Logs,
@@ -2192,4 +2115,105 @@ func InitiateAuction(
 	)
 	Expect(err).Should(BeNil())
 	WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+}
+
+func EndAuction(
+	ctx context.Context,
+	signatureAggregator *SignatureAggregator,
+	fundedKey *ecdsa.PrivateKey,
+	l1Info interfaces.L1TestInfo,
+	pChainInfo interfaces.L1TestInfo,
+	slotauctionmanager *slotauctionmanager.SlotAuctionManager,
+	slotAuctionAddress common.Address,
+	validatorManagerAddress common.Address,
+	erc20 *exampleerc20.ExampleERC20,
+	pchainWallet pwallet.Wallet,
+	networkID uint32,
+	nodes []Node,
+) {
+	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := slotauctionmanager.EndAuction(opts)
+	Expect(err).Should(BeNil())
+
+	receipt := WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
+	Expect(err).Should(BeNil())
+	registrationInitiatedEvents, err := GetEventsFromLogs(
+		receipt.Logs,
+		acp99Manager.ParseInitiatedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+
+	signedWarpMessages := ConstructSignedWarpMessages(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
+	for _, signedMsg := range signedWarpMessages {
+		//gather info about the warp message to match it with the correct Node
+		msg, err := warpPayload.ParseAddressedCall(signedMsg.UnsignedMessage.Payload)
+		Expect(err).Should(BeNil())
+		var payloadInterface warpMessage.Payload
+		warpMessage.Codec.Unmarshal(msg.Payload, &payloadInterface)
+		Expect(err).Should(BeNil())
+		payload, ok := payloadInterface.(*warpMessage.RegisterL1Validator)
+		Expect(ok).Should(BeTrue())
+
+		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == ids.NodeID(payload.NodeID) })
+		log.Println("Emre: index is:", index)
+		if index != -1 {
+			log.Println("Emre: nodeIDs are:", nodes[index].NodeID, ids.NodeID(payload.NodeID))
+			_, err = pchainWallet.IssueRegisterL1ValidatorTx(
+				100*units.Avax,
+				nodes[index].NodePoP.ProofOfPossession,
+				signedMsg.Bytes(),
+			)
+			Expect(err).Should(BeNil())
+			PChainProposerVMWorkaround(pchainWallet)
+			AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
+		}
+	}
+
+	var receipts []*types.Receipt
+	for _, event := range registrationInitiatedEvents {
+		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == event.NodeID }) //finds the correct Node struct based on the returned nodeID (I hope this works it would be hype)
+		if index == -1 {
+			err := errors.New("Node not found in nodes array")
+			Expect(err).Should(BeNil())
+		}
+		registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
+			event.ValidationID,
+			event.RegistrationExpiry,
+			nodes[index],
+			true,
+			l1Info,
+			pChainInfo,
+			networkID,
+			signatureAggregator,
+		)
+		receipt = CompleteValidatorRegistration(
+			ctx,
+			fundedKey,
+			l1Info,
+			slotAuctionAddress,
+			registrationSignedMessage,
+		)
+		receipts = append(receipts, receipt)
+	}
+
+	log.Println("Emre: somehow made it past validator registration")
+	var completedRegistrationEvents []*acp99manager.ACP99ManagerCompletedValidatorRegistration
+	completedRegistrationEvents, err = GetEventsFromLogs(
+		receipts[0].Logs,
+		acp99Manager.ParseCompletedValidatorRegistration,
+	)
+	Expect(err).Should(BeNil())
+
+	for _, completeEvent := range completedRegistrationEvents {
+		foo := slices.IndexFunc(registrationInitiatedEvents, func(n *acp99manager.ACP99ManagerInitiatedValidatorRegistration) bool {
+			return n.ValidationID == completeEvent.ValidationID
+		})
+		if foo == -1 {
+			err := errors.New("completed Register event not found")
+			Expect(err).Should(BeNil())
+		}
+	}
+
 }

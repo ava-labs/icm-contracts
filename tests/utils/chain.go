@@ -398,6 +398,21 @@ func GetEventFromLogs[T any](logs []*types.Log, parser func(log types.Log) (T, e
 	return *new(T), fmt.Errorf("failed to find %T event in receipt logs", *new(T))
 }
 
+// Returns all logs in 'logs' that is successfully parsed by 'parser'
+func GetEventsFromLogs[T any](logs []*types.Log, parser func(log types.Log) (T, error)) ([]T, error) {
+	var events []T
+	for _, log := range logs {
+		event, err := parser(*log)
+		if err == nil {
+			events = append(events, event)
+		}
+	}
+	if len(events) == 0 {
+		return nil, fmt.Errorf("failed to find %T event in receipt logs", *new(T))
+	}
+	return events, nil
+}
+
 //
 // Account utils
 //
@@ -599,6 +614,52 @@ func ExtractWarpMessageFromLog(
 	unsignedMsg, err := warp.UnpackSendWarpEventDataToMessage(txLog.Data)
 	Expect(err).Should(BeNil())
 	return unsignedMsg
+}
+
+func ExtractWarpMessagesFromLog(
+	ctx context.Context,
+	sourceReceipt *types.Receipt,
+	source interfaces.L1TestInfo,
+) []*avalancheWarp.UnsignedMessage {
+	log.Info("Fetching relevant warp logs from the newly produced block")
+	logs, err := source.RPCClient.FilterLogs(ctx, subnetEvmInterfaces.FilterQuery{
+		BlockHash: &sourceReceipt.BlockHash,
+		Addresses: []common.Address{warp.Module.Address},
+	})
+	Expect(err).Should(BeNil())
+	// Check for relevant warp log from subscription and ensure that it matches
+	// the log extracted from the last block.
+	log.Info("Parsing logData as unsigned warp message")
+	var unsignedMessages []*avalancheWarp.UnsignedMessage
+	for _, txLog := range logs {
+		unsignedMsg, err := warp.UnpackSendWarpEventDataToMessage(txLog.Data)
+		Expect(err).Should(BeNil())
+		unsignedMessages = append(unsignedMessages, unsignedMsg)
+	}
+	return unsignedMessages
+}
+
+func ConstructSignedWarpMessages(
+	ctx context.Context,
+	sourceReceipt *types.Receipt,
+	source interfaces.L1TestInfo,
+	destination interfaces.L1TestInfo,
+	justification []byte,
+	signatureAggregator *SignatureAggregator,
+) []*avalancheWarp.Message {
+	unsignedMessages := ExtractWarpMessagesFromLog(ctx, sourceReceipt, source)
+	// Loop over each client on source chain to ensure they all have time to accept the block.
+	// Note: if we did not confirm this here, the next stage could be racy since it assumes every node
+	// has accepted the block.
+	WaitForAllValidatorsToAcceptBlock(ctx, source.NodeURIs, source.BlockchainID, sourceReceipt.BlockNumber.Uint64())
+
+	// Get the aggregate signature for the Warp message
+	log.Info("Fetching aggregate signature from the source chain validators")
+	var signedMessages []*avalancheWarp.Message
+	for _, unsignedMessage := range unsignedMessages {
+		signedMessages = append(signedMessages, GetSignedMessage(source, destination, unsignedMessage, justification, signatureAggregator))
+	}
+	return signedMessages
 }
 
 func ConstructSignedWarpMessage(
