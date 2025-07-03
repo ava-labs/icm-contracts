@@ -2195,7 +2195,6 @@ func EndAuction(
 		receipts = append(receipts, receipt)
 	}
 
-	log.Println("Emre: somehow made it past validator registration")
 	var completedRegistrationEvents []*acp99manager.ACP99ManagerCompletedValidatorRegistration
 	completedRegistrationEvents, err = GetEventsFromLogs(
 		receipts[0].Logs,

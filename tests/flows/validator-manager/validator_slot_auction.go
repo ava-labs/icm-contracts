@@ -48,9 +48,6 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		fundedKey,
 		false,
 	)
-	for i, node := range nodes {
-		log.Println("Emre: validator weight ", i, node.Weight)
-	}
 
 	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
 	slotAuctionAddress := slotAuctionManagerProxy.Address
