@@ -2145,21 +2145,18 @@ func EndAuction(
 	)
 	Expect(err).Should(BeNil())
 
-	signedWarpMessages := ConstructSignedWarpMessages(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
-	for _, signedMsg := range signedWarpMessages {
+	//gather all unsigned messages from the receipt
+	unsignedMessages := ExtractWarpMessagesFromLog(ctx, receipt, l1Info)
+	WaitForAllValidatorsToAcceptBlock(ctx, l1Info.NodeURIs, l1Info.BlockchainID, receipt.BlockNumber.Uint64())
+
+	for _, unsignedMsg := range unsignedMessages {
 		//gather info about the warp message to match it with the correct Node
-		msg, err := warpPayload.ParseAddressedCall(signedMsg.UnsignedMessage.Payload)
-		Expect(err).Should(BeNil())
-		var payloadInterface warpMessage.Payload
-		warpMessage.Codec.Unmarshal(msg.Payload, &payloadInterface)
-		Expect(err).Should(BeNil())
-		payload, ok := payloadInterface.(*warpMessage.RegisterL1Validator)
-		Expect(ok).Should(BeTrue())
+		payload := ExtractRegisterL1ValidatorPayload(unsignedMsg)
+
+		signedMsg := GetSignedMessage(l1Info, pChainInfo, unsignedMsg, nil, signatureAggregator)
 
 		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == ids.NodeID(payload.NodeID) })
-		log.Println("Emre: index is:", index)
 		if index != -1 {
-			log.Println("Emre: nodeIDs are:", nodes[index].NodeID, ids.NodeID(payload.NodeID))
 			_, err = pchainWallet.IssueRegisterL1ValidatorTx(
 				100*units.Avax,
 				nodes[index].NodePoP.ProofOfPossession,
@@ -2216,4 +2213,17 @@ func EndAuction(
 		}
 	}
 
+}
+
+// I would like to make this so it takes a second argument with the type of interface but im not sure how to do that
+// so for right now imma just do this
+func ExtractRegisterL1ValidatorPayload(unsignedMsg *avalancheWarp.UnsignedMessage) *warpMessage.RegisterL1Validator {
+	msg, err := warpPayload.ParseAddressedCall(unsignedMsg.Payload)
+	Expect(err).Should(BeNil())
+	var payloadInterface warpMessage.Payload
+	warpMessage.Codec.Unmarshal(msg.Payload, &payloadInterface)
+	Expect(err).Should(BeNil())
+	payload, ok := payloadInterface.(*warpMessage.RegisterL1Validator)
+	Expect(ok).Should(BeTrue())
+	return payload
 }

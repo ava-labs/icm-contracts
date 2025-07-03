@@ -639,7 +639,7 @@ func ExtractWarpMessagesFromLog(
 	return unsignedMessages
 }
 
-func ConstructSignedWarpMessages(
+func ConstructSignedWarpMessages( //DO NOT use if signing validator warp messages
 	ctx context.Context,
 	sourceReceipt *types.Receipt,
 	source interfaces.L1TestInfo,
