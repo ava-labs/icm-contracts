@@ -12,8 +12,8 @@ import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.
 struct ValidatorBid {
     address addr;
     uint256 bid;
-    bytes nodeID;
-    bytes blsPublicKey;
+    bytes[20] nodeID;
+    bytes[48] blsPublicKey;
     PChainOwner remainingBalanceOwner;
     PChainOwner disableOwner;
 }
@@ -21,8 +21,8 @@ struct ValidatorBid {
 struct ValidatorInfo {
     address addr;
     uint256 endTime;
-    bytes nodeID;
-    bytes blsPublicKey;
+    bytes[20] nodeID;
+    bytes[48] blsPublicKey;
     uint32 validationID;
 }
 
