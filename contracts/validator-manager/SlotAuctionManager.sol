@@ -8,7 +8,6 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
-import {EmCoin} from "./EmCoin.sol";
 import {Heap} from "@openzeppelin/contracts@5.0.2/utils/structs/Heap.sol";
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/utils/ReentrancyGuardUpgradeable.sol";
@@ -157,11 +156,12 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
     
-    // function initiateRemoveInitialValidator(
-    //     bytes32 validationID
-    // ) public {
-    //     VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
-    // }
+    //working on removing this, along with making the contract upgradeable, removing it right now makes the e2e tests fail
+    function initiateRemoveInitialValidator(
+        bytes32 validationID
+    ) public {
+        VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
+    }
 
     function completeRemoveInitialValidator(
         uint32 messageIndex
