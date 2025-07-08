@@ -2145,12 +2145,12 @@ func EndAuction(
 	)
 	Expect(err).Should(BeNil())
 
-	//gather all unsigned messages from the receipt
+	// gather all unsigned messages from the receipt
 	unsignedMessages := ExtractWarpMessagesFromLog(ctx, receipt, l1Info)
 	WaitForAllValidatorsToAcceptBlock(ctx, l1Info.NodeURIs, l1Info.BlockchainID, receipt.BlockNumber.Uint64())
 
 	for _, unsignedMsg := range unsignedMessages {
-		//gather info about the warp message to match it with the correct Node
+		// gather info about the warp message to match it with the correct Node
 		payload := ExtractRegisterL1ValidatorPayload(unsignedMsg)
 
 		signedMsg := GetSignedMessage(l1Info, pChainInfo, unsignedMsg, nil, signatureAggregator)
@@ -2170,7 +2170,7 @@ func EndAuction(
 
 	var receipts []*types.Receipt
 	for _, event := range registrationInitiatedEvents {
-		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == event.NodeID }) //finds the correct Node struct based on the returned nodeID (I hope this works it would be hype)
+		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == event.NodeID }) 
 		if index == -1 {
 			err := errors.New("Node not found in nodes array")
 			Expect(err).Should(BeNil())
