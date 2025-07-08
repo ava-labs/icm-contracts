@@ -600,11 +600,18 @@ func ExtractWarpMessageFromLog(
 	source interfaces.L1TestInfo,
 ) *avalancheWarp.UnsignedMessage {
 	log.Info("Fetching relevant warp logs from the newly produced block")
-	logs, err := source.RPCClient.FilterLogs(ctx, subnetEvmInterfaces.FilterQuery{
-		BlockHash: &sourceReceipt.BlockHash,
-		Addresses: []common.Address{warp.Module.Address},
-	})
-	Expect(err).Should(BeNil())
+	// logs, err := source.RPCClient.FilterLogs(ctx, subnetEvmInterfaces.FilterQuery{
+	// 	BlockHash: &sourceReceipt.BlockHash,
+	// 	Addresses: []common.Address{warp.Module.Address},
+	// })
+	// Expect(err).Should(BeNil())
+
+	var logs []*types.Log
+	for _, txLog := range sourceReceipt.Logs {
+		if txLog.Address == warp.Module.Address {
+			logs = append(logs, txLog)
+		}
+	}
 	Expect(len(logs)).Should(Equal(1))
 
 	// Check for relevant warp log from subscription and ensure that it matches
@@ -622,19 +629,25 @@ func ExtractWarpMessagesFromLog(
 	source interfaces.L1TestInfo,
 ) []*avalancheWarp.UnsignedMessage {
 	log.Info("Fetching relevant warp logs from the newly produced block")
-	logs, err := source.RPCClient.FilterLogs(ctx, subnetEvmInterfaces.FilterQuery{
-		BlockHash: &sourceReceipt.BlockHash,
-		Addresses: []common.Address{warp.Module.Address},
-	})
-	Expect(err).Should(BeNil())
+
+	{
+		// logs, err := source.RPCClient.FilterLogs(ctx, subnetEvmInterfaces.FilterQuery{
+		// 	BlockHash: &sourceReceipt.BlockHash,
+		// 	Addresses: []common.Address{warp.Module.Address},
+		// })
+		// Expect(err).Should(BeNil())
+	}
+
 	// Check for relevant warp log from subscription and ensure that it matches
 	// the log extracted from the last block.
 	log.Info("Parsing logData as unsigned warp message")
 	var unsignedMessages []*avalancheWarp.UnsignedMessage
-	for _, txLog := range logs {
-		unsignedMsg, err := warp.UnpackSendWarpEventDataToMessage(txLog.Data)
-		Expect(err).Should(BeNil())
-		unsignedMessages = append(unsignedMessages, unsignedMsg)
+	for _, txLog := range sourceReceipt.Logs {
+		if txLog.Address == warp.Module.Address {
+			unsignedMsg, err := warp.UnpackSendWarpEventDataToMessage(txLog.Data)
+			Expect(err).Should(BeNil())
+			unsignedMessages = append(unsignedMessages, unsignedMsg)
+		}
 	}
 	return unsignedMessages
 }
