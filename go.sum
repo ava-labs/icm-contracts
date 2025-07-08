@@ -62,6 +62,8 @@ github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPd
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/ava-labs/avalanchego v1.13.2 h1:Kx/T2a8vqLlgHde3DWT5zMF5yBIh1rqEd6nJQMMzV/Y=
 github.com/ava-labs/avalanchego v1.13.2/go.mod h1:s7W/kim5L6hiD2PB1v/Ozy1ZZyoLQ4H6mxVO0aMnxng=
+github.com/ava-labs/avalanchego v1.13.3-0.20250708125130-8632498326e6 h1:KgJjpUuSR1ZUaNhIWrjJhYzVLROkpa/eLlfzk85wCy0=
+github.com/ava-labs/avalanchego v1.13.3-0.20250708125130-8632498326e6/go.mod h1:s7W/kim5L6hiD2PB1v/Ozy1ZZyoLQ4H6mxVO0aMnxng=
 github.com/ava-labs/coreth v0.15.2-rc.0.0.20250620163936-0058a7ec6d9d h1:nZA7nEhlf2uWM1doZz4WFiMkZVZ0iH+c3IebokIO1sk=
 github.com/ava-labs/coreth v0.15.2-rc.0.0.20250620163936-0058a7ec6d9d/go.mod h1:Mk5g2ZI9lEbxA67qikOtUrq71Yr389B34S+Ddsa51K4=
 github.com/ava-labs/libevm v1.13.14-0.3.0.rc.1 h1:vBMYo+Iazw0rGTr+cwjkBdh5eadLPlv4ywI4lKye3CA=
@@ -183,6 +185,8 @@ github.com/ethereum/c-kzg-4844 v0.4.0 h1:3MS1s4JtA868KpJxroZoepdV0ZKBp3u/O5HcZ7R
 github.com/ethereum/c-kzg-4844 v0.4.0/go.mod h1:VewdlzQmpT5QSrVhbBuGoCdFJkpaJlO1aQputP83wc0=
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
+github.com/fatih/structtag v1.2.0 h1:/OdNE99OxoI/PqaW/SuSK9uxxT3f/tcSZgon/ssNSx4=
+github.com/fatih/structtag v1.2.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/frankban/quicktest v1.14.4 h1:g2rn0vABPOOXmZUj+vbmUp0lPoXEMuhTpIluN0XL9UY=
 github.com/frankban/quicktest v1.14.4/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=

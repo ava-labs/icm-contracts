@@ -31,7 +31,7 @@ function extract_commit() {
 
 # ICM_SERVICES_VERSION is needed for the E2E tests but is not a direct dependency since that would create a circular dependency.
 # ICM_SERVICES_VERSION=${ICM_SERVICES_VERSION:-'signature-aggregator-v1.0.0-rc.0'}
-ICM_SERVICES_VERSION=${ICM_SERVICES_VERSION:-'e4905d8434ba7ca7500e9b2fbbbe59164d8e2abb'}
+ICM_SERVICES_VERSION=${ICM_SERVICES_VERSION:-'5487ae0cfaf15f4b048295fd846f3bea1d5414d6'}
 
 # Don't export them as they're used in the context of other calls
 AVALANCHEGO_VERSION=${AVALANCHEGO_VERSION:-$(extract_commit "$(getDepVersion github.com/ava-labs/avalanchego)")}
