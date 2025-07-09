@@ -49,6 +49,7 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
     uint16 public validatorSlots;
     uint64 public validatorWeight;
     uint256 public validationTimeLimit;
+    uint256 public minimumBid;
     // checks to see if the NodeID is currently in the heap
     mapping (bytes nodeID => bool isQualified) private _nodeIsQualified; 
     mapping (bytes nodeID => ValidatorInfo) public validatorsByNodeID;
@@ -80,7 +81,8 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
         uint16 validatorslots,
         uint64 weight,
         uint256 auctionLength,
-        uint256 validationLength
+        uint256 validationLength,
+        uint256 minimumbid
     ) external {
         require(!auctionInProgress, "Auction currently in progress");
         validatorWeight = weight;
@@ -89,10 +91,11 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
         // Things to add:
         // no re entry
         // probably a lot more
-        // Sets the minimum end time of the auction, can go over
+        
         auctionEndTime = block.timestamp + auctionLength; 
         validatorSlots = validatorslots;
         validationTimeLimit = validationLength;
+        minimumBid = minimumbid;
         _secondPrice = 0;
         // Initiates an empty heap array, id rather just create a new one but solidity memory syntax is still confusing to me
         delete _bids.tree; 
@@ -109,23 +112,16 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
     ) AuctionInProgress external {
         require(validatorsByNodeID[nodeID].addr == address(0), "Node is already a validator");
         require(!_nodeIsQualified[nodeID], "Node is already in a winning position");
-        // Don't allow duplicate bids
         require(bidderInfo[bid].addr == address(0), "Duplicate bid in running");
+        require(bid >= minimumBid, "Bid lower than minimum bid");
+        require(VALIDATOR_MANAGER.getNodeValidationID(nodeID) == 0, "NodeID already validator");
 
         // If all slots aren't contended, then fill the heap with any bid
         if (Heap.length(_bids) < validatorSlots) {
             require (TOKEN_CONTRACT.transferFrom(msg.sender, address(this), bid), "Insufficient funds to bid");
             Heap.insert(_bids, bid);
         } 
-        // weird edge case in the scenario where N people bid, and no more bids come in greater than the smallest qualifying bid
-        // leading to second price being 0, even though there is a bid that qualifies as a second price but ignored since it didn't alter the heap
-        else if (_secondPrice == 0 && Heap.peek(_bids) > bid) {
-            _secondPrice = bid;
-            // TODO: Definitely an issue where we need to revert the transaction, but we need to keep the state of the new second price
-            revert("Bid not high enough to win auction");
-        }
         else if (Heap.peek(_bids) < bid) {
-            
             require (TOKEN_CONTRACT.transferFrom(msg.sender, address(this), bid), "Insufficient funds to bid");
             uint256 poppedBid = Heap.replace(_bids, bid);
             _secondPrice = poppedBid;
@@ -133,8 +129,8 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
             // send back held funds if lost auction
             TOKEN_CONTRACT.transfer(bidderInfo[poppedBid].addr, poppedBid);
 
-            delete _nodeIsQualified[bidderInfo[poppedBid].nodeID];
             // deletes info of bidder no longer needed along with replacing it in the heap
+            delete _nodeIsQualified[bidderInfo[poppedBid].nodeID];
             delete bidderInfo[poppedBid]; 
         }
         else {
@@ -146,9 +142,8 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
     }
 
     function endAuction() AuctionInProgress external {
-        // only owner
+        // TODO: only owner
         require(block.timestamp > auctionEndTime, "Auction endtime not reached");
-        // set auction to false so no more bids can come in
         auctionInProgress = false; 
         auctionEndTime = 0;
 
@@ -158,15 +153,16 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
         }
 
         while (Heap.length(_bids) > 0) {
-            // grabs next bid
             uint256 currentBid = Heap.pop(_bids);
             ValidatorBid memory bidInfo = bidderInfo[currentBid];
+
             // sends back extra tokens due to second price
             TOKEN_CONTRACT.transfer(bidInfo.addr, currentBid - _secondPrice);
-            // registers as validator
+            
             bytes32 validationID = VALIDATOR_MANAGER.initiateValidatorRegistration(
                 bidInfo.nodeID, bidInfo.blsPublicKey, bidInfo.remainingBalanceOwner, bidInfo.disableOwner, validatorWeight
             );
+
             emit InitiatedAuctionValidatorRegistration(validationID, bidInfo.addr, validationTimeLimit + auctionEndTime);
             validatorsByNodeID[bidInfo.nodeID] = ValidatorInfo(bidInfo.addr, validationTimeLimit + auctionEndTime, bidInfo.nodeID, bidInfo.blsPublicKey, validationID, validatorWeight);
             validatorsByValidationID[validationID] = ValidatorInfo(bidInfo.addr, validationTimeLimit + auctionEndTime, bidInfo.nodeID, bidInfo.blsPublicKey, validationID, validatorWeight);
@@ -182,6 +178,8 @@ contract SlotAuctionManager is ReentrancyGuardUpgradeable, ContextUpgradeable {
     ) public {
         // if validationID doesnt exist then endtime will be 0, however it wont be logged in the Validator Manager either so this should be ok
         require(validatorsByValidationID[validationID].endTime < block.timestamp, "Validation time limit has not ended");
+        delete validatorsByNodeID[validatorsByValidationID[validationID].nodeID];
+        delete validatorsByValidationID[validationID];
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
     

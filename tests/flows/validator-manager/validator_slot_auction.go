@@ -17,8 +17,8 @@ import (
 )
 
 /*
- * Registers a native token staking validator on a L1. The steps are as follows:
- * - Deploy the NativeTokenStakingManager
+ * Registers an ERC20 auction validator on a L1. The steps are as follows:
+ * - Deploy the SlotAuctionManager
  * - Initiate validator registration
  * - Deliver the Warp message to the P-Chain (not implemented)
  * - Aggregate P-Chain signatures on the response Warp message
@@ -30,15 +30,15 @@ import (
 * - Deliver the Warp message to the P-Chain (not implemented)
  * - Aggregate P-Chain signatures on the response Warp message
  * - Deliver the Warp message to the L1
- * - Verify that the validator is delisted from the staking contract
+ * - Verify that the validator is delisted from the auction contract
 */
 func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	// Get the L1s info
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
-	_, fundedKey := network.GetFundedAccountInfo() //funded address
+	_, fundedKey := network.GetFundedAccountInfo()
 	ctx := context.Background()
-	pChainInfo := utils.GetPChainInfo(cChainInfo) //pchainInfo
+	pChainInfo := utils.GetPChainInfo(cChainInfo)
 
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
@@ -134,6 +134,7 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		units.Schmeckle,
 		big.NewInt(0),
 		big.NewInt(31556926),
+		big.NewInt(10),
 		slotAuctionManager,
 	)
 

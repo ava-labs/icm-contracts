@@ -2102,6 +2102,7 @@ func InitiateAuction(
 	validatorWeight uint64,
 	auctionLength *big.Int,
 	validationLength *big.Int,
+	minimumBid *big.Int,
 	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
 ) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
@@ -2112,6 +2113,7 @@ func InitiateAuction(
 		validatorWeight,
 		auctionLength,
 		validationLength,
+		minimumBid,
 	)
 	Expect(err).Should(BeNil())
 	WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
@@ -2170,7 +2172,7 @@ func EndAuction(
 
 	var receipts []*types.Receipt
 	for _, event := range registrationInitiatedEvents {
-		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == event.NodeID }) 
+		index := slices.IndexFunc(nodes, func(n Node) bool { return n.NodeID == event.NodeID })
 		if index == -1 {
 			err := errors.New("Node not found in nodes array")
 			Expect(err).Should(BeNil())
