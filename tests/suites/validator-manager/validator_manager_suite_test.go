@@ -2,6 +2,7 @@ package validator_manager_test
 
 import (
 	"context"
+	"flag"
 	"os"
 	"testing"
 	"time"
@@ -24,12 +25,17 @@ var (
 	e2eFlags             *e2e.FlagVars
 )
 
+func TestMain(m *testing.M) {
+	e2eFlags = e2e.RegisterFlags()
+	flag.Parse()
+	os.Exit(m.Run())
+}
+
 func TestValidatorManager(t *testing.T) {
 	if os.Getenv("RUN_E2E") == "" {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
 
-	e2eFlags = e2e.RegisterFlags()
 	RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Validator Manager e2e test")
 }
