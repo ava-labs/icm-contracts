@@ -11,6 +11,21 @@ import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.
 /**
  * @dev Contains needed information to register node as validator.
  */
+
+/**
+ * @dev AuctionFinalizing is necessary (potentially) in the case where 
+ * a new auction is initiated while the auction is finalizing.
+ */
+
+enum AuctionState {
+    NoAuction, 
+    AuctionInProgress,
+    AuctionFinalizing
+}
+
+/**
+ * @dev Contains info about bid in the running to win auction.
+ */
 struct ValidatorBid {
     address addr;
     uint256 bid;
@@ -81,7 +96,8 @@ interface ISlotAuctionManager {
     event InitiatedAuctionValidatorRegistration(
         bytes32 indexed validationID, 
         address indexed ownerAddress, 
-        uint256 validatorEndTime
+        uint256 validatorEndTime,
+        uint64 weight
     );
 
     /**
@@ -98,22 +114,6 @@ interface ISlotAuctionManager {
         uint256 minAuctionDuration,
         uint256 minValidatorDuration,
         uint256 minimumBid
-    ) external;
-
-    /**
-     * @notice Places a bid in the currently running auction
-     * @param bid The amount of tokens to bid.
-     * @param nodeID The ID of the node to add to the L1.
-     * @param blsPublicKey The BLS public key of the validator.
-     * @param remainingBalanceOwner The remaining balance owner of the validator.
-     * @param disableOwner The disable owner of the validator.
-     */
-    function placeBid (
-        uint256 bid,
-        bytes memory nodeID,
-        bytes memory blsPublicKey,
-        PChainOwner memory remainingBalanceOwner,
-        PChainOwner memory disableOwner
     ) external;
 
     /**
@@ -145,4 +145,8 @@ interface ISlotAuctionManager {
     function completeValidatorRemoval(
         uint32 messageIndex
     ) external returns(bytes32);
+
+    // function getValidatorInfoByNodeID(
+    //     bytes memory nodeID
+    // ) external returns (ValidatorInfo memory);
 }
