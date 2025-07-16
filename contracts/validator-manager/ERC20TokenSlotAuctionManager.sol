@@ -56,7 +56,7 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
     /**
      * @notice Returns the ERC20 token being bid
      */
-    function erc20() external view returns (IERC20Mintable) {
+    function ERC20() external view returns (IERC20Mintable) {
         return _token;
     }
 

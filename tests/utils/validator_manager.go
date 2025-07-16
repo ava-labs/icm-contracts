@@ -25,11 +25,13 @@ import (
 	proxyadmin "github.com/ava-labs/icm-contracts/abi-bindings/go/ProxyAdmin"
 	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
 	acp99manager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ACP99Manager"
+	erc20tokenslotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenSlotAuctionManager"
 	erc20tokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenStakingManager"
 	examplerewardcalculator "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ExampleRewardCalculator"
+	nativetokenslotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenSlotAuctionManager"
 	nativetokenstakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/NativeTokenStakingManager"
-	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
 	validatormanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ValidatorManager"
+	islotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/ISlotAuctionManager"
 	istakingmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/IStakingManager"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
@@ -64,7 +66,8 @@ const (
 	PoAValidatorManager ValidatorManagerConcreteType = iota
 	ERC20TokenStakingManager
 	NativeTokenStakingManager
-	SlotAuctionManager
+	ERC20TokenSlotAuctionManager
+	NativeTokenSlotAuctionManager
 )
 
 //
@@ -146,17 +149,29 @@ func DeployAndInitializeValidatorManagerSpecialization(
 	)
 
 	switch managerType {
-	case SlotAuctionManager:
+	case ERC20TokenSlotAuctionManager:
 		erc20Address, transactionInfo, _, err := exampleerc20.DeployExampleERC20(opts, l1.RPCClient)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, transactionInfo.Hash())
 
-		slotauctionmanager.SlotAuctionManagerBin = slotauctionmanager.SlotAuctionManagerMetaData.Bin
-		//Emre: this was throwing error and im not sure how to fix it so im just putting this here to see if itll be fine (the common.Address{} x 2)
-		address, tx, _, err = slotauctionmanager.DeploySlotAuctionManager(
+		erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerBin = erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerMetaData.Bin
+
+		address, tx, _, err = erc20tokenslotauctionmanager.DeployERC20TokenSlotAuctionManager(
 			opts,
 			l1.RPCClient,
+			validatorManagerAddress,
 			erc20Address,
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
+
+	case NativeTokenSlotAuctionManager:
+
+		nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerBin = nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerMetaData.Bin
+
+		address, tx, _, err = nativetokenslotauctionmanager.DeployNativeTokenSlotAuctionManager(
+			opts,
+			l1.RPCClient,
 			validatorManagerAddress,
 		)
 		Expect(err).Should(BeNil())
@@ -480,51 +495,67 @@ func InitiateERC20ValidatorRegistration(
 	return receipt, registrationInitiatedEvent
 }
 
-func PlaceBidOnAuction(
+func PlaceBidOnERC20TokenAuction(
 	ctx context.Context,
 	senderKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
 	bidAmount *big.Int,
 	token *exampleerc20.ExampleERC20,
 	node Node,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
-	slotAuctionManagerAddress common.Address,
-	validatorManagerAddress common.Address,
+	ERC20TokenSlotAuctionManager *erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManager,
+	erc20TokenSlotAuctionManagerAddress common.Address,
 ) *types.Receipt {
 	ERC20Approve(
 		ctx,
 		token,
-		slotAuctionManagerAddress,
+		erc20TokenSlotAuctionManagerAddress,
 		bidAmount,
 		l1,
 		senderKey,
 	)
-
+	
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
 
-	tx, err := slotAuctionManager.PlaceBid(
+	tx, err := ERC20TokenSlotAuctionManager.PlaceBid(
 		opts,
 		bidAmount,
 		node.NodeID[:],
 		node.NodePoP.PublicKey[:],
-		slotauctionmanager.PChainOwner{},
-		slotauctionmanager.PChainOwner{},
+		erc20tokenslotauctionmanager.PChainOwner{},
+		erc20tokenslotauctionmanager.PChainOwner{},
 	)
 	Expect(err).Should(BeNil())
 
 	receipt := WaitForTransactionSuccess(ctx, l1, tx.Hash())
-	// acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1.RPCClient)
-	// Expect(err).Should(BeNil())
-	// registrationInitiatedEvent, err := GetEventFromLogs(
-	// 	receipt.Logs,
-	// 	acp99Manager.ParseInitiatedValidatorRegistration,
-	// )
-	// Expect(err).Should(BeNil())
-	// Expect(ids.NodeID(registrationInitiatedEvent.NodeID)).Should(Equal(node.NodeID))
-	// might want to look at this later, but shouldnt need it for bidding
 	return receipt
 }
+
+func PlaceBidOnNativeTokenAuction(
+	ctx context.Context,
+	senderKey *ecdsa.PrivateKey,
+	l1 interfaces.L1TestInfo,
+	bidAmount *big.Int,
+	node Node,
+	NativeTokenSlotAuctionManager *nativetokenslotauctionmanager.NativeTokenSlotAuctionManager,
+) *types.Receipt {
+	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+	opts.Value = bidAmount
+
+	tx, err := NativeTokenSlotAuctionManager.PlaceBid(
+		opts,
+		node.NodeID[:],
+		node.NodePoP.PublicKey[:],
+		nativetokenslotauctionmanager.PChainOwner{},
+		nativetokenslotauctionmanager.PChainOwner{},
+	)
+	Expect(err).Should(BeNil())
+
+	receipt := WaitForTransactionSuccess(ctx, l1, tx.Hash())
+	return receipt
+}
+
 
 func InitiatePoAValidatorRegistration(
 	ctx context.Context,
@@ -872,16 +903,16 @@ func ForceInitiateEndPoSValidation(
 	return WaitForTransactionSuccess(ctx, l1, tx.Hash())
 }
 
-func InitiateEndProofOfPurchaseValidation(
+func InitiateEndAuctionValidation(
 	ctx context.Context,
 	senderKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	islotAuctionManager *islotauctionmanager.ISlotAuctionManager,
 	validationID ids.ID,
 ) *types.Receipt {
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := slotAuctionManager.InitiateValidatorRemoval(
+	tx, err := islotAuctionManager.InitiateValidatorRemoval(
 		opts,
 		validationID,
 	)
@@ -1251,13 +1282,13 @@ func InitiateAndCompleteEndInitialPoSValidation(
 	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
 }
 
-func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+func InitiateAndCompleteEndInitialAuctionValidation(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
 	fundedKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	islotAuctionManager *islotauctionmanager.ISlotAuctionManager,
 	slotAuctionManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
@@ -1268,11 +1299,11 @@ func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
 ) {
 	log.Println("Initializing initial validator removal")
 	WaitMinStakeDuration(ctx, l1Info, fundedKey)
-	receipt := ForceInitiateEndProofOfPurchaseValidation(
+	receipt := ForceInitiateEndAuctionValidation(
 		ctx,
 		fundedKey,
 		l1Info,
-		slotAuctionManager,
+		islotAuctionManager,
 		validationID,
 	)
 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
@@ -1313,7 +1344,7 @@ func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
 		signatureAggregator,
 	)
 	// Deliver the Warp message to the L1
-	receipt = CompleteEndProofOfPurchaseValidation(
+	receipt = CompleteEndAuctionValidation(
 		ctx,
 		fundedKey,
 		l1Info,
@@ -1329,16 +1360,16 @@ func InitiateAndCompleteEndInitialProofOfPurchaseValidation(
 	Expect(validationEndedEvent.ValidationID[:]).Should(Equal(validationID[:]))
 }
 
-func ForceInitiateEndProofOfPurchaseValidation(
+func ForceInitiateEndAuctionValidation(
 	ctx context.Context,
 	senderKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	islotAuctionManager *islotauctionmanager.ISlotAuctionManager,
 	validationID ids.ID,
 ) *types.Receipt {
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := slotAuctionManager.InitiateRemoveInitialValidator(
+	tx, err := islotAuctionManager.InitiateRemoveInitialValidator(
 		opts,
 		validationID,
 	)
@@ -1346,14 +1377,14 @@ func ForceInitiateEndProofOfPurchaseValidation(
 	return WaitForTransactionSuccess(ctx, l1, tx.Hash())
 }
 
-func CompleteEndProofOfPurchaseValidation(
+func CompleteEndAuctionValidation(
 	ctx context.Context,
 	senderKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
-	proofOfPurchaseAddress common.Address,
+	AuctionAddress common.Address,
 	registrationSignedMessage *avalancheWarp.Message,
 ) *types.Receipt {
-	abi, err := slotauctionmanager.SlotAuctionManagerMetaData.GetAbi()
+	abi, err := islotauctionmanager.ISlotAuctionManagerMetaData.GetAbi()
 	Expect(err).Should(BeNil())
 
 	callData, err := abi.Pack("completeRemoveInitialValidator", uint32(0))
@@ -1363,7 +1394,7 @@ func CompleteEndProofOfPurchaseValidation(
 		callData,
 		senderKey,
 		l1,
-		proofOfPurchaseAddress,
+		AuctionAddress,
 		registrationSignedMessage.Bytes(),
 	)
 }
@@ -1468,13 +1499,13 @@ func InitiateAndCompleteEndPoSValidation(
 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
 }
 
-func InitiateAndCompleteEndProofOfPurchaseValidation(
+func InitiateAndCompleteEndAuctionValidation(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
 	fundedKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	islotAuctionManager *islotauctionmanager.ISlotAuctionManager,
 	slotAuctionManagerAddress common.Address,
 	validatorManagerAddress common.Address,
 	validationID ids.ID,
@@ -1487,11 +1518,11 @@ func InitiateAndCompleteEndProofOfPurchaseValidation(
 	WaitMinStakeDuration(ctx, l1Info, fundedKey)
 
 	var receipt *types.Receipt
-	receipt = InitiateEndProofOfPurchaseValidation(
+	receipt = InitiateEndAuctionValidation(
 		ctx,
 		fundedKey,
 		l1Info,
-		slotAuctionManager,
+		islotAuctionManager,
 		validationID,
 	)
 	// }
@@ -1536,7 +1567,7 @@ func InitiateAndCompleteEndProofOfPurchaseValidation(
 	)
 
 	// Deliver the Warp message to the L1
-	receipt = CompleteEndProofOfPurchaseValidation(
+	receipt = CompleteEndAuctionValidation(
 		ctx,
 		fundedKey,
 		l1Info,
@@ -2074,20 +2105,25 @@ func AdvanceProposerVM(
 func CreateAndFundNewAddress(
 	ctx context.Context,
 	l1Info interfaces.L1TestInfo,
-	exampleERC20 *exampleerc20.ExampleERC20,
 	fundedKey *ecdsa.PrivateKey,
-	funds *big.Int,
-) (*ecdsa.PrivateKey, common.Address) {
+	exampleERC20 *exampleerc20.ExampleERC20,
+	ERC20Funds *big.Int,
+) (*ecdsa.PrivateKey, common.Address) { 
 	senderOpts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
 	newPrivateKey, err := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
 	Expect(err).Should(BeNil())
-
 	newAddress := crypto.PubkeyToAddress(newPrivateKey.PublicKey)
 
-	tx, err := exampleERC20.Transfer(senderOpts, newAddress, funds)
-	Expect(err).Should(BeNil())
-	WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+	// I know this works I just dont know if its common practice, instead of making a new
+	// function to also fund erc20 tokens I decided to lump it into one and if ERC20 funds
+	// are wanted than to put in an erc20 object, otherwise just pass in nil and itll forget 
+	// about it
+	if exampleERC20 != nil {
+		tx, err := exampleERC20.Transfer(senderOpts, newAddress, ERC20Funds)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1Info, tx.Hash())		
+	}
 
 	SendNativeTransfer(ctx, l1Info, fundedKey, newAddress, big.NewInt(1000000000000000000))
 
@@ -2103,11 +2139,11 @@ func InitiateAuction(
 	auctionLength *big.Int,
 	validationLength *big.Int,
 	minimumBid *big.Int,
-	slotAuctionManager *slotauctionmanager.SlotAuctionManager,
+	islotauctionmanager *islotauctionmanager.ISlotAuctionManager,
 ) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := slotAuctionManager.InitiateAuction(
+	tx, err := islotauctionmanager.InitiateAuction(
 		opts,
 		validatorSlots,
 		validatorWeight,
@@ -2125,17 +2161,16 @@ func EndAuction(
 	fundedKey *ecdsa.PrivateKey,
 	l1Info interfaces.L1TestInfo,
 	pChainInfo interfaces.L1TestInfo,
-	slotauctionmanager *slotauctionmanager.SlotAuctionManager,
+	islotauctionmanager *islotauctionmanager.ISlotAuctionManager,
 	slotAuctionAddress common.Address,
 	validatorManagerAddress common.Address,
-	erc20 *exampleerc20.ExampleERC20,
 	pchainWallet pwallet.Wallet,
 	networkID uint32,
 	nodes []Node,
 ) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := slotauctionmanager.EndAuction(opts)
+	tx, err := islotauctionmanager.EndAuction(opts)
 	Expect(err).Should(BeNil())
 
 	receipt := WaitForTransactionSuccess(ctx, l1Info, tx.Hash())

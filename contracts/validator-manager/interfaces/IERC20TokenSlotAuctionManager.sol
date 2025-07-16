@@ -29,5 +29,5 @@ interface IERC20TokenSlotAuctionManager {
         PChainOwner memory disableOwner
     ) external;
 
-    function erc20() external view returns (IERC20Mintable);
+    function ERC20() external view returns (IERC20Mintable);
 }
