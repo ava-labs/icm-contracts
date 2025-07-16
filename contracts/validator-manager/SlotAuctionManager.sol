@@ -24,9 +24,8 @@ import {Comparators} from "@openzeppelin/contracts@5.0.2/utils/Comparators.sol";
 abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuctionManager {
     using Heap for Heap.Uint256Heap;
 
-    IERC20 public TOKEN_CONTRACT;
     IValidatorManager public VALIDATOR_MANAGER;
-    AuctionState auctionState;
+    AuctionState public auctionState;
     // auctionEndTime is the end of the auction (no bids)
     uint256 public auctionEndTime;
     uint16 public validatorSlots;
@@ -196,7 +195,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,
         PChainOwner memory disableOwner
-    ) nonReentrant AuctionOn internal {
+    ) AuctionOn internal {
         if (VALIDATOR_MANAGER.getNodeValidationID(nodeID) != 0) {
             revert NodeIsValidator(nodeID);
         }
@@ -212,7 +211,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
 
         // If all slots aren't contended, then fill the heap with any bid
         if (Heap.length(_bids) < validatorSlots) {
-            TOKEN_CONTRACT.transferFrom(msg.sender, address(this), bid);
+            _lock(bid);
             Heap.insert(_bids, bid);
         } 
         else if (Heap.peek(_bids) < bid) {
