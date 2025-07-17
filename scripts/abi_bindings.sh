@@ -12,6 +12,8 @@ ICM_CONTRACTS_PATH=$(
 source $ICM_CONTRACTS_PATH/scripts/constants.sh
 source $ICM_CONTRACTS_PATH/scripts/versions.sh
 
+AVALANCHE_ICM_PATH=${ICM_CONTRACTS_PATH}/avalanche
+
 export ARCH=$(uname -m)
 [ $ARCH = x86_64 ] && ARCH=amd64
 echo "ARCH set to $ARCH"
@@ -62,8 +64,8 @@ solc_version_output=$(solc --version 2>&1)
 extracted_version=$(solc --version 2>&1 | awk '/Version:/ {print $2}' | awk -F'+' '{print $1}')
 
 # Check if the extracted version matches the expected version
-if ! [[ "$extracted_version" == "$SOLIDITY_VERSION" ]]; then
-    echo "Expected solc version $SOLIDITY_VERSION, but found $extracted_version. Please install the correct version." && exit 1
+if ! [[ "$extracted_version" == "$AVALANCHE_SOLIDITY_VERSION" ]]; then
+    echo "Expected solc version $AVALANCHE_SOLIDITY_VERSION, but found $extracted_version. Please install the correct version." && exit 1
 fi
 
 # Install abigen
@@ -71,12 +73,12 @@ echo "Building subnet-evm abigen"
 go install github.com/ava-labs/subnet-evm/cmd/abigen@${SUBNET_EVM_VERSION}
 
 # Solc does not recursively expand remappings, so we must construct them manually
-remappings=$(cat $ICM_CONTRACTS_PATH/remappings.txt)
+remappings=$(cat $AVALANCHE_ICM_PATH/remappings.txt)
 
 # Recursively search for all remappings.txt files in the lib directory.
 # For each file, prepend the remapping with the relative path to the file.
 while read -r filepath; do
-    relative_path="${filepath#$ICM_CONTRACTS_PATH/}"
+    relative_path="${filepath#$AVALANCHE_ICM_PATH/}"
     dir_path=$(dirname "$relative_path")
     echo $dir_path
   
@@ -84,7 +86,7 @@ while read -r filepath; do
     # so that each remapping is of the form @token=lib/path/to/remapping
     transformed_lines=$(sed -n "s|^\(@[^=]*=\)\(.*\)|\1$dir_path/\2|p" "$filepath")
     remappings+=" $transformed_lines "
-done < <(find "$ICM_CONTRACTS_PATH/lib" -type f -name "remappings.txt" )
+done < <(find "$AVALANCHE_ICM_PATH/lib" -type f -name "remappings.txt" )
 
 function convertToLower() {
     if [ "$ARCH" = 'arm64' ]; then
@@ -126,13 +128,13 @@ function generate_bindings() {
         dir="${dir#./}"
 
         echo "Building $contract_name..."
-        mkdir -p $ICM_CONTRACTS_PATH/out/$contract_name.sol
+        mkdir -p $AVALANCHE_ICM_PATH/out/$contract_name.sol
         
-        combined_json=$ICM_CONTRACTS_PATH/out/$contract_name.sol/combined-output.json
+        combined_json=$AVALANCHE_ICM_PATH/out/$contract_name.sol/combined-output.json
 
         cwd=$(pwd)
-        cd $ICM_CONTRACTS_PATH
-        solc --optimize --evm-version $EVM_VERSION --combined-json abi,bin,metadata,ast,devdoc,userdoc --pretty-json $cwd/$dir/$contract_name.sol $remappings > $combined_json
+        cd $AVALANCHE_ICM_PATH
+        solc --optimize --evm-version $AVALANCHE_EVM_VERSION --combined-json abi,bin,metadata,ast,devdoc,userdoc --pretty-json $cwd/$dir/$contract_name.sol $remappings > $combined_json
         cd $cwd
 
         # construct the exclude list
@@ -175,19 +177,19 @@ if [[ -z "${CONTRACT_LIST}" ]]; then
     contract_names=($DEFAULT_CONTRACT_LIST)
 fi
 
-cd $ICM_CONTRACTS_PATH/contracts
+cd $AVALANCHE_ICM_PATH/contracts
 generate_bindings "${contract_names[@]}"
 
 contract_names=($PROXY_LIST)
-cd $ICM_CONTRACTS_PATH/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/transparent
+cd $AVALANCHE_ICM_PATH/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/transparent
 generate_bindings "${contract_names[@]}"
 
 contract_names=($SUBNET_EVM_LIST)
-cd $ICM_CONTRACTS_PATH/lib/subnet-evm/contracts/contracts/interfaces
+cd $AVALANCHE_ICM_PATH/lib/subnet-evm/contracts/contracts/interfaces
 generate_bindings "${contract_names[@]}"
 
 contract_names=($ACCESS_LIST)
-cd $ICM_CONTRACTS_PATH/lib/openzeppelin-contracts-upgradeable/contracts/access
+cd $AVALANCHE_ICM_PATH/lib/openzeppelin-contracts-upgradeable/contracts/access
 generate_bindings "${contract_names[@]}"
 
 exit 0
