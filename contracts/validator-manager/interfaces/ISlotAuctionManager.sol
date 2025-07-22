@@ -101,20 +101,10 @@ interface ISlotAuctionManager {
     );
 
     /**
-     * @notice Begins a new auction, only callable by owner of the contract.
-     * @param validatorslots The number of slots being auctioned off.
-     * @param weight The weight of each validator slot.
-     * @param minAuctionDuration The total length of the auction.
-     * @param minValidatorDuration The total length of the validation period.
-     * @param minimumBid The smallest bid accepted in the auction.
+     * @notice Begins a new auction, callable by anyone, will automatically auction the maximum
+     * amount of validator slots with default auction settings
      */
-    function initiateAuction(
-        uint16 validatorslots,
-        uint64 weight,
-        uint256 minAuctionDuration,
-        uint256 minValidatorDuration,
-        uint256 minimumBid
-    ) external;
+    function initiateAuction() external;
 
     /**
      * @notice Ends the current running auction, adding current winners to the L1

@@ -18,30 +18,26 @@ import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
 
 
-/**
- * @dev Implementation of the {IERC20TokenStakingManager} interface.
- *
- * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
- */
 contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuctionManager {
     using SafeERC20 for IERC20Mintable;
     using SafeERC20TransferFrom for IERC20Mintable;
 
-    // solhint-disable private-vars-leading-underscore
-    /// @custom:storage-location erc7201:avalanche-icm.storage.ERC20TokenStakingManager
     IERC20Mintable _token;
 
-    // struct ERC20TokenStakingManagerStorage {
-    // }
-    
-    // solhint-enable private-vars-leading-underscore
-
-    constructor(address vmAddress, address erc20Address) {
+    constructor(
+        address vmAddress,
+        address erc20Address,
+        uint16 validatorslots,
+        uint64 weight,
+        uint256 minAuctionDuration,
+        uint256 minValidatorDuration,
+        uint256 minimumBid
+    ) {
         _token = IERC20Mintable(erc20Address);
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
         auctionState = AuctionState.NoAuction;
+        _setSlotAuctionSettings(validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid);
     }
-
 
     function placeBid(
         uint256 bid, 

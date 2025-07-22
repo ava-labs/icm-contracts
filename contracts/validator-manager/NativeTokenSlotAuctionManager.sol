@@ -17,21 +17,20 @@ import {Initializable} from
 import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 
-
-/**
- * @dev Implementation of the {INativeTokenStakingManager} interface.
- *
- * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
- */
 contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager{
     using Address for address payable;
 
-    // INativeMinter public constant NATIVE_MINTER =
-    //     INativeMinter(0x0200000000000000000000000000000000000001);
-
-    constructor(address vmAddress) {
+    constructor(
+        address vmAddress,
+        uint16 validatorslots,
+        uint64 weight,
+        uint256 minAuctionDuration,
+        uint256 minValidatorDuration,
+        uint256 minimumBid
+    ) {
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
         auctionState = AuctionState.NoAuction;
+        _setSlotAuctionSettings(validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid);
     }
 
     function placeBid(

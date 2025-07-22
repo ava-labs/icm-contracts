@@ -135,7 +135,7 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
 
     /**
      * @notice Migrates a validator from the V1 contract to the V2 contract.
-     * @param validationID The ID of the validation period to migrate.
+     * @param validationID The ID of the validation period to migrate. 
      * @param receivedNonce The latest nonce received from the P-Chain.
      */
     function migrateFromV1(bytes32 validationID, uint32 receivedNonce) external {
@@ -472,6 +472,10 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
         return _getValidatorManagerStorage()._subnetID;
     }
 
+    function getMaximumChurnPercentage() public view returns (uint8) {
+        return _getValidatorManagerStorage()._maximumChurnPercentage;
+    }
+    
     /**
      * @notice Returns the current churn tracker and its configuration
      * @return The churn period duration in seconds

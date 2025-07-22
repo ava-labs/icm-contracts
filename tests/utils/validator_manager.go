@@ -58,6 +58,10 @@ const (
 	DefaultWeightToValueFactor     uint64 = 1e12
 	DefaultPChainAddress           string = "P-local18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u"
 	DefaultRewardRecipientAddress  string = "0x000000000000000000000000000000000000002a"
+	DefaultValidatorSlots		   uint16 = 3
+	DefaultValidatorWeight         uint64 = 10
+	DefaultMinAuctionDuration	   uint64 = 5
+	DefaultMinBid				   uint64 = 10
 )
 
 type ValidatorManagerConcreteType int
@@ -161,6 +165,11 @@ func DeployAndInitializeValidatorManagerSpecialization(
 			l1.RPCClient,
 			validatorManagerAddress,
 			erc20Address,
+			DefaultValidatorSlots,
+			DefaultValidatorWeight,
+			big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+			big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+			big.NewInt(0).SetUint64(DefaultMinBid),
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())
@@ -173,6 +182,11 @@ func DeployAndInitializeValidatorManagerSpecialization(
 			opts,
 			l1.RPCClient,
 			validatorManagerAddress,
+			DefaultValidatorSlots,
+			DefaultValidatorWeight,
+			big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+			big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+			big.NewInt(0).SetUint64(DefaultMinBid),
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())
@@ -2134,28 +2148,16 @@ func InitiateAuction(
 	ctx context.Context,
 	l1Info interfaces.L1TestInfo,
 	fundedKey *ecdsa.PrivateKey,
-	validatorSlots uint16,
-	validatorWeight uint64,
-	auctionLength *big.Int,
-	validationLength *big.Int,
-	minimumBid *big.Int,
 	islotauctionmanager *islotauctionmanager.ISlotAuctionManager,
 ) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := islotauctionmanager.InitiateAuction(
-		opts,
-		validatorSlots,
-		validatorWeight,
-		auctionLength,
-		validationLength,
-		minimumBid,
-	)
+	tx, err := islotauctionmanager.InitiateAuction(opts)
 	Expect(err).Should(BeNil())
 	WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
 }
 
-func EndAuction(
+func EndAuctionAndCompleteValidatorRegistration(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
 	fundedKey *ecdsa.PrivateKey,

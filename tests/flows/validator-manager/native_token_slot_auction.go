@@ -33,7 +33,6 @@ import (
 */
 func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	// Get the L1s info
-	log.Println("Emre: WE RAN NATIVE SAVM LESS GOO!")
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	_, fundedKey := network.GetFundedAccountInfo()
@@ -129,11 +128,6 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		fundedKey,
-		2,
-		units.Schmeckle,
-		big.NewInt(0),
-		big.NewInt(31556926),
-		big.NewInt(10),
 		iSlotAuctionManager,
 	)
 
@@ -162,7 +156,7 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		NativeTokenSlotAuctionManager,
 	)
 
-	utils.EndAuction(
+	utils.EndAuctionAndCompleteValidatorRegistration(
 		ctx,
 		signatureAggregator,
 		fundedKey,

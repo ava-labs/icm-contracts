@@ -36,7 +36,6 @@ import (
 */
 func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	// Get the L1s info
-	log.Println("Emre: WE RAN ERC20 SAVM LESS GOO!")
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	_, fundedKey := network.GetFundedAccountInfo()
@@ -139,11 +138,6 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		fundedKey,
-		2,
-		units.Schmeckle,
-		big.NewInt(0),
-		big.NewInt(31556926),
-		big.NewInt(10),
 		iSlotAuctionManager,
 	)
 
@@ -178,7 +172,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		ERC20TokenSlotAuctionAddress,
 	)
 
-	utils.EndAuction(
+	utils.EndAuctionAndCompleteValidatorRegistration(
 		ctx,
 		signatureAggregator,
 		fundedKey,
@@ -192,6 +186,6 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		nodes,
 	)
 
-	// OwnerOpts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
+	
 
 }

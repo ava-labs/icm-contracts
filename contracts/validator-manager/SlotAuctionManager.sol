@@ -6,6 +6,7 @@
 pragma solidity 0.8.25;
 
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
+import {Math} from "@openzeppelin/contracts@5.0.2/utils/math/Math.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {ISlotAuctionManager, ValidatorBid, ValidatorInfo, AuctionState} from "./interfaces/ISlotAuctionManager.sol";
@@ -28,9 +29,15 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     AuctionState public auctionState;
     // auctionEndTime is the end of the auction (no bids)
     uint256 public auctionEndTime;
-    uint16 public validatorSlots;
+    // Total amount of validator slots in the set
+    uint16 public totalValidatorSlots;
+    // Amount of validator slots being auctioned right now
+    uint16 public auctioningValidatorSlots;
+    // Amount of validator slots unused
+    uint16 public openValidatorSlots;
     uint64 public validatorWeight;
     uint256 public MinValidatorDuration;
+    uint256 public MinAuctionDuration;
     uint256 public MinimumBid;
     // checks to see if the NodeID is currently in the heap
     mapping (bytes nodeID => bool isQualified) private _nodeIsQualified; 
@@ -51,6 +58,9 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     error AuctionEndTimeNotReached(uint256 auctionEndTime);
     error ValidatorTimeLimitNotPassed(uint256 validationTimeLimit);
     error AuctionFinalizing();
+    error ValidatorWeightTooHigh(uint64 validatorWeight);
+    error NoOpenValidatorSlots(uint16 validatorSlots);
+    error MoreActiveValidatorsThanTotalSlots(uint16 totalValidatorSlots, uint16 activeValidators);
 
     modifier AuctionOn {
         if (auctionState != AuctionState.AuctionInProgress) {
@@ -69,35 +79,30 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         _;
     }
 
-    // TODO replace this ^ with this v once I know it wont cause issues for me
-
-    // function initialize(address tokenAddress, address vmAddress)public initializer {
-    //     TOKEN_CONTRACT = IERC20(tokenAddress);
-    //     VALIDATOR_MANAGER = IValidatorManager(vmAddress);
-    // }
-
-    
-    function initiateAuction(
-        uint16 validatorslots,
-        uint64 weight,
-        uint256 minAuctionDuration,
-        uint256 minValidatorDuration,
-        uint256 minimumBid
-    ) AuctionOff external {
+    function initiateAuction() AuctionOff external {
         auctionState = AuctionState.AuctionInProgress;
-        validatorWeight = weight;
-        // require(churn percentage will not be overlooked)
-        
-        auctionEndTime = block.timestamp + minAuctionDuration; 
-        validatorSlots = validatorslots;
-        MinValidatorDuration = minValidatorDuration;
-        MinimumBid = minimumBid;
+        auctionEndTime = block.timestamp + MinAuctionDuration; 
         _secondPrice = 0;
-        // Initiates an empty heap array, id rather just create a new one but solidity memory syntax is still confusing to me
+        if (openValidatorSlots == 0) {
+            revert NoOpenValidatorSlots(openValidatorSlots);
+        }
+        // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
+        // than the current amount of available slots
+        uint64 maxValidatorSlotsBeforeChurn = VALIDATOR_MANAGER.getMaximumChurnPercentage() * VALIDATOR_MANAGER.l1TotalWeight() / validatorWeight * 100;
+        
+        if (maxValidatorSlotsBeforeChurn == 0){
+            revert ValidatorWeightTooHigh(validatorWeight);
+        }
+        if (maxValidatorSlotsBeforeChurn > openValidatorSlots) {
+            auctioningValidatorSlots = openValidatorSlots;
+        }
+        else {
+            auctioningValidatorSlots = uint16(maxValidatorSlotsBeforeChurn);
+        }
+        // Creates new heap for bids
         delete _bids.tree; 
-        emit NewValidatorAuction(validatorSlots, weight, minValidatorDuration, minAuctionDuration, MinimumBid);
+        emit NewValidatorAuction(auctioningValidatorSlots, validatorWeight, MinValidatorDuration, auctionEndTime, MinimumBid);
     }
-
 
     function endAuction() nonReentrant AuctionOn external {
 
@@ -134,8 +139,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
             _secondPrice = currentBid;
         }
         
-        validatorSlots = 0;
-        MinValidatorDuration = 0;
+        auctioningValidatorSlots = 0;
         auctionState = AuctionState.NoAuction;
     }
 
@@ -149,6 +153,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         }
         delete validatorsByNodeID[validatorsByValidationID[validationID].nodeID];
         delete validatorsByValidationID[validationID];
+        openValidatorSlots++;
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
     
@@ -164,6 +169,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     ) external {
         VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
+
     function completeValidatorRegistration(
         uint32 messageIndex
     ) external returns (bytes32) {
@@ -176,18 +182,52 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         return VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
     
-    // function getValidatorInfoByNodeID(
-    //     bytes memory nodeID
-    // ) external returns (ValidatorInfo memory) {
-    //     return validatorsByNodeID[nodeID];
-    // }
-    
+    function resetSlotAuctionSettings(
+        uint16 newValidatorSlots,
+        uint64 newWeight,
+        uint256 newMinAuctionDuration,
+        uint256 newMinValidatorDuration,
+        uint256 newMinimumBid
+    ) external AuctionOff { // OnlyOwner
+        // Make sure validator slots are not pushed below the current amount of slotted validators
+        if (newValidatorSlots > totalValidatorSlots) {
+            openValidatorSlots += newValidatorSlots - totalValidatorSlots;
+            totalValidatorSlots = newValidatorSlots;
+        }
+        else {
+            if (totalValidatorSlots - openValidatorSlots > newValidatorSlots) {
+                revert MoreActiveValidatorsThanTotalSlots(newValidatorSlots, totalValidatorSlots - openValidatorSlots);
+            }
+        }
+        MinAuctionDuration = newMinAuctionDuration;
+        MinValidatorDuration = newMinValidatorDuration;
+        MinimumBid = newMinimumBid;
+        validatorWeight = newWeight;
+
+    }
+
     function MinBidRequired() AuctionOn external view returns (uint256){
-        if (Heap.length(_bids) < validatorSlots) {
+        if (Heap.length(_bids) < totalValidatorSlots) {
             return MinimumBid;
         }
         return Heap.peek(_bids) + 1;
     }
+
+    function _setSlotAuctionSettings(
+        uint16 validatorslots,
+        uint64 weight,
+        uint256 minAuctionDuration,
+        uint256 minValidatorDuration,
+        uint256 minimumBid
+    ) internal {
+        // sets up default values of auction
+        totalValidatorSlots = validatorslots;
+        openValidatorSlots = totalValidatorSlots;
+        validatorWeight = weight;
+        MinAuctionDuration = minAuctionDuration; 
+        MinValidatorDuration = minValidatorDuration;
+        MinimumBid = minimumBid;
+    } 
 
     function _placeBid (
         uint256 bid,
@@ -210,7 +250,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         }
 
         // If all slots aren't contended, then fill the heap with any bid
-        if (Heap.length(_bids) < validatorSlots) {
+        if (Heap.length(_bids) < auctioningValidatorSlots) {
             _lock(bid);
             Heap.insert(_bids, bid);
         } 
