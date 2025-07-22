@@ -19,11 +19,9 @@ import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
 import { WarpMessage, IWarpMessenger } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {Test} from "@forge-std/Test.sol";
 
-contract SlotAuctionManagerTest is Test {
-    using SafeERC20 for IERC20Mintable;
+abstract contract SlotAuctionManagerTest is Test {
+    SlotAuctionManager public slotauctionmanager;
 
-    ERC20TokenSlotAuctionManager public app;
-    IERC20Mintable public token;
     ValidatorManager public validatorManager;
 
     PChainOwner public DEFAULT_P_CHAIN_OWNER;
@@ -34,6 +32,12 @@ contract SlotAuctionManagerTest is Test {
         bytes(hex"2341234123412341234123412341234123412341");
     bytes public constant DEFAULT_INITIAL_VALIDATOR_NODE_ID_2 =
         bytes(hex"3412341234123412341234123412341234123412");
+    bytes public constant DEFAULT_BIDDING_VALIDATOR_NODE_ID_1 =
+        bytes(hex"4123412341234123412341234123412341234123");
+    bytes public constant DEFAULT_BIDDING_VALIDATOR_NODE_ID_2 =
+        bytes(hex"2345234523452345234523452345234523452345");
+    bytes public constant DEFAULT_BIDDING_VALIDATOR_NODE_ID_3 =
+        bytes(hex"3452345234523452345234523452345234523452");
     bytes public constant DEFAULT_BLS_PUBLIC_KEY = bytes(
         hex"123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678"
     );
@@ -48,38 +52,248 @@ contract SlotAuctionManagerTest is Test {
     uint64 public constant DEFAULT_INITIAL_VALIDATOR_WEIGHT = DEFAULT_WEIGHT * 1e4;
     uint64 public constant DEFAULT_INITIAL_TOTAL_WEIGHT =
         DEFAULT_INITIAL_VALIDATOR_WEIGHT + DEFAULT_WEIGHT;
-    uint256 public constant DEFAULT_MINIMUM_STAKE_AMOUNT = 20e12;
-    uint256 public constant DEFAULT_MAXIMUM_STAKE_AMOUNT = 1e22;
+    // uint256 public constant DEFAULT_MINIMUM_STAKE_AMOUNT = 20e12;
+    // uint256 public constant DEFAULT_MAXIMUM_STAKE_AMOUNT = 1e22;
     uint64 public constant DEFAULT_CHURN_PERIOD = 1 hours;
     uint8 public constant DEFAULT_MAXIMUM_CHURN_PERCENTAGE = 20;
-    uint8 public constant DEFAULT_MAXIMUM_HOURLY_CHURN = 0;
+    // uint8 public constant DEFAULT_MAXIMUM_HOURLY_CHURN = 0;
     uint64 public constant DEFAULT_REGISTRATION_TIMESTAMP = 1000;
-    uint256 public constant DEFAULT_STARTING_TOTAL_WEIGHT = 1e10 + DEFAULT_WEIGHT;
+    // uint256 public constant DEFAULT_STARTING_TOTAL_WEIGHT = 1e10 + DEFAULT_WEIGHT;
     uint64 public constant DEFAULT_MINIMUM_VALIDATION_DURATION = 24 hours;
-    uint64 public constant DEFAULT_COMPLETION_TIMESTAMP = 100_000;
+    // uint64 public constant DEFAULT_COMPLETION_TIMESTAMP = 100_000;
     uint64 public constant REGISTRATION_EXPIRY_LENGTH = 1 days;
+    uint16 public constant DEFAULT_VALIDATOR_SLOTS = 3;
+    uint64 public constant DEFAULT_VALIDATOR_SLOT_WEIGHT = 10;
+    uint256 public constant DEFAULT_MINIMUM_AUCTION_DURATION = 60 seconds;
+    uint256 public constant DEFAULT_AUCTION_START_TIME = 1000 seconds;
+    uint256 public constant DEFAULT_MINIMUM_BID = 10;
 
-    function testSilly() public {
-         app.initiateAuction(1, 1, 1, 1, 1);
-    }
+    event NewValidatorAuction(
+        uint16 validatorSlots,
+        uint64 validatorWeight, 
+        uint256 minValidatorDuration, 
+        uint256 auctionEndTime,
+        uint256 minimumBid
+    );
 
-    function setUp() public {
+    event SuccessfulBidPlaced(
+        uint256 indexed bid,
+        bytes indexed nodeID
+    );
+    
+    event BidEvicted(
+        uint256 indexed bid, 
+        bytes indexed nodeID
+    );
+
+    event InitiatedAuctionValidatorRegistration(
+        bytes32 indexed validationID, 
+        address indexed ownerAddress, 
+        uint256 validatorEndTime,
+        uint64 weight
+    );
+
+    function setUp() public virtual {
+        // This stays 
         address[] memory addresses = new address[](1);
         addresses[0] = 0x1234567812345678123456781234567812345678;
         DEFAULT_P_CHAIN_OWNER = PChainOwner({threshold: 1, addresses: addresses});
+        // no matter what
+    }
 
-        token = new ExampleERC20();
-        validatorManager = new ValidatorManager(ICMInitializable.Allowed);
-        app = new ERC20TokenSlotAuctionManager(address(validatorManager), address(token));
+    function testStartAuction() public {
+        vm.expectEmit(true, true, true, true, address(slotauctionmanager));
+        emit NewValidatorAuction(
+            DEFAULT_VALIDATOR_SLOTS, 
+            DEFAULT_VALIDATOR_SLOT_WEIGHT, 
+            DEFAULT_MINIMUM_VALIDATION_DURATION, 
+            DEFAULT_MINIMUM_AUCTION_DURATION + block.timestamp, 
+            DEFAULT_MINIMUM_BID
+        );
+        slotauctionmanager.initiateAuction();
+    }
 
-        validatorManager.initialize(_defaultSettings(address(app)));
+    function testAuctionAlreadyRunning() public {
+        _startAuctionWithCheck();
 
-        _mockGetBlockchainID();
+        vm.expectRevert(
+            abi.encodeWithSelector(SlotAuctionManager.AuctionInProgress.selector)
+        );
+        slotauctionmanager.initiateAuction();
+    }
 
-        ConversionData memory conversion = _defaultConversionData();
-        bytes32 conversionID = sha256(ValidatorMessages.packConversionData(conversion));
-        _mockInitializeValidatorSet(conversionID);
-        validatorManager.initializeValidatorSet(conversion, 0);
+    function testEndAuctionWithoutAuctionRunning() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(SlotAuctionManager.AuctionNotInProgress.selector)
+        );
+        slotauctionmanager.endAuction();
+    }
+
+    function testBidBelowMinimum() public {
+        _startAuctionWithCheck();
+
+        uint256 belowMinimumBid = DEFAULT_MINIMUM_BID - 1;
+        _beforeBid(belowMinimumBid, address(this));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SlotAuctionManager.BidSmallerThanMinimum.selector,
+                DEFAULT_MINIMUM_BID,
+                belowMinimumBid
+            )
+        );
+        _placeBid(
+            belowMinimumBid, 
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_1, 
+            DEFAULT_BLS_PUBLIC_KEY, 
+            DEFAULT_P_CHAIN_OWNER, 
+            DEFAULT_P_CHAIN_OWNER
+        );
+    }
+
+    function testDuplicateBid() public {
+        _startAuctionWithCheck();
+        _FundAndPlaceBidWithCheck(
+            DEFAULT_MINIMUM_BID,
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_1,
+            DEFAULT_BLS_PUBLIC_KEY,
+            DEFAULT_P_CHAIN_OWNER,
+            DEFAULT_P_CHAIN_OWNER
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SlotAuctionManager.DuplicateBidInContention.selector, 
+                DEFAULT_MINIMUM_BID
+            )
+        );
+        _placeBid(
+            DEFAULT_MINIMUM_BID, 
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_2, 
+            DEFAULT_BLS_PUBLIC_KEY, 
+            DEFAULT_P_CHAIN_OWNER, 
+            DEFAULT_P_CHAIN_OWNER
+        );
+    }
+
+    function testBidWithDuplicateNodeID() public {
+        _startAuctionWithCheck();
+        _FundAndPlaceBidWithCheck(
+            DEFAULT_MINIMUM_BID,
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_1,
+            DEFAULT_BLS_PUBLIC_KEY,
+            DEFAULT_P_CHAIN_OWNER,
+            DEFAULT_P_CHAIN_OWNER
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SlotAuctionManager.DuplicateNodeIDInContention.selector, 
+                DEFAULT_BIDDING_VALIDATOR_NODE_ID_1
+            )
+        );
+        _placeBid(
+            DEFAULT_MINIMUM_BID, 
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_1, 
+            DEFAULT_BLS_PUBLIC_KEY, 
+            DEFAULT_P_CHAIN_OWNER, 
+            DEFAULT_P_CHAIN_OWNER
+        );
+    }
+
+    function testSetSlotAuctionSettings() public {
+        // Making sure default settings are set properly
+        vm.assertEq(slotauctionmanager.totalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS);
+        vm.assertEq(slotauctionmanager.validatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT);
+        vm.assertEq(slotauctionmanager.MinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION);
+        vm.assertEq(slotauctionmanager.MinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION);
+        vm.assertEq(slotauctionmanager.MinimumBid(), DEFAULT_MINIMUM_BID);
+
+        slotauctionmanager.setSlotAuctionSettings(
+            DEFAULT_VALIDATOR_SLOTS + 1, 
+            DEFAULT_VALIDATOR_SLOT_WEIGHT + 1, 
+            DEFAULT_MINIMUM_AUCTION_DURATION + 1, 
+            DEFAULT_MINIMUM_VALIDATION_DURATION + 1, 
+            DEFAULT_MINIMUM_BID + 1
+        );
+        vm.assertEq(slotauctionmanager.totalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS + 1);
+        vm.assertEq(slotauctionmanager.validatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1);
+        vm.assertEq(slotauctionmanager.MinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1);
+        vm.assertEq(slotauctionmanager.MinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION + 1);
+        vm.assertEq(slotauctionmanager.MinimumBid(), DEFAULT_MINIMUM_BID + 1);
+    }
+
+    function testSetSlotAuctionSettingsDuringAuction() public {
+        _startAuctionWithCheck();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SlotAuctionManager.AuctionInProgress.selector
+            )
+        );
+        slotauctionmanager.setSlotAuctionSettings(
+            DEFAULT_VALIDATOR_SLOTS + 1, 
+            DEFAULT_VALIDATOR_SLOT_WEIGHT + 1, 
+            DEFAULT_MINIMUM_AUCTION_DURATION + 1, 
+            DEFAULT_MINIMUM_VALIDATION_DURATION + 1, 
+            DEFAULT_MINIMUM_BID + 1
+        );    
+    }
+
+    function testBidEvicted() public { //TODO: NOT WORKING RN, IDK IF ITS MY TEST CASE OR THE CONTRACT 
+        // Setting slots to 1
+        slotauctionmanager.setSlotAuctionSettings(
+            1, 
+            DEFAULT_VALIDATOR_SLOT_WEIGHT, 
+            DEFAULT_MINIMUM_AUCTION_DURATION, 
+            DEFAULT_MINIMUM_VALIDATION_DURATION, 
+            DEFAULT_MINIMUM_BID
+        );
+        _startAuctionWithCheck();
+        _FundAndPlaceBidWithCheck(
+            DEFAULT_MINIMUM_BID,
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_1,
+            DEFAULT_BLS_PUBLIC_KEY,
+            DEFAULT_P_CHAIN_OWNER,
+            DEFAULT_P_CHAIN_OWNER
+        );
+        _beforeBid(DEFAULT_MINIMUM_BID + 1, address(this));
+        vm.expectEmit(address(slotauctionmanager));
+        emit BidEvicted(DEFAULT_MINIMUM_BID, DEFAULT_BIDDING_VALIDATOR_NODE_ID_1);
+        _placeBid(
+            DEFAULT_MINIMUM_BID + 1,
+            DEFAULT_BIDDING_VALIDATOR_NODE_ID_2,
+            DEFAULT_BLS_PUBLIC_KEY,
+            DEFAULT_P_CHAIN_OWNER,
+            DEFAULT_P_CHAIN_OWNER
+        );
+    }
+
+    function _FundAndPlaceBidWithCheck(
+        uint256 bid, 
+        bytes memory nodeID, 
+        bytes memory blsPublicKey, 
+        PChainOwner memory remainingBalanceOwner, 
+        PChainOwner memory disableOwner 
+    ) internal {
+        _beforeBid(bid, address(this));
+        vm.expectEmit();
+        emit SuccessfulBidPlaced(bid, nodeID);
+        _placeBid(
+            bid, 
+            nodeID, 
+            blsPublicKey, 
+            remainingBalanceOwner, 
+            disableOwner
+        );
+    }
+
+    function _startAuctionWithCheck() internal {
+        vm.expectEmit(true, true, true, true, address(slotauctionmanager));
+        emit NewValidatorAuction(
+            DEFAULT_VALIDATOR_SLOTS, 
+            DEFAULT_VALIDATOR_SLOT_WEIGHT, 
+            DEFAULT_MINIMUM_VALIDATION_DURATION, 
+            DEFAULT_MINIMUM_AUCTION_DURATION + block.timestamp, 
+            DEFAULT_MINIMUM_BID
+        );
+        slotauctionmanager.initiateAuction();
     }
 
     function _defaultSettings(
@@ -93,7 +307,10 @@ contract SlotAuctionManagerTest is Test {
         });
     }
 
-    function _mockGetPChainWarpMessage(bytes memory expectedPayload, bool valid) internal {
+    function _mockGetPChainWarpMessage(
+        bytes memory expectedPayload, 
+        bool valid
+    ) internal {
         vm.mockCall(
             WARP_PRECOMPILE_ADDRESS,
             abi.encodeWithSelector(IWarpMessenger.getVerifiedWarpMessage.selector, uint32(0)),
@@ -167,152 +384,19 @@ contract SlotAuctionManagerTest is Test {
             initialValidators: initialValidators
         });
     }
+    function _setUp() internal virtual;
 
+    function _beforeBid(
+        uint256 amount, 
+        address spender
+    ) internal virtual;
 
-    // using SafeERC20 for IERC20Mintable;
-
-    // SlotAuctionManager public slotAuctionManager;
-    // IERC20Mintable public token;
-    
-    // uint16 public constant DEFAULT_VALIDATOR_SLOTS = uint16(2);
-    // uint256 public constant DEFAULT_MINIMUM_AUCTION_DURATION = uint256(100);
-    // uint256 public constant DEFAULT_MINIMUM_BID = uint256(10); 
-    // uint256 public constant DEFAULT_USER_BID = uint256(10); 
-    // uint256 public constant DEFAULT_FUND_AMOUNT = uint256(50);
-    // address public constant DEFAULT_FIRST_BIDDER_ADDRESS = 0x1847184718471847184718471847184718471847;
-    // address public constant DEFAULT_SECOND_BIDDER_ADDRESS = 0x1963196319631963196319631963196319631963;
-    // address public constant DEFAULT_THIRD_BIDDER_ADDRESS = 0x2014201420142014201420142014201420142014;
-
-    // event InitiatedAuctionValidatorRegistration(
-    //     bytes32 indexed validationID,
-    //     address indexed owner,
-    //     uint64 minStakeDuration,
-    //     uint64 validatorWeight
-    // );
-
-    // function setUp() public override {
-    //     ValidatorManagerTest.setUp();
-
-    //     _setUp();
-    //     _mockGetBlockchainID();
-
-    //     ConversionData memory conversion = _defaultConversionData();
-    //     bytes32 conversionID = sha256(ValidatorMessages.packConversionData(conversion));
-    //     _mockInitializeValidatorSet(conversionID);
-    //     validatorManager.initializeValidatorSet(conversion, 0);
-    // }
-    
-    // function testBidWithoutAuction() public {
-    //     vm.expectRevert(abi.encodeWithSelector(SlotAuctionManager.AuctionNotInProgress.selector));
-    //     PChainOwner memory PCO;
-    //     slotAuctionManager.placeBid(100, DEFAULT_NODE_ID, DEFAULT_BLS_PUBLIC_KEY, PCO, PCO);
-    // }
-
-    // function _beforeRegisterValidator(
-    //     bytes32 validationID,
-    //     address rewardRecipient
-    // ) internal virtual override {
-    //     // vm.expectEmit(true, true, true, true, address(slotAuctionManager));
-    //     // emit InitiatedAuctionValidatorRegistration(
-    //     //     validationID,
-    //     //     address(this),
-    //     //     DEFAULT_MINIMUM_VALIDATION_DURATION,
-    //     //     DEFAULT_INITIAL_VALIDATOR_WEIGHT
-    //     // );
-    // }
-
-    // function _beforeSend(uint256 amount, address spender) internal override {
-    //     token.safeIncreaseAllowance(spender, amount);
-    //     token.safeTransfer(spender, amount);
-
-    //     // ERC20 tokens need to be pre-approved
-    //     vm.startPrank(spender);
-    //     token.safeIncreaseAllowance(address(slotAuctionManager), amount);
-    //     vm.stopPrank();
-    // }
-
-    // function _completeValidatorRegistration(
-    //     uint32 messageIndex
-    // ) internal virtual override returns (bytes32) {
-    //     return slotAuctionManager.completeValidatorRegistration(messageIndex);
-    // }
-
-    // function _completeValidatorRemoval(
-    //     uint32 messageIndex
-    // ) internal virtual override returns (bytes32) {
-    //     return slotAuctionManager.completeValidatorRemoval(messageIndex);
-    // }
-
-    // function _initiateValidatorRemoval(
-    //     bytes32 validationID,
-    //     bool includeUptime
-    // ) internal virtual override {
-    //     slotAuctionManager.initiateValidatorRemoval(validationID);
-    // }
-
-    // function _initiateValidatorRegistration(
-    //     bytes memory nodeID,
-    //     bytes memory blsPublicKey,
-    //     PChainOwner memory remainingBalanceOwner,
-    //     PChainOwner memory disableOwner,
-    //     uint64 weight,
-    //     address rewardRecipient
-    // ) override internal virtual returns (bytes32) {
-    //     vm.warp(0);
-    //     slotAuctionManager.initiateAuction(
-    //         DEFAULT_VALIDATOR_SLOTS - 1, 
-    //         DEFAULT_WEIGHT, 
-    //         DEFAULT_MINIMUM_AUCTION_DURATION, 
-    //         DEFAULT_MINIMUM_VALIDATION_DURATION, 
-    //         DEFAULT_MINIMUM_BID
-    //     );
-    //     token.mint(address(this), DEFAULT_FUND_AMOUNT);
-    //     slotAuctionManager.placeBid(DEFAULT_MINIMUM_BID, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
-    //     vm.warp(DEFAULT_REGISTRATION_TIMESTAMP);
-    //     slotAuctionManager.endAuction();
-
-    //     ValidatorInfo memory newValidator = slotAuctionManager.getValidatorInfoByNodeID(nodeID);
-    //     return newValidator.validationID;
-    // }
-
-    // function _initiateValidatorRegistration(
-    //     bytes memory nodeID,
-    //     bytes memory blsPublicKey,
-    //     PChainOwner memory remainingBalanceOwner,
-    //     PChainOwner memory disableOwner,
-    //     uint64 weight
-    // ) override internal virtual returns (bytes32) {
-    //     slotAuctionManager.initiateAuction(
-    //         DEFAULT_VALIDATOR_SLOTS - 1, 
-    //         DEFAULT_WEIGHT, 
-    //         DEFAULT_MINIMUM_AUCTION_DURATION, 
-    //         DEFAULT_MINIMUM_VALIDATION_DURATION, 
-    //         DEFAULT_MINIMUM_BID
-    //     );
-    //     token.mint(address(msg.sender), DEFAULT_FUND_AMOUNT);
-    //     slotAuctionManager.placeBid(5, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
-    //     slotAuctionManager.endAuction();
-
-    //     ValidatorInfo memory newValidator = slotAuctionManager.getValidatorInfoByNodeID(nodeID);
-    //     return newValidator.validationID;
-    // }
-
-    // function _forceInitiateValidatorRemoval(
-    //     bytes32 validationID,
-    //     bool includeUptime
-    // ) internal virtual override {
-    //     return slotAuctionManager.initiateValidatorRemoval(validationID);
-    // }
-
-    // function _setUp() internal override returns (IACP99Manager) {
-    //     // Construct the object under test
-    //     token = new ExampleERC20();
-    //     validatorManager = new ValidatorManager(ICMInitializable.Allowed);
-    //     slotAuctionManager = new SlotAuctionManager(address(token), address(validatorManager));
-
-    //     validatorManager.initialize(_defaultSettings(address(slotAuctionManager)));
-
-    //     return validatorManager;
-    // }
+    function _placeBid(
+        uint256 bid, 
+        bytes memory nodeID, 
+        bytes memory blsPublicKey, 
+        PChainOwner memory remainingBalanceOwner, 
+        PChainOwner memory disableOwner 
+    ) internal virtual;
     
 }

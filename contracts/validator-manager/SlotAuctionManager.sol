@@ -51,7 +51,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     error AuctionInProgress();
     error AuctionNotInProgress();
     error NodeIsValidator(bytes nodeID);
-    error NodeIsWinning(bytes nodeID);
+    error DuplicateNodeIDInContention(bytes nodeID);
     error DuplicateBidInContention(uint256 bid);
     error BidSmallerThanMinimum(uint256 minumumBid, uint256 userBid);
     error InsufficientBidToWinAuction(uint256 smallestAcceptableBid, uint256 userBid);
@@ -182,7 +182,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         return VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
     
-    function resetSlotAuctionSettings(
+    function setSlotAuctionSettings(
         uint16 newValidatorSlots,
         uint64 newWeight,
         uint256 newMinAuctionDuration,
@@ -240,7 +240,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
             revert NodeIsValidator(nodeID);
         }
         if (_nodeIsQualified[nodeID]) {
-            revert NodeIsWinning(nodeID);
+            revert DuplicateNodeIDInContention(nodeID);
         }
         if (bidderInfo[bid].addr != address(0)) {
             revert DuplicateBidInContention(bid);
@@ -256,13 +256,12 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         } 
         else if (Heap.peek(_bids) < bid) {
             _lock(bid);
-            // TOKEN_CONTRACT.transferFrom(msg.sender, address(this), bid);
+        
             uint256 poppedBid = Heap.replace(_bids, bid);
             _secondPrice = poppedBid;
             emit BidEvicted(poppedBid, bidderInfo[poppedBid].nodeID);
             // send back held funds if lost auction
             _unlock(bidderInfo[poppedBid].addr, poppedBid);
-            // TOKEN_CONTRACT.transfer(bidderInfo[poppedBid].addr, poppedBid);
 
             // deletes info of bidder no longer needed along with replacing it in the heap
             delete _nodeIsQualified[bidderInfo[poppedBid].nodeID];
