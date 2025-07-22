@@ -37,7 +37,7 @@ var (
 	e2eFlags             *e2e.FlagVars
 )
 
-func TestValidatorManager(t *testing.T) {
+func TestICTT(t *testing.T) {
 	if os.Getenv("RUN_E2E") == "" {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
