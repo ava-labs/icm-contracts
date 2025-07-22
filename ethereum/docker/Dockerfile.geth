@@ -1,0 +1,30 @@
+FROM ubuntu:24.04
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y wget ca-certificates psmisc && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set Geth version with commit hash
+# The "12b4131f" is the commit hash for the official v1.16.1 release of geth.
+# See: https://geth.ethereum.org/downloads/ and https://github.com/ethereum/go-ethereum/releases/tag/v1.16.1
+ARG GETH_VERSION=v1.16.1-12b4131f
+
+# Download and install geth
+RUN wget https://gethstore.blob.core.windows.net/builds/geth-linux-amd64-${GETH_VERSION#v}.tar.gz && \
+    tar -xzf geth-linux-amd64-${GETH_VERSION#v}.tar.gz && \
+    cp geth-linux-amd64-${GETH_VERSION#v}/geth /usr/local/bin/ && \
+    rm -rf geth-linux-amd64-${GETH_VERSION#v}* 
+
+# Set working directory
+WORKDIR /ethereum
+
+# Copy configuration files and scripts
+COPY docker/genesis.json /ethereum/genesis.json
+COPY docker/run_ethereum_network.sh /ethereum/run_ethereum_network.sh
+
+# Make the script executable
+RUN chmod +x /ethereum/run_ethereum_network.sh
+
+# Verify installation
+RUN geth version

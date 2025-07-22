@@ -41,7 +41,12 @@ SUBNET_EVM_VERSION=${SUBNET_EVM_VERSION:-$(extract_commit "$(getDepVersion githu
 # Set golangci-lint version
 GOLANGCI_LINT_VERSION=${GOLANGCI_LINT_VERSION:-'v1.64.5'}
 
-# Extract the Solidity version from foundry.toml
+# Extract the Solidity version from the Avalanche foundry.toml file
 AVALANCHE_ICM_PATH=${ICM_CONTRACTS_PATH}/avalanche
 AVALANCHE_SOLIDITY_VERSION=$(awk -F"'" '/^solc_version/ {print $2}' $AVALANCHE_ICM_PATH/foundry.toml)
 AVALANCHE_EVM_VERSION=$(awk -F"'" '/^evm_version/ {print $2}' $AVALANCHE_ICM_PATH/foundry.toml)
+
+# Extract the Solidity version from the Ethereum foundry.toml file
+ETHEREUM_ICM_PATH=${ICM_CONTRACTS_PATH}/ethereum
+ETHEREUM_SOLIDITY_VERSION=$(awk -F"'" '/^solc_version/ {print $2}' $ETHEREUM_ICM_PATH/foundry.toml)
+ETHEREUM_EVM_VERSION=$(awk -F"'" '/^evm_version/ {print $2}' $ETHEREUM_ICM_PATH/foundry.toml)

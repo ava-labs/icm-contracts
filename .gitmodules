@@ -8,3 +8,6 @@
 [submodule "avalanche/lib/subnet-evm"]
 	path = avalanche/lib/subnet-evm
 	url = https://github.com/ava-labs/subnet-evm
+[submodule "ethereum/lib/forge-std"]
+	path = ethereum/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

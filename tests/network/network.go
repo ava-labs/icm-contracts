@@ -430,11 +430,7 @@ func (n *LocalNetwork) GetL1Info(subnetID ids.ID) interfaces.L1TestInfo {
 			for _, nodeID := range l1.ValidatorIDs {
 				node, err := n.Network.GetNode(nodeID)
 				Expect(err).Should(BeNil())
-
-				uri, _, err := node.GetLocalURI(context.Background())
-				Expect(err).Should(BeNil())
-
-				nodeURIs = append(nodeURIs, uri)
+				nodeURIs = append(nodeURIs, node.GetAccessibleURI())
 			}
 			blockchainID := l1.Chains[0].ChainID
 			wsClient, err := ethclient.Dial(utils.HttpToWebsocketURI(nodeURIs[0], blockchainID.String()))
@@ -468,11 +464,7 @@ func (n *LocalNetwork) GetL1Infos() []interfaces.L1TestInfo {
 		for _, nodeID := range l1.ValidatorIDs {
 			node, err := n.Network.GetNode(nodeID)
 			Expect(err).Should(BeNil())
-
-			uri, _, err := node.GetLocalURI(context.Background())
-			Expect(err).Should(BeNil())
-
-			nodeURIs = append(nodeURIs, uri)
+			nodeURIs = append(nodeURIs, node.GetAccessibleURI())
 		}
 		blockchainID := l1.Chains[0].ChainID
 		wsClient, err := ethclient.Dial(utils.HttpToWebsocketURI(nodeURIs[0], blockchainID.String()))
