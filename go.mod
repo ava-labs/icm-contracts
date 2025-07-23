@@ -3,13 +3,13 @@ module github.com/ava-labs/icm-contracts
 go 1.23.11
 
 require (
-	github.com/ava-labs/avalanchego v1.13.2
+	github.com/ava-labs/avalanchego v1.13.3-rc.2
 	github.com/supranational/blst v0.3.14 // indirect
 )
 
 require (
 	github.com/ava-labs/libevm v1.13.14-0.3.0.rc.1
-	github.com/ava-labs/subnet-evm v0.7.5
+	github.com/ava-labs/subnet-evm v0.7.6
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/pkg/errors v0.9.1
@@ -23,9 +23,9 @@ require (
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/StephenButtolph/canoto v0.15.0 // indirect
+	github.com/StephenButtolph/canoto v0.17.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.1 // indirect
-	github.com/ava-labs/coreth v0.15.2-rc.0.0.20250620163936-0058a7ec6d9d // indirect
+	github.com/ava-labs/coreth v0.15.3-rc.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
@@ -53,7 +53,7 @@ require (
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/gballet/go-verkle v0.1.1-0.20231031103413-a67434b50f46 // indirect
 	github.com/getsentry/sentry-go v0.18.0 // indirect
-	github.com/go-cmd/cmd v1.4.1 // indirect
+	github.com/go-cmd/cmd v1.4.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
