@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
+	"io/fs"
 	"math/big"
+	"os"
 
 	"github.com/ava-labs/avalanchego/ids"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
@@ -80,6 +84,16 @@ func (t TeleporterTestInfo) SetTeleporter(address common.Address, l1 interfaces.
 	info := t[l1.BlockchainID]
 	info.TeleporterMessengerAddress = address
 	info.TeleporterMessenger = teleporterMessenger
+}
+
+func (t TeleporterTestInfo) SetTeleporterRegistry(address common.Address, l1 interfaces.L1TestInfo) {
+	teleporterRegistry, err := teleporterregistry.NewTeleporterRegistry(
+		address, l1.RPCClient,
+	)
+	Expect(err).Should(BeNil())
+	info := t[l1.BlockchainID]
+	info.TeleporterRegistryAddress = address
+	info.TeleporterRegistry = teleporterRegistry
 }
 
 func (t TeleporterTestInfo) InitializeBlockchainID(l1 interfaces.L1TestInfo, fundedKey *ecdsa.PrivateKey) {
@@ -192,6 +206,7 @@ func (t TeleporterTestInfo) RelayTeleporterMessage(
 		receipt.Logs,
 		t.TeleporterMessenger(destination).ParseReceiveCrossChainMessage,
 	)
+	fmt.Println("receiveEvent", receiveEvent)
 	Expect(err).Should(BeNil())
 	Expect(receiveEvent.SourceBlockchainID[:]).Should(Equal(source.BlockchainID[:]))
 	return receipt
@@ -831,4 +846,42 @@ func CreateOffChainRegistryMessage(
 	Expect(err).Should(BeNil())
 
 	return unsignedMessage
+}
+
+func SaveRegistyAddress(
+	teleporterInfo TeleporterTestInfo,
+	fileName string,
+) {
+	// Save the Teleporter registry address and validator addresses to files
+	registryAddresseses := make(map[string]string)
+	for l1, teleporterInfo := range teleporterInfo {
+		registryAddresseses[l1.Hex()] = teleporterInfo.TeleporterRegistryAddress.Hex()
+	}
+
+	jsonData, err := json.Marshal(registryAddresseses)
+	Expect(err).Should(BeNil())
+	err = os.WriteFile(fileName, jsonData, fs.ModePerm)
+	Expect(err).Should(BeNil())
+}
+
+func SetTeleporterInfoFromFile(
+	fileName string,
+	teleporterContractAddress common.Address,
+	teleporterInfo TeleporterTestInfo,
+	l1s []interfaces.L1TestInfo,
+) {
+	// Read the Teleporter registry address from the file
+	registryAddresseses := make(map[string]string)
+	data, err := os.ReadFile(fileName)
+	Expect(err).Should(BeNil())
+	err = json.Unmarshal(data, &registryAddresseses)
+	Expect(err).Should(BeNil())
+
+	for _, l1 := range l1s {
+		teleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+		teleporterInfo.SetTeleporterRegistry(
+			common.HexToAddress(registryAddresseses[l1.BlockchainID.Hex()]),
+			l1,
+		)
+	}
 }

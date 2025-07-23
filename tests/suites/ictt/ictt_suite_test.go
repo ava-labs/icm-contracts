@@ -2,6 +2,10 @@ package ictt_test
 
 import (
 	"context"
+	"flag"
+	"fmt"
+	"io/fs"
+	"math/big"
 	"os"
 	"testing"
 	"time"
@@ -11,9 +15,11 @@ import (
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
 	deploymentUtils "github.com/ava-labs/icm-contracts/utils/deployment-utils"
+	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/log"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/segmentio/encoding/json"
 )
 
 const (
@@ -29,6 +35,8 @@ const (
 	sendAndCallLabel       = "SendAndCall"
 	registrationLabel      = "Registration"
 	upgradabilityLabel     = "upgradability"
+
+	teleporterRegistryAddressFile = "TeleporterRegistryAddress.json"
 )
 
 var (
@@ -37,12 +45,17 @@ var (
 	e2eFlags             *e2e.FlagVars
 )
 
+func TestMain(m *testing.M) {
+	e2eFlags = e2e.RegisterFlags()
+	flag.Parse()
+	os.Exit(m.Run())
+}
+
 func TestValidatorManager(t *testing.T) {
 	if os.Getenv("RUN_E2E") == "" {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
 
-	e2eFlags = e2e.RegisterFlags()
 	RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Teleporter e2e test")
 }
@@ -95,19 +108,58 @@ var _ = ginkgo.BeforeSuite(func() {
 
 	// Only need to deploy Teleporter on the C-Chain since it is included in the genesis of the L1 chains.
 	_, fundedKey := LocalNetworkInstance.GetFundedAccountInfo()
-	TeleporterInfo.DeployTeleporterMessenger(
-		ctx,
-		LocalNetworkInstance.GetPrimaryNetworkInfo(),
-		teleporterDeployerTransaction,
-		teleporterDeployerAddress,
-		teleporterContractAddress,
-		fundedKey,
-	)
-	for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
-		TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
-		TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
-		TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
+
+	if e2eFlags.NetworkDir() == "" {
+		// Only deploy Teleporter if we are not reusing an existing network
+		TeleporterInfo.DeployTeleporterMessenger(
+			ctx,
+			LocalNetworkInstance.GetPrimaryNetworkInfo(),
+			teleporterDeployerTransaction,
+			teleporterDeployerAddress,
+			teleporterContractAddress,
+			fundedKey,
+		)
+
+		for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
+			TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+			TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
+			TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
+		}
+
+		registryAddresseses := make(map[string]string)
+		for l1, teleporterInfo := range TeleporterInfo {
+			registryAddresseses[l1.Hex()] = teleporterInfo.TeleporterRegistryAddress.Hex()
+		}
+
+		jsonData, err := json.Marshal(registryAddresseses)
+		Expect(err).Should(BeNil())
+		err = os.WriteFile(teleporterRegistryAddressFile, jsonData, fs.ModePerm)
+		Expect(err).Should(BeNil())
+
+	} else {
+		fundAmount := big.NewInt(0).Mul(big.NewInt(1e18), big.NewInt(15)) // 11 AVAX
+		fundDeployerTx := utils.CreateNativeTransferTransaction(
+			ctx, LocalNetworkInstance.GetPrimaryNetworkInfo(), fundedKey, teleporterDeployerAddress, fundAmount,
+		)
+		utils.SendTransactionAndWaitForSuccess(ctx, LocalNetworkInstance.GetPrimaryNetworkInfo(), fundDeployerTx)
+		fmt.Println("Deployer funded with", fundAmount, "AVAX")
+
+		// Read the Teleporter registry address from the file
+		registryAddresseses := make(map[string]string)
+		data, err := os.ReadFile(teleporterRegistryAddressFile)
+		Expect(err).Should(BeNil())
+		err = json.Unmarshal(data, &registryAddresseses)
+		Expect(err).Should(BeNil())
+
+		for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
+			TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+			TeleporterInfo.SetTeleporterRegistry(
+				common.HexToAddress(registryAddresseses[l1.BlockchainID.Hex()]),
+				l1,
+			)
+		}
 	}
+
 })
 
 var _ = ginkgo.AfterSuite(func() {
@@ -117,7 +169,6 @@ var _ = ginkgo.AfterSuite(func() {
 
 var _ = ginkgo.Describe("[Validator manager integration tests]", func() {
 	// ICTT tests
-
 	ginkgo.It("Transfer an ERC20 token between two L1s",
 		ginkgo.Label(icttLabel, erc20TokenHomeLabel, erc20TokenRemoteLabel),
 		func() {

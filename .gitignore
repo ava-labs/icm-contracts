@@ -43,3 +43,7 @@ server.log
 # Forge documentation
 docs/
 coverage/
+
+TeleporterRegistryAddress.json
+ValidatorAddresses.json
+
