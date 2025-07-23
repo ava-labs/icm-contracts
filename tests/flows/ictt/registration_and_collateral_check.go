@@ -21,7 +21,7 @@ import (
  * Collateralize the remote
  * Check sending to collateralized remote succeeds and withdraws with correct scale.
  */
-func RegistrationAndCollateralCheck(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func RegistrationAndCollateralCheck(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

@@ -18,7 +18,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func SendSpecificReceipts(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func SendSpecificReceipts(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1AInfo := network.GetPrimaryNetworkInfo()
 	l1BInfo, _ := network.GetTwoL1s()
 	l1ATeleporterMessenger := teleporter.TeleporterMessenger(l1AInfo)

@@ -38,7 +38,7 @@ import (
  * - Delist the previous PoA validator properly
  * - Delist the PoS validator
  */
-func PoAMigrationToPoS(network *localnetwork.LocalNetwork) {
+func PoAMigrationToPoS(network *localnetwork.LocalAvalancheNetwork) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	_, fundedKey := network.GetFundedAccountInfo()

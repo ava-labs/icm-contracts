@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	LocalNetworkInstance *network.LocalNetwork
+	LocalNetworkInstance *network.LocalAvalancheNetwork
 	TeleporterInfo       utils.TeleporterTestInfo
 	e2eFlags             *e2e.FlagVars
 )
@@ -48,6 +48,9 @@ func TestTeleporter(t *testing.T) {
 
 // Define the Teleporter before and after suite functions.
 var _ = ginkgo.BeforeSuite(func() {
+	// Configure logging for tests
+	utils.ConfigureDefaultLoggingForTests()
+
 	// Generate the Teleporter deployment values
 	teleporterDeployerTransaction,
 		teleporterDeployedBytecode,
@@ -64,7 +67,7 @@ var _ = ginkgo.BeforeSuite(func() {
 	ctx, cancel := context.WithTimeout(context.Background(), 240*2*time.Second)
 	defer cancel()
 
-	LocalNetworkInstance = network.NewLocalNetwork(
+	LocalNetworkInstance = network.NewLocalAvalancheNetwork(
 		ctx,
 		"teleporter-test-local-network",
 		warpGenesisTemplateFile,

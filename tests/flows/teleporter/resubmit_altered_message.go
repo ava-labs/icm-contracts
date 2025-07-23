@@ -13,7 +13,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func ResubmitAlteredMessage(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func ResubmitAlteredMessage(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1AInfo := network.GetPrimaryNetworkInfo()
 	l1BInfo, _ := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

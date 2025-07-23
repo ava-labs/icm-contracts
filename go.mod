@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/ava-labs/libevm v1.13.14-0.3.0.rc.1
-	github.com/ava-labs/subnet-evm v0.7.5
+	github.com/ava-labs/subnet-evm v0.7.6
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
 	github.com/pkg/errors v0.9.1

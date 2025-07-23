@@ -19,7 +19,7 @@ import (
  * Transfer tokens from L1 A to L1 B through multi-hop
  * Transfer back tokens from L1 B to L1 A through multi-hop
  */
-func ERC20TokenHomeERC20TokenRemoteMultiHop(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func ERC20TokenHomeERC20TokenRemoteMultiHop(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, l1BInfo := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

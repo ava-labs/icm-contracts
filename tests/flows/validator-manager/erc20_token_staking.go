@@ -33,7 +33,7 @@ import (
  * - Deliver the Warp message to the L1
  * - Verify that the validator is delisted from the staking contract
  */
-func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
+func ERC20TokenStakingManager(network *localnetwork.LocalAvalancheNetwork) {
 	// Get the L1s info
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()

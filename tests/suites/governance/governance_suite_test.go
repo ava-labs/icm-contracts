@@ -9,6 +9,7 @@ import (
 	"github.com/ava-labs/avalanchego/tests/fixture/e2e"
 	governanceFlows "github.com/ava-labs/icm-contracts/tests/flows/governance"
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
+	"github.com/ava-labs/icm-contracts/tests/utils"
 	"github.com/ava-labs/libevm/log"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,7 +21,7 @@ const (
 )
 
 var (
-	LocalNetworkInstance *localnetwork.LocalNetwork
+	LocalNetworkInstance *localnetwork.LocalAvalancheNetwork
 	e2eFlags             *e2e.FlagVars
 )
 
@@ -36,10 +37,13 @@ func TestGovernance(t *testing.T) {
 
 // Define the before and after suite functions.
 var _ = ginkgo.BeforeSuite(func() {
+	// Configure logging for tests
+	utils.ConfigureDefaultLoggingForTests()
+
 	// Create the local network instance
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	LocalNetworkInstance = localnetwork.NewLocalNetwork(
+	LocalNetworkInstance = localnetwork.NewLocalAvalancheNetwork(
 		ctx,
 		"governance-test-local-network",
 		warpGenesisTemplateFile,
