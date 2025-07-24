@@ -17,7 +17,6 @@ import {IERC20TokenSlotAuctionManager} from "./interfaces/IERC20TokenSlotAuction
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
 
-
 contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuctionManager {
     using SafeERC20 for IERC20Mintable;
     using SafeERC20TransferFrom for IERC20Mintable;
@@ -36,19 +35,21 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
         _token = IERC20Mintable(erc20Address);
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
         auctionState = AuctionState.NoAuction;
-        _setSlotAuctionSettings(validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid);
+        _setSlotAuctionSettings(
+            validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid
+        );
     }
 
     function placeBid(
-        uint256 bid, 
-        bytes memory nodeID, 
-        bytes memory blsPublicKey, 
-        PChainOwner memory remainingBalanceOwner, 
-        PChainOwner memory disableOwner 
+        uint256 bid,
+        bytes memory nodeID,
+        bytes memory blsPublicKey,
+        PChainOwner memory remainingBalanceOwner,
+        PChainOwner memory disableOwner
     ) external nonReentrant {
         _placeBid(bid, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
     }
-   
+
     /**
      * @notice Returns the ERC20 token being bid
      */

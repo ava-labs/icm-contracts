@@ -18,28 +18,21 @@ import {
     ValidatorStatus,
     ValidatorManagerSettings
 } from "../ValidatorManager.sol";
-import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
-import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
+import {NativeTokenSlotAuctionManager} from "../NativeTokenSlotAuctionManager.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
 import {
     ISlotAuctionManager, ValidatorBid, ValidatorInfo
 } from "../interfaces/ISlotAuctionManager.sol";
-import {ExampleERC20} from "@mocks/ExampleERC20.sol";
-import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
 import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
-import {Test} from "@forge-std/Test.sol";
 import {SlotAuctionManagerTest} from "./SlotAuctionManagerTests.t.sol";
 
-contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
-    using SafeERC20 for IERC20Mintable;
-
-    ERC20TokenSlotAuctionManager public app;
-    IERC20Mintable public token;
+contract NativeTokenSlotAuctionManagerTest is SlotAuctionManagerTest {
+    NativeTokenSlotAuctionManager public app;
 
     function setUp() public override {
         SlotAuctionManagerTest.setUp();
@@ -53,26 +46,11 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         validatorManager.initializeValidatorSet(conversion, 0);
     }
 
-    function testInsufficientBalance() public {
-        _startAuctionWithCheck();
-        _beforeBid(DEFAULT_MINIMUM_BID - 1, address(this));
-        vm.expectRevert(); // Not sure what the name of the error is but somewhere in safe transfer should revert
-        _placeBid(
-            DEFAULT_MINIMUM_BID,
-            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
-            DEFAULT_BLS_PUBLIC_KEY,
-            DEFAULT_P_CHAIN_OWNER,
-            DEFAULT_P_CHAIN_OWNER
-        );
-    }
-
     function _setUp() internal override {
         // Construct the object under test
-        token = new ExampleERC20();
         validatorManager = new ValidatorManager(ICMInitializable.Allowed);
-        app = new ERC20TokenSlotAuctionManager(
+        app = new NativeTokenSlotAuctionManager(
             address(validatorManager),
-            address(token),
             DEFAULT_VALIDATOR_SLOTS,
             DEFAULT_VALIDATOR_SLOT_WEIGHT,
             DEFAULT_MINIMUM_AUCTION_DURATION,
@@ -86,13 +64,7 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
     }
 
     function _beforeBid(uint256 amount, address spender) internal override {
-        token.safeIncreaseAllowance(spender, amount);
-        token.safeTransfer(spender, amount);
-
-        // ERC20 tokens need to be pre-approved
-        vm.startPrank(spender);
-        token.safeIncreaseAllowance(address(app), amount);
-        vm.stopPrank();
+        //Native tokes dont need to be pre approved
     }
 
     function _placeBid(
@@ -102,6 +74,6 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         PChainOwner memory remainingBalanceOwner,
         PChainOwner memory disableOwner
     ) internal override {
-        app.placeBid(bid, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
+        app.placeBid{value: bid}(nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
     }
 }

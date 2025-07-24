@@ -9,7 +9,12 @@ import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {Math} from "@openzeppelin/contracts@5.0.2/utils/math/Math.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
-import {ISlotAuctionManager, ValidatorBid, ValidatorInfo, AuctionState} from "./interfaces/ISlotAuctionManager.sol";
+import {
+    ISlotAuctionManager,
+    ValidatorBid,
+    ValidatorInfo,
+    AuctionState
+} from "./interfaces/ISlotAuctionManager.sol";
 import {Heap} from "@openzeppelin/contracts@5.0.2/utils/structs/Heap.sol";
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/utils/ReentrancyGuardUpgradeable.sol";
@@ -19,7 +24,6 @@ import {Comparators} from "@openzeppelin/contracts@5.0.2/utils/Comparators.sol";
 //     "@openzeppelin/contracts-upgradeable@5.0.2/utils/ContextUpgradeable.sol";
 // import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
-
 // TODO: Make AuctionStatus an ENUM and edit modifiers and checks
 
 abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuctionManager {
@@ -27,7 +31,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
 
     IValidatorManager public VALIDATOR_MANAGER;
     AuctionState public auctionState;
-    // auctionEndTime is the end of the auction (no bids)
+    // auctionEndTime is the end of the auction (no bids at timestamp auctionEndTime)
     uint256 public auctionEndTime;
     // Total amount of validator slots in the set
     uint16 public totalValidatorSlots;
@@ -39,13 +43,14 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     uint256 public MinValidatorDuration;
     uint256 public MinAuctionDuration;
     uint256 public MinimumBid;
+    uint256 public auctionCooldownEndtime;
     // checks to see if the NodeID is currently in the heap
-    mapping (bytes nodeID => bool isQualified) private _nodeIsQualified; 
-    mapping (bytes nodeID => ValidatorInfo) private validatorsByNodeID;
-    mapping (bytes32 validationID => ValidatorInfo) private validatorsByValidationID;
-    mapping (uint256 bid => ValidatorBid) public bidderInfo;
+    mapping(bytes nodeID => bool isQualified) private _nodeIsQualified;
+    mapping(bytes nodeID => ValidatorInfo) private validatorsByNodeID;
+    mapping(bytes32 validationID => ValidatorInfo) private validatorsByValidationID;
+    mapping(uint256 bid => ValidatorBid) public bidderInfo;
     uint256 private _secondPrice;
-    
+
     Heap.Uint256Heap internal _bids;
 
     error AuctionInProgress();
@@ -61,15 +66,16 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     error ValidatorWeightTooHigh(uint64 validatorWeight);
     error NoOpenValidatorSlots(uint16 validatorSlots);
     error MoreActiveValidatorsThanTotalSlots(uint16 totalValidatorSlots, uint16 activeValidators);
+    error AuctionInCooldown(uint256 auctionCooldownEndtime);
 
-    modifier AuctionOn {
+    modifier AuctionOn() {
         if (auctionState != AuctionState.AuctionInProgress) {
             revert AuctionNotInProgress();
         }
         _;
     }
 
-    modifier AuctionOff {
+    modifier AuctionOff() {
         if (auctionState == AuctionState.AuctionInProgress) {
             revert AuctionInProgress();
         }
@@ -79,70 +85,98 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         _;
     }
 
-    function initiateAuction() AuctionOff external {
+    modifier AuctionCooldown() {
+        if (block.timestamp < auctionCooldownEndtime) {
+            revert AuctionInCooldown(auctionCooldownEndtime);
+        }
+        _;
+    }
+
+    function initiateAuction() external AuctionOff AuctionCooldown {
         auctionState = AuctionState.AuctionInProgress;
-        auctionEndTime = block.timestamp + MinAuctionDuration; 
+        auctionEndTime = block.timestamp + MinAuctionDuration;
         _secondPrice = 0;
         if (openValidatorSlots == 0) {
             revert NoOpenValidatorSlots(openValidatorSlots);
         }
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
         // than the current amount of available slots
-        uint64 maxValidatorSlotsBeforeChurn = VALIDATOR_MANAGER.getMaximumChurnPercentage() * VALIDATOR_MANAGER.l1TotalWeight() / validatorWeight * 100;
-        
-        if (maxValidatorSlotsBeforeChurn == 0){
+        uint64 maxValidatorSlotsBeforeChurn = VALIDATOR_MANAGER.getMaximumChurnPercentage()
+            * VALIDATOR_MANAGER.l1TotalWeight() / validatorWeight * 100;
+
+        if (maxValidatorSlotsBeforeChurn == 0) {
             revert ValidatorWeightTooHigh(validatorWeight);
         }
         if (maxValidatorSlotsBeforeChurn > openValidatorSlots) {
             auctioningValidatorSlots = openValidatorSlots;
-        }
-        else {
+        } else {
             auctioningValidatorSlots = uint16(maxValidatorSlotsBeforeChurn);
         }
-        // Creates new heap for bids
-        delete _bids.tree; 
-        emit NewValidatorAuction(auctioningValidatorSlots, validatorWeight, MinValidatorDuration, auctionEndTime, MinimumBid);
+        emit NewValidatorAuction(
+            auctioningValidatorSlots,
+            validatorWeight,
+            MinValidatorDuration,
+            auctionEndTime,
+            MinimumBid
+        );
     }
 
-    function endAuction() nonReentrant AuctionOn external {
-
+    function endAuction() external nonReentrant AuctionOn {
+        auctionCooldownEndtime = block.timestamp + 1 days;
         auctionState = AuctionState.AuctionFinalizing;
-        if (block.timestamp <= auctionEndTime) {
+        if (block.timestamp < auctionEndTime) {
             revert AuctionEndTimeNotReached(auctionEndTime);
         }
-        auctionEndTime = 0;
 
         // avoids array out of bounds for Heap.peek
-        if (_secondPrice == 0 && Heap.length(_bids) != 0) { 
+        if (_secondPrice == 0 && Heap.length(_bids) != 0) {
             _secondPrice = Heap.peek(_bids);
         }
 
         while (Heap.length(_bids) > 0) {
             uint256 currentBid = Heap.pop(_bids);
             ValidatorBid memory bidInfo = bidderInfo[currentBid];
-
+            delete bidderInfo[currentBid];
+            delete _nodeIsQualified[bidInfo.nodeID];
             // sends back extra tokens due to second price
-            _unlock(bidInfo.addr, currentBid - _secondPrice);
-            // TOKEN_CONTRACT.transfer(bidInfo.addr, currentBid - _secondPrice);
-            
+            if (currentBid - _secondPrice != 0) {
+                _unlock(bidInfo.addr, currentBid - _secondPrice);
+            }
             bytes32 validationID = VALIDATOR_MANAGER.initiateValidatorRegistration(
-                bidInfo.nodeID, bidInfo.blsPublicKey, bidInfo.remainingBalanceOwner, bidInfo.disableOwner, validatorWeight
+                bidInfo.nodeID,
+                bidInfo.blsPublicKey,
+                bidInfo.remainingBalanceOwner,
+                bidInfo.disableOwner,
+                validatorWeight
+            );
+            emit InitiatedAuctionValidatorRegistration(
+                validationID, bidInfo.addr, MinValidatorDuration + auctionEndTime, validatorWeight
+            );
+            validatorsByNodeID[bidInfo.nodeID] = ValidatorInfo(
+                bidInfo.addr,
+                MinValidatorDuration + auctionEndTime,
+                bidInfo.nodeID,
+                bidInfo.blsPublicKey,
+                validationID,
+                validatorWeight
             );
 
-            emit InitiatedAuctionValidatorRegistration(validationID, bidInfo.addr, MinValidatorDuration + auctionEndTime, validatorWeight);
-            validatorsByNodeID[bidInfo.nodeID] = ValidatorInfo(bidInfo.addr, MinValidatorDuration + auctionEndTime, 
-                bidInfo.nodeID, bidInfo.blsPublicKey, validationID, validatorWeight);
-
-            validatorsByValidationID[validationID] = ValidatorInfo(bidInfo.addr, MinValidatorDuration + auctionEndTime, 
-                bidInfo.nodeID, bidInfo.blsPublicKey, validationID, validatorWeight);
+            validatorsByValidationID[validationID] = ValidatorInfo(
+                bidInfo.addr,
+                MinValidatorDuration + auctionEndTime,
+                bidInfo.nodeID,
+                bidInfo.blsPublicKey,
+                validationID,
+                validatorWeight
+            );
 
             _secondPrice = currentBid;
         }
-        
+
+        auctionEndTime = 0;
         auctioningValidatorSlots = 0;
         auctionState = AuctionState.NoAuction;
     }
-
 
     function initiateValidatorRemoval(
         bytes32 validationID
@@ -156,7 +190,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         openValidatorSlots++;
         VALIDATOR_MANAGER.initiateValidatorRemoval(validationID);
     }
-    
+
     // working on removing this, along with making the contract upgradeable, removing it right now makes the e2e tests fail
     function initiateRemoveInitialValidator(
         bytes32 validationID
@@ -173,6 +207,7 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     function completeValidatorRegistration(
         uint32 messageIndex
     ) external returns (bytes32) {
+        openValidatorSlots--;
         return VALIDATOR_MANAGER.completeValidatorRegistration(messageIndex);
     }
 
@@ -181,32 +216,35 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
     ) external returns (bytes32) {
         return VALIDATOR_MANAGER.completeValidatorRemoval(messageIndex);
     }
-    
+
     function setSlotAuctionSettings(
         uint16 newValidatorSlots,
         uint64 newWeight,
         uint256 newMinAuctionDuration,
         uint256 newMinValidatorDuration,
         uint256 newMinimumBid
-    ) external AuctionOff { // OnlyOwner
+    ) external AuctionOff {
+        // OnlyOwner
         // Make sure validator slots are not pushed below the current amount of slotted validators
         if (newValidatorSlots > totalValidatorSlots) {
             openValidatorSlots += newValidatorSlots - totalValidatorSlots;
             totalValidatorSlots = newValidatorSlots;
-        }
-        else {
+        } else {
             if (totalValidatorSlots - openValidatorSlots > newValidatorSlots) {
-                revert MoreActiveValidatorsThanTotalSlots(newValidatorSlots, totalValidatorSlots - openValidatorSlots);
+                revert MoreActiveValidatorsThanTotalSlots(
+                    newValidatorSlots, totalValidatorSlots - openValidatorSlots
+                );
             }
+            openValidatorSlots -= totalValidatorSlots - newValidatorSlots;
+            totalValidatorSlots = newValidatorSlots;
         }
         MinAuctionDuration = newMinAuctionDuration;
         MinValidatorDuration = newMinValidatorDuration;
         MinimumBid = newMinimumBid;
         validatorWeight = newWeight;
-
     }
 
-    function MinBidRequired() AuctionOn external view returns (uint256){
+    function MinBidRequired() external view AuctionOn returns (uint256) {
         if (Heap.length(_bids) < totalValidatorSlots) {
             return MinimumBid;
         }
@@ -224,18 +262,18 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         totalValidatorSlots = validatorslots;
         openValidatorSlots = totalValidatorSlots;
         validatorWeight = weight;
-        MinAuctionDuration = minAuctionDuration; 
+        MinAuctionDuration = minAuctionDuration;
         MinValidatorDuration = minValidatorDuration;
         MinimumBid = minimumBid;
-    } 
+    }
 
-    function _placeBid (
+    function _placeBid(
         uint256 bid,
         bytes memory nodeID,
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,
         PChainOwner memory disableOwner
-    ) AuctionOn internal {
+    ) internal AuctionOn {
         if (VALIDATOR_MANAGER.getNodeValidationID(nodeID) != 0) {
             revert NodeIsValidator(nodeID);
         }
@@ -253,10 +291,9 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
         if (Heap.length(_bids) < auctioningValidatorSlots) {
             _lock(bid);
             Heap.insert(_bids, bid);
-        } 
-        else if (Heap.peek(_bids) < bid) {
+        } else if (Heap.peek(_bids) < bid) {
             _lock(bid);
-        
+
             uint256 poppedBid = Heap.replace(_bids, bid);
             _secondPrice = poppedBid;
             emit BidEvicted(poppedBid, bidderInfo[poppedBid].nodeID);
@@ -265,12 +302,12 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
 
             // deletes info of bidder no longer needed along with replacing it in the heap
             delete _nodeIsQualified[bidderInfo[poppedBid].nodeID];
-            delete bidderInfo[poppedBid]; 
-        }
-        else {
+            delete bidderInfo[poppedBid];
+        } else {
             revert InsufficientBidToWinAuction(Heap.peek(_bids) + 1, bid);
         }
-        bidderInfo[bid] = ValidatorBid(msg.sender, bid, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
+        bidderInfo[bid] =
+            ValidatorBid(msg.sender, bid, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner);
         _nodeIsQualified[nodeID] = true;
         emit SuccessfulBidPlaced(bid, nodeID);
     }
@@ -288,8 +325,5 @@ abstract contract SlotAuctionManager is ReentrancyGuardUpgradeable, ISlotAuction
      * @param to Address to send token to.
      * @param value Number of tokens to lock.
      */
-    function _unlock(
-        address to, 
-        uint256 value
-    ) internal virtual;
+    function _unlock(address to, uint256 value) internal virtual;
 }

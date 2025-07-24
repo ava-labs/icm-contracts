@@ -13,12 +13,11 @@ import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.
  */
 
 /**
- * @dev AuctionFinalizing is necessary (potentially) in the case where 
+ * @dev AuctionFinalizing is necessary (potentially) in the case where
  * a new auction is initiated while the auction is finalizing.
  */
-
 enum AuctionState {
-    NoAuction, 
+    NoAuction,
     AuctionInProgress,
     AuctionFinalizing
 }
@@ -61,8 +60,8 @@ interface ISlotAuctionManager {
      */
     event NewValidatorAuction(
         uint16 validatorSlots,
-        uint64 validatorWeight, 
-        uint256 minValidatorDuration, 
+        uint64 validatorWeight,
+        uint256 minValidatorDuration,
         uint256 auctionEndTime,
         uint256 minimumBid
     );
@@ -72,20 +71,14 @@ interface ISlotAuctionManager {
      * @param bid The value of the successful bid.
      * @param nodeID The nodeID that the bid was placed with.
      */
-    event SuccessfulBidPlaced(
-        uint256 indexed bid,
-        bytes indexed nodeID
-    );
-    
+    event SuccessfulBidPlaced(uint256 indexed bid, bytes indexed nodeID);
+
     /**
      * @notice Event emitted when a bid has been removed from the running.
      * @param bid The value of the removed bid.
      * @param nodeID The nodeID that the bid was placed with.
      */
-    event BidEvicted(
-        uint256 indexed bid, 
-        bytes indexed nodeID
-    );
+    event BidEvicted(uint256 indexed bid, bytes indexed nodeID);
 
     /**
      * @notice Event emitted when a validator is registered.
@@ -94,8 +87,8 @@ interface ISlotAuctionManager {
      * @param validatorEndTime The end time of the validator.
      */
     event InitiatedAuctionValidatorRegistration(
-        bytes32 indexed validationID, 
-        address indexed ownerAddress, 
+        bytes32 indexed validationID,
+        address indexed ownerAddress,
         uint256 validatorEndTime,
         uint64 weight
     );
@@ -134,7 +127,7 @@ interface ISlotAuctionManager {
 
     function completeValidatorRemoval(
         uint32 messageIndex
-    ) external returns(bytes32);
+    ) external returns (bytes32);
 
     // function getValidatorInfoByNodeID(
     //     bytes memory nodeID

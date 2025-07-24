@@ -19,7 +19,7 @@ interface INativeTokenSlotAuctionManager {
      * @param remainingBalanceOwner The remaining balance owner of the validator.
      * @param disableOwner The disable owner of the validator.
      */
-    function placeBid (
+    function placeBid(
         bytes memory nodeID,
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,

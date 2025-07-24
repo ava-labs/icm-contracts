@@ -17,7 +17,7 @@ import {Initializable} from
 import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
 import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
 
-contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager{
+contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager {
     using Address for address payable;
 
     constructor(
@@ -30,7 +30,9 @@ contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAu
     ) {
         VALIDATOR_MANAGER = IValidatorManager(vmAddress);
         auctionState = AuctionState.NoAuction;
-        _setSlotAuctionSettings(validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid);
+        _setSlotAuctionSettings(
+            validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid
+        );
     }
 
     function placeBid(
@@ -54,10 +56,7 @@ contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAu
     /**
      * @notice See {SlotAuctionManager-_unlock}
      */
-    function _unlock(
-        address to, 
-        uint256 value
-    ) internal virtual override {
+    function _unlock(address to, uint256 value) internal virtual override {
         payable(to).sendValue(value);
     }
 }
