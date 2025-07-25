@@ -41,7 +41,9 @@ library ICMUtils {
      * @param data The bytes array to convert
      * @return A bool[] array where each element is true if the corresponding bit is 1, false otherwise
      */
-    function bytesToBoolArray(bytes memory data) internal pure returns (bool[] memory) {
+    function bytesToBoolArray(
+        bytes memory data
+    ) internal pure returns (bool[] memory) {
         require(data.length > 0 && data[0] != 0x00, "Invalid bit set");
 
         // Find the position of the most significant bit in the first byte
@@ -77,7 +79,9 @@ library ICMUtils {
         return result;
     }
 
-    function parseICMMessage(bytes memory data) internal pure returns (ICMMessage memory) {
+    function parseICMMessage(
+        bytes memory data
+    ) internal pure returns (ICMMessage memory) {
         // Validate the codec ID is 0
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -119,7 +123,9 @@ library ICMUtils {
         });
     }
 
-    function parseAddressedCall(bytes memory data) internal pure returns (AddressedCall memory) {
+    function parseAddressedCall(
+        bytes memory data
+    ) internal pure returns (AddressedCall memory) {
         // Validate the codec ID is 0.
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -142,12 +148,14 @@ library ICMUtils {
         return AddressedCall({sourceAddress: sourceAddress, payload: payload});
     }
 
-    function filterValidators(bool[] memory signers, Validator[] memory validators)
-        internal
-        view
-        returns (bytes memory, uint64)
-    {
-        require(signers.length <= validators.length, "Signers length must be less than or equal to validators length");
+    function filterValidators(
+        bool[] memory signers,
+        Validator[] memory validators
+    ) internal view returns (bytes memory, uint64) {
+        require(
+            signers.length <= validators.length,
+            "Signers length must be less than or equal to validators length"
+        );
         bytes memory aggregatePublicKey;
         uint64 aggregateWeight = 0;
         for (uint256 i = 0; i < validators.length; ++i) {
@@ -168,32 +176,47 @@ library ICMUtils {
     }
 
     // Verifies that quorumNum * totalWeight <= quorumDen * signatureWeight
-    function verifyWeight(uint64 signatureWeight, uint64 totalWeight) internal pure returns (bool) {
+    function verifyWeight(
+        uint64 signatureWeight,
+        uint64 totalWeight
+    ) internal pure returns (bool) {
         uint256 scaledTotalWeight = QUORUM_NUM * uint256(totalWeight);
         uint256 scaledSignatureWeight = QUORUM_DEN * uint256(signatureWeight);
         return scaledTotalWeight <= scaledSignatureWeight;
     }
 
-    function verifyICMMessage(ICMMessage memory message, uint32 avalancheNetworkID, ValidatorSet memory validatorSet)
-        internal
-        view
-        returns (bool)
-    {
+    function verifyICMMessage(
+        ICMMessage memory message,
+        uint32 avalancheNetworkID,
+        ValidatorSet memory validatorSet
+    ) internal view returns (bool) {
         if (message.unsignedMessage.avalancheNetworkID != avalancheNetworkID) {
-            return false;
+            revert("Invalid avalanche network ID");
         }
 
-        if (message.unsignedMessage.avalancheSourceBlockchainID != validatorSet.avalancheBlockchainID) {
-            return false;
-        }
+        // TODO: Do we need to check the avalanche source blockchain ID?
+        // It's expected to be different in cases where the message is from the primary network.
+        // if (
+        //     message.unsignedMessage.avalancheSourceBlockchainID
+        //         != validatorSet.avalancheBlockchainID
+        // ) {
+        //     revert("Invalid avalanche source blockchain ID");
+        // }
 
         bool[] memory signers = bytesToBoolArray(message.signature.signers);
-        (bytes memory aggregatePublicKey, uint64 aggregateWeight) = filterValidators(signers, validatorSet.validators);
+        (bytes memory aggregatePublicKey, uint64 aggregateWeight) =
+            filterValidators(signers, validatorSet.validators);
 
         if (!verifyWeight(aggregateWeight, validatorSet.totalWeight)) {
-            return false;
+            revert("Invalid weight");
         }
 
-        return BLSTUtils.verifySignature(aggregatePublicKey, message.signature.signature, message.unsignedMessageBytes);
+        bool result = BLSTUtils.verifySignature(
+            aggregatePublicKey, message.signature.signature, message.unsignedMessageBytes
+        );
+        if (!result) {
+            revert("Invalid signature");
+        }
+        return result;
     }
 }

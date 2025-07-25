@@ -59,10 +59,10 @@ var _ = ginkgo.BeforeSuite(func() {
 		2,
 		e2eFlags,
 	)
-	log.Info("Started local Avalanche network")
+	log.Info("Started local Avalanche network", "networkID", LocalAvalancheNetworkInstance.NetworkID)
 
 	LocalEthereumNetworkInstance = network.NewLocalEthereumNetwork(ctx)
-	log.Info("Started local Ethereum network")
+	log.Info("Started local Ethereum network", "chainID", LocalEthereumNetworkInstance.ChainID)
 
 	log.Info("Set up ginkgo before suite")
 })
