@@ -64,4 +64,9 @@ func EthereumICMVerification(avalancheNetwork *network.LocalAvalancheNetwork, et
 		pChainClient,
 		signatureAggregator,
 	)
+
+	// TODO:
+	// 1. Send an verify an ICM message from the Avalanche L1 network to the Ethereum network.
+	// 2. Add a new validator to the L1, and update the validator set on the Ethereum network.
+	// 3. Send and verify another message, using the updated validator set.
 }
