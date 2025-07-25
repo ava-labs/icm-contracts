@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Validator, ValidatorSet} from "../utils/ValidatorSetUtils.sol";
-import {ICMMessage} from "../utils/ICMUtils.sol";
+import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
+import {ICMMessage} from "../utils/ICM.sol";
 
 /**
  * @title IAvalancheValidatorSetRegistry
@@ -11,8 +11,12 @@ import {ICMMessage} from "../utils/ICMUtils.sol";
  * from a given validator set.
  */
 interface IAvalancheValidatorSetRegistry {
-    event ValidatorSetRegistered(uint256 indexed validatorSetID, bytes32 indexed avalancheBlockchainID);
-    event ValidatorSetUpdated(uint256 indexed validatorSetID, bytes32 indexed avalancheBlockchainID);
+    event ValidatorSetRegistered(
+        uint256 indexed validatorSetID, bytes32 indexed avalancheBlockchainID
+    );
+    event ValidatorSetUpdated(
+        uint256 indexed validatorSetID, bytes32 indexed avalancheBlockchainID
+    );
 
     /**
      * @notice Registers a new validator set
@@ -27,9 +31,10 @@ interface IAvalancheValidatorSetRegistry {
      * that it claims to be representing.
      * @return The ID of the registered validator set
      */
-    function registerValidatorSet(ICMMessage calldata message, bytes memory validatorBytes)
-        external
-        returns (uint256);
+    function registerValidatorSet(
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    ) external returns (uint256);
 
     /**
      * @notice Updates a validator set
@@ -39,15 +44,20 @@ interface IAvalancheValidatorSetRegistry {
      * @param validatorSetID The ID of the validator set to update
      * @param message The ICM message containing the update
      */
-    function updateValidatorSet(uint256 validatorSetID, ICMMessage calldata message, bytes memory validatorBytes)
-        external;
+    function updateValidatorSet(
+        uint256 validatorSetID,
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    ) external;
 
     /**
      * @notice Gets a validator set by its ID
      * @param validatorSetID The ID of the validator set to get
      * @return The validator set
      */
-    function getValidatorSet(uint256 validatorSetID) external view returns (ValidatorSet memory);
+    function getValidatorSet(
+        uint256 validatorSetID
+    ) external view returns (ValidatorSet memory);
 
     /**
      * @notice Gets the Avalanche network ID
@@ -64,5 +74,8 @@ interface IAvalancheValidatorSetRegistry {
      * @param message The ICM message to verify
      * @return True if the message is valid, false otherwise
      */
-    function verifyICMMessage(uint256 validatorSetID, ICMMessage calldata message) external view returns (bool);
+    function verifyICMMessage(
+        uint256 validatorSetID,
+        ICMMessage calldata message
+    ) external view returns (bool);
 }

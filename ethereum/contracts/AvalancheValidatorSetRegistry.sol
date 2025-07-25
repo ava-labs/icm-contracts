@@ -2,10 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {IAvalancheValidatorSetRegistry} from "./interfaces/IAvalancheValidatorSetRegistry.sol";
-import {Validator, ValidatorSet, ValidatorSetStatePayload, ValidatorSetUtils} from "./utils/ValidatorSetUtils.sol";
-import {ICMMessage, AddressedCall} from "./utils/ICMUtils.sol";
-import {ICMUtils} from "./utils/ICMUtils.sol";
-import {BLSTUtils} from "./utils/BLSTUtils.sol";
+import {
+    Validator,
+    ValidatorSet,
+    ValidatorSetStatePayload,
+    ValidatorSets
+} from "./utils/ValidatorSets.sol";
+import {ICMMessage, AddressedCall} from "./utils/ICM.sol";
+import {ICM} from "./utils/ICM.sol";
+import {BLST} from "./utils/BLST.sol";
 import {ByteComparator} from "./utils/ByteComparator.sol";
 
 /**
@@ -21,7 +26,9 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
     // Mapping of validator set IDs to their complete validator set data.
     mapping(uint256 => ValidatorSet) private _validatorSets;
 
-    constructor(uint32 _avalancheNetworkID) {
+    constructor(
+        uint32 _avalancheNetworkID
+    ) {
         avalancheNetworkID = _avalancheNetworkID;
     }
 
@@ -34,7 +41,10 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @return validators The parsed validators array
      * @return totalWeight The total weight of all validators
      */
-    function _parseAndValidateValidatorSetData(ICMMessage calldata message, bytes memory validatorBytes)
+    function _parseAndValidateValidatorSetData(
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    )
         private
         pure
         returns (
@@ -44,22 +54,28 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
         )
     {
         // Parse the addressed call and validate that the source address is empty.
-        AddressedCall memory addressedCall = ICMUtils.parseAddressedCall(message.unsignedMessage.payload);
+        AddressedCall memory addressedCall = ICM.parseAddressedCall(message.unsignedMessage.payload);
         require(addressedCall.sourceAddress.length == 0, "Source address must be empty");
 
         // Parse the validator set state payload.
-        validatorSetStatePayload = ValidatorSetUtils.parseValidatorSetStatePayload(addressedCall.payload);
+        validatorSetStatePayload =
+            ValidatorSets.parseValidatorSetStatePayload(addressedCall.payload);
 
         // Check that the validator set hash matches the hash of the serialized validator set.
-        require(validatorSetStatePayload.validatorSetHash == sha256(validatorBytes), "Validator set hash mismatch");
+        require(
+            validatorSetStatePayload.validatorSetHash == sha256(validatorBytes),
+            "Validator set hash mismatch"
+        );
 
         // Parse the validators.
-        (validators, totalWeight) = ValidatorSetUtils.parseValidators(validatorBytes);
+        (validators, totalWeight) = ValidatorSets.parseValidators(validatorBytes);
         require(validators.length > 0, "Validator set cannot be empty");
         require(totalWeight > 0, "Total weight must be greater than 0");
     }
 
-    function _getValidatorSet(uint256 validatorSetID) private view returns (ValidatorSet memory) {
+    function _getValidatorSet(
+        uint256 validatorSetID
+    ) private view returns (ValidatorSet memory) {
         require(validatorSetID < nextValidatorSetID, "Validator set does not exist");
         return _validatorSets[validatorSetID];
     }
@@ -72,14 +88,16 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @param validatorBytes The serialized validator set to register.
      * @return The ID of the registered validator set
      */
-    function registerValidatorSet(ICMMessage calldata message, bytes memory validatorBytes)
-        external
-        override
-        returns (uint256)
-    {
+    function registerValidatorSet(
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    ) external override returns (uint256) {
         // Parse and validate the validator set data
-        (ValidatorSetStatePayload memory validatorSetStatePayload, Validator[] memory validators, uint64 totalWeight) =
-            _parseAndValidateValidatorSetData(message, validatorBytes);
+        (
+            ValidatorSetStatePayload memory validatorSetStatePayload,
+            Validator[] memory validators,
+            uint64 totalWeight
+        ) = _parseAndValidateValidatorSetData(message, validatorBytes);
 
         // Construct the validator set and confirm the ICM was self-signed by it.
         ValidatorSet memory validatorSet = ValidatorSet({
@@ -89,7 +107,9 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
             pChainHeight: validatorSetStatePayload.pChainHeight,
             pChainTimestamp: validatorSetStatePayload.pChainTimestamp
         });
-        require(ICMUtils.verifyICMMessage(message, avalancheNetworkID, validatorSet), "Invalid ICM message");
+        require(
+            ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet), "Invalid ICM message"
+        );
 
         // Store the validator set.
         uint256 validatorSetID = nextValidatorSetID++;
@@ -105,25 +125,30 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @param validatorSetID The ID of the validator set to update
      * @param message The ICM message containing the update
      */
-    function updateValidatorSet(uint256 validatorSetID, ICMMessage calldata message, bytes memory validatorBytes)
-        external
-        override
-    {
+    function updateValidatorSet(
+        uint256 validatorSetID,
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    ) external override {
         require(validatorSetID < nextValidatorSetID, "Validator set does not exist");
 
         ValidatorSet storage currentValidatorSet = _validatorSets[validatorSetID];
 
         // Verify the ICM message using the current validator set
-        bool isValid = ICMUtils.verifyICMMessage(message, avalancheNetworkID, currentValidatorSet);
+        bool isValid = ICM.verifyICMMessage(message, avalancheNetworkID, currentValidatorSet);
         require(isValid, "Invalid ICM message");
 
         // Parse and validate the validator set data
-        (ValidatorSetStatePayload memory validatorSetStatePayload, Validator[] memory validators, uint64 totalWeight) =
-            _parseAndValidateValidatorSetData(message, validatorBytes);
+        (
+            ValidatorSetStatePayload memory validatorSetStatePayload,
+            Validator[] memory validators,
+            uint64 totalWeight
+        ) = _parseAndValidateValidatorSetData(message, validatorBytes);
 
         // Check that blockchain ID matches the current validator set.
         require(
-            validatorSetStatePayload.avalancheBlockchainID == currentValidatorSet.avalancheBlockchainID,
+            validatorSetStatePayload.avalancheBlockchainID
+                == currentValidatorSet.avalancheBlockchainID,
             "Blockchain ID mismatch"
         );
 
@@ -156,7 +181,9 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @param validatorSetID The ID of the validator set to get
      * @return The validator set
      */
-    function getValidatorSet(uint256 validatorSetID) external view override returns (ValidatorSet memory) {
+    function getValidatorSet(
+        uint256 validatorSetID
+    ) external view override returns (ValidatorSet memory) {
         return _getValidatorSet(validatorSetID);
     }
 
@@ -177,8 +204,11 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @param message The ICM message to verify
      * @return True if the message is valid, false otherwise
      */
-    function verifyICMMessage(uint256 validatorSetID, ICMMessage calldata message) external view returns (bool) {
+    function verifyICMMessage(
+        uint256 validatorSetID,
+        ICMMessage calldata message
+    ) external view returns (bool) {
         ValidatorSet memory validatorSet = _getValidatorSet(validatorSetID);
-        return ICMUtils.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+        return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
     }
 }

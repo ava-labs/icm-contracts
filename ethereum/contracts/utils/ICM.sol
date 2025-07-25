@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Validator, ValidatorSet} from "../utils/ValidatorSetUtils.sol";
-import {BLSTUtils} from "./BLSTUtils.sol";
+import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
+import {BLST} from "./BLST.sol";
 import {ByteSlicer} from "./ByteSlicer.sol";
 
 struct ICMSignature {
@@ -28,11 +28,11 @@ struct AddressedCall {
 }
 
 /**
- * @title ICMUtils
+ * @title ICM
  * @notice Utility library for Interchain Messaging (ICM) operations
  * @dev This library provides helper functions for working with ICM signatures and validation
  */
-library ICMUtils {
+library ICM {
     uint256 constant QUORUM_NUM = 67;
     uint256 constant QUORUM_DEN = 100;
 
@@ -164,7 +164,7 @@ library ICMUtils {
                 Validator memory validator = validators[i];
 
                 if (aggregateWeight > 0) {
-                    aggregatePublicKey = BLSTUtils.addG1(aggregatePublicKey, validator.blsPublicKey);
+                    aggregatePublicKey = BLST.addG1(aggregatePublicKey, validator.blsPublicKey);
                     aggregateWeight += validator.weight;
                 } else {
                     aggregatePublicKey = validator.blsPublicKey;
@@ -211,7 +211,7 @@ library ICMUtils {
             revert("Invalid weight");
         }
 
-        bool result = BLSTUtils.verifySignature(
+        bool result = BLST.verifySignature(
             aggregatePublicKey, message.signature.signature, message.unsignedMessageBytes
         );
         if (!result) {

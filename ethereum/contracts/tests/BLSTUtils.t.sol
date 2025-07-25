@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../utils/BLSTUtils.sol";
+import "../utils/BLST.sol";
 
 contract BLSTUtilsTest is Test {
     function testFormatUncompressedBLSPublicKey() public pure {
@@ -11,7 +11,7 @@ contract BLSTUtilsTest is Test {
         bytes memory formatted =
             hex"00000000000000000000000000000000074a926af04042ab5876a9ba4297a806a34732d7df7a33b2d34d8e77313c34c49f365eba61e923acfbdfa160c3e51d270000000000000000000000000000000010b93b3ff2351cc019178b142ecb2eed17b0c99c2b6e9c30bedae8cfc26f8f7cdf75b9f0dbb2ea31e11117a04dbe962f";
 
-        assertEq(formatted, BLSTUtils.formatUncompressedBLSPublicKey(unformatted));
+        assertEq(formatted, BLST.formatUncompressedBLSPublicKey(unformatted));
     }
 
     function testNoAggregatePublicKeysSuccess() public view {
@@ -21,7 +21,7 @@ contract BLSTUtilsTest is Test {
 
         bytes[] memory publicKeys = new bytes[](1);
         publicKeys[0] = pk1;
-        bytes memory aggregated = BLSTUtils.aggregatePublicKeys(publicKeys);
+        bytes memory aggregated = BLST.aggregatePublicKeys(publicKeys);
         assertEq(aggregated, pk1);
     }
 
@@ -38,7 +38,7 @@ contract BLSTUtilsTest is Test {
         publicKeys[0] = pk1;
         publicKeys[1] = pk2;
 
-        bytes memory aggregated = BLSTUtils.aggregatePublicKeys(publicKeys);
+        bytes memory aggregated = BLST.aggregatePublicKeys(publicKeys);
         assertEq(aggregated, expectedAggregated);
     }
 
@@ -52,12 +52,11 @@ contract BLSTUtilsTest is Test {
         bytes memory expectedAggregate =
             hex"11a1c66b14aa6d316416583e6490b081cf09dcd59ddd5001c4c9acf236b2c4ecab638ae32003ddce690de7ace0ed32c017363c0c67531f30c01618ab4df0dfe6c13c21ed5efe7943b7110c80e77ee085984d19df331de1514981c559b2659200";
 
-        bytes memory res1 = BLSTUtils.addG1(
-            BLSTUtils.formatUncompressedBLSPublicKey(pk1),
-            BLSTUtils.formatUncompressedBLSPublicKey(pk2)
+        bytes memory res1 = BLST.addG1(
+            BLST.formatUncompressedBLSPublicKey(pk1), BLST.formatUncompressedBLSPublicKey(pk2)
         );
-        bytes memory res2 = BLSTUtils.addG1(res1, BLSTUtils.formatUncompressedBLSPublicKey(pk3));
-        assertEq(res2, BLSTUtils.formatUncompressedBLSPublicKey(expectedAggregate));
+        bytes memory res2 = BLST.addG1(res1, BLST.formatUncompressedBLSPublicKey(pk3));
+        assertEq(res2, BLST.formatUncompressedBLSPublicKey(expectedAggregate));
     }
 
     function testVerifyBLSSignatureSuccess() public view {
@@ -67,7 +66,7 @@ contract BLSTUtilsTest is Test {
         bytes memory sig =
             hex"1572ad7226ef5d2a52c89d824179e1723a523c7a30c8ff2643aee0b19aca4e3670a28d8749991075d72dd9d64aba703a0ed0d39f4a935cfc5b96c5fbc8985596a9556dec84286c0f945c93ebf33c96bc58ce5cf54a70c3b5221da81d01b6640e058b6a69058a96395acf26fb8013e93dcacbe83f93ed0697e6fd080132062c8e3fc4b63488e00ec5dd60dd2dcda6264112ce2d0e1e024de26bc4d75fb1a7b0fa823b44770570e1539cf500aa5fa2c5abd8e806246d0009d260e224e1f435cc97";
 
-        bool valid = BLSTUtils.verifySignature(pk, sig, message);
+        bool valid = BLST.verifySignature(pk, sig, message);
         assertTrue(valid);
     }
 
@@ -80,7 +79,7 @@ contract BLSTUtilsTest is Test {
             hex"00000000000000000000000000000000001f2946023547012bf42ca45962136ebca74aeea4291a25e9bf46bf37c5fdd37ecad6d5a389bcecf3f3d1f4f73c44db000000000000000000000000000000000385c2753673a29e199f0a0dc02772b5e2dec7a3aa70e012b313195906a27ac95d0a4963d96340df6f4d13cf40f7c78f";
         bytes memory sig =
             hex"0ace4f38b5e22e8cfd27951b8327d5260def6e6370e334c3f74fb9b5ccd209d0d80d1a34bb804f6ac40dd991141d87b5147a0a08008b085fd27341456bb43654fed88ebca4407d0b5ae66a67df8141edc58fced0468b5e34cec33dc2d58f023d1770616fe829ef9af2350c7c9d7b72ee1c05edefc7cd831ac13114e8ae7e1466c7ef2990a8e6387f9def145be2c9be8b0cbc8f7e6ebcb1b099a1785ea2001d70887faaaf86c937a292049134d02c7bc9aeaed7a3354673985a88a6e3aff66ccd";
-        bool valid = BLSTUtils.verifyAggregateSignature(pks, sig, message);
+        bool valid = BLST.verifyAggregateSignature(pks, sig, message);
         assertTrue(valid);
     }
 }

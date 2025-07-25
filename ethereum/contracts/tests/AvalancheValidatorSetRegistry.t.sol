@@ -3,9 +3,9 @@ pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "../AvalancheValidatorSetRegistry.sol";
-import "../utils/ValidatorSetUtils.sol";
-import "../utils/ICMUtils.sol";
-import "../utils/BLSTUtils.sol";
+import "../utils/ValidatorSets.sol";
+import "../utils/ICM.sol";
+import "../utils/BLST.sol";
 
 contract AvalancheValidatorSetRegistryTest is Test {
     AvalancheValidatorSetRegistry registry;
@@ -43,7 +43,7 @@ contract AvalancheValidatorSetRegistryTest is Test {
         uint64 expectedTotalWeight = 400;
 
         // Parse the ICM message.
-        ICMMessage memory message = ICMUtils.parseICMMessage(signedValidtorSetStateMessage);
+        ICMMessage memory message = ICM.parseICMMessage(signedValidtorSetStateMessage);
 
         // Get the current validator set ID.
         uint256 expectedValidatorSetID = registry.nextValidatorSetID();
@@ -63,7 +63,7 @@ contract AvalancheValidatorSetRegistryTest is Test {
         for (uint256 i = 0; i < 4; i++) {
             assertEq(
                 validatorSet.validators[i].blsPublicKey,
-                BLSTUtils.formatUncompressedBLSPublicKey(expectedPublicKeys[i])
+                BLST.formatUncompressedBLSPublicKey(expectedPublicKeys[i])
             );
             assertEq(validatorSet.validators[i].weight, expectedWeight);
         }

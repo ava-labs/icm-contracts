@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ByteSlicer} from "./ByteSlicer.sol";
-import {BLSTUtils} from "./BLSTUtils.sol";
+import {BLST} from "./BLST.sol";
 import {ByteComparator} from "./ByteComparator.sol";
 
 struct Validator {
@@ -25,7 +25,7 @@ struct ValidatorSetStatePayload {
     bytes32 validatorSetHash;
 }
 
-library ValidatorSetUtils {
+library ValidatorSets {
     /**
      * @notice Parses the validators from a serialized validator set
      * @param data The serialized validator set. The serialized format is:
@@ -36,7 +36,9 @@ library ValidatorSetUtils {
      * @return validators The parsed validators
      * @return totalWeight The total weight of all validators
      */
-    function parseValidators(bytes memory data) internal pure returns (Validator[] memory, uint64) {
+    function parseValidators(
+        bytes memory data
+    ) internal pure returns (Validator[] memory, uint64) {
         // Check the codec ID is 0
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -47,7 +49,7 @@ library ValidatorSetUtils {
         Validator[] memory validators = new Validator[](numValidators);
         uint64 totalWeight = 0;
         uint256 offset = 6;
-        bytes memory previousPublicKey = new bytes(BLSTUtils.BLS_UNCOMPRESSED_PUBLIC_KEY_INPUT_LENGTH);
+        bytes memory previousPublicKey = new bytes(BLST.BLS_UNCOMPRESSED_PUBLIC_KEY_INPUT_LENGTH);
         for (uint32 i = 0; i < numValidators; i++) {
             bytes memory unformattedPublicKey = ByteSlicer.slice(data, offset, 96);
             require(
@@ -57,7 +59,7 @@ library ValidatorSetUtils {
             uint64 weight = uint64(bytes8(ByteSlicer.slice(data, offset + 96, 8)));
             require(weight > 0, "Validator weight must be greater than 0");
             validators[i] = Validator({
-                blsPublicKey: BLSTUtils.formatUncompressedBLSPublicKey(unformattedPublicKey),
+                blsPublicKey: BLST.formatUncompressedBLSPublicKey(unformattedPublicKey),
                 weight: weight
             });
             totalWeight += weight;
@@ -66,7 +68,9 @@ library ValidatorSetUtils {
         return (validators, totalWeight);
     }
 
-    function parseValidatorSetStatePayload(bytes memory data) internal pure returns (ValidatorSetStatePayload memory) {
+    function parseValidatorSetStatePayload(
+        bytes memory data
+    ) internal pure returns (ValidatorSetStatePayload memory) {
         // Check the codec ID is 0
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 

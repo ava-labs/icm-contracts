@@ -7,16 +7,20 @@ struct FieldPoint2 {
 }
 
 /**
- * @title BLSTUtils
+ * @title BLST
  * @notice Utility library for BLS12-381 operations.
  */
-library BLSTUtils {
+library BLST {
     uint256 constant BLS_UNCOMPRESSED_PUBLIC_KEY_INPUT_LENGTH = 96;
 
-    address constant BLS12381_G1_ADD_PRECOMPILE = address(0x000000000000000000000000000000000000000b);
-    address constant BLS12381_G2_ADD_PRECOMPILE = address(0x000000000000000000000000000000000000000d);
-    address constant BLS12381_PAIRING_CHECK_PRECOMPILE = address(0x000000000000000000000000000000000000000F);
-    address constant BLS12381_MAP_FP2_G2_PRECOMPILE = address(0x0000000000000000000000000000000000000011);
+    address constant BLS12381_G1_ADD_PRECOMPILE =
+        address(0x000000000000000000000000000000000000000b);
+    address constant BLS12381_G2_ADD_PRECOMPILE =
+        address(0x000000000000000000000000000000000000000d);
+    address constant BLS12381_PAIRING_CHECK_PRECOMPILE =
+        address(0x000000000000000000000000000000000000000F);
+    address constant BLS12381_MAP_FP2_G2_PRECOMPILE =
+        address(0x0000000000000000000000000000000000000011);
 
     bytes constant BLS_G1_NEG_GENERATOR =
         hex"0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb00000000000000000000000000000000114d1d6855d545a8aa7d76c8cf2e21f267816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca";
@@ -29,7 +33,9 @@ library BLSTUtils {
      * @param publicKey The 96-byte uncompressed BLS public key, as produced by the BLST library's P1Affine.Serialize() function.
      * @return The 128-byte serialized public key. Its X and Y coordinates are left-padded to be 64 bytes each, for a total of 128 bytes.
      */
-    function formatUncompressedBLSPublicKey(bytes memory publicKey) internal pure returns (bytes memory) {
+    function formatUncompressedBLSPublicKey(
+        bytes memory publicKey
+    ) internal pure returns (bytes memory) {
         require(publicKey.length == 96, "Invalid input public key length");
         bytes memory res = new bytes(128);
 
@@ -51,7 +57,9 @@ library BLSTUtils {
      * @param signature The 192-byte uncompressed BLS signature. Must have the format [x.c1, x.c0, y.c1, y.c0].
      * @return The 256-byte formatted signature. Has the format [16 pad + x.c0, 16 pad + x.c1, 16 pad +  y.c0, 16 pad + y.c1].
      */
-    function formatUncompressedBLSTSignature(bytes memory signature) internal pure returns (bytes memory) {
+    function formatUncompressedBLSTSignature(
+        bytes memory signature
+    ) internal pure returns (bytes memory) {
         require(signature.length == 192, "Invalid input signature length");
         bytes memory res = new bytes(256);
 
@@ -84,7 +92,9 @@ library BLSTUtils {
      * left-padded to be 64 bytes each, for a total of 128 bytes.
      * @return The aggregated public key.
      */
-    function aggregatePublicKeys(bytes[] memory publicKeys) internal view returns (bytes memory) {
+    function aggregatePublicKeys(
+        bytes[] memory publicKeys
+    ) internal view returns (bytes memory) {
         // Use the BLS public key aggregation precompile to aggregate the public keys.
         require(publicKeys.length > 0, "Missing public keys");
         bytes memory aggregatedPublicKey = publicKeys[0];
@@ -103,11 +113,11 @@ library BLSTUtils {
      * @param message The message to verify the signature against.
      * @return True if the signature is valid, false otherwise.
      */
-    function verifySignature(bytes memory publicKey, bytes memory signature, bytes memory message)
-        internal
-        view
-        returns (bool)
-    {
+    function verifySignature(
+        bytes memory publicKey,
+        bytes memory signature,
+        bytes memory message
+    ) internal view returns (bool) {
         return _verifySignature(publicKey, signature, message, BLS12381G2_SIG_DST);
     }
 
@@ -120,11 +130,11 @@ library BLSTUtils {
      * @param message The message to verify the signature against.
      * @return True if the signature is valid for the public key resulting from aggregating the given public keys, false otherwise.
      */
-    function verifyAggregateSignature(bytes[] memory publicKeys, bytes memory signature, bytes memory message)
-        internal
-        view
-        returns (bool)
-    {
+    function verifyAggregateSignature(
+        bytes[] memory publicKeys,
+        bytes memory signature,
+        bytes memory message
+    ) internal view returns (bool) {
         bytes memory aggregatePublicKey = aggregatePublicKeys(publicKeys);
         return verifySignature(aggregatePublicKey, signature, message);
     }
@@ -138,11 +148,11 @@ library BLSTUtils {
      * @param message The message to verify the proof of possession against.
      * @return True if the proof of possession is valid, false otherwise.
      */
-    function verifyProofOfPossession(bytes memory publicKey, bytes memory signature, bytes memory message)
-        internal
-        view
-        returns (bool)
-    {
+    function verifyProofOfPossession(
+        bytes memory publicKey,
+        bytes memory signature,
+        bytes memory message
+    ) internal view returns (bool) {
         return _verifySignature(publicKey, signature, message, BLS12381G2_POP_DST);
     }
 
@@ -150,7 +160,10 @@ library BLSTUtils {
      * @notice Hashes a message to the G2 curve
      * @dev Original source: https://github.com/ethyla/bls12-381-hash-to-curve/blob/main/src/HashToCurve.sol
      */
-    function hashToG2(bytes memory message, bytes memory dst) internal view returns (bytes memory) {
+    function hashToG2(
+        bytes memory message,
+        bytes memory dst
+    ) internal view returns (bytes memory) {
         FieldPoint2[2] memory u = hashToFieldFp2(message, dst);
         bytes memory q0 = _mapFpToG2(u[0]);
         bytes memory q1 = _mapFpToG2(u[1]);
@@ -164,7 +177,10 @@ library BLSTUtils {
      * @param dst The domain separation tag
      * @return Two field points
      */
-    function hashToFieldFp2(bytes memory message, bytes memory dst) internal view returns (FieldPoint2[2] memory) {
+    function hashToFieldFp2(
+        bytes memory message,
+        bytes memory dst
+    ) internal view returns (FieldPoint2[2] memory) {
         // 1. len_in_bytes = count * m * L
         // so always 2 * 2 * 64 = 256
         uint16 lenInBytes = 256;
@@ -197,7 +213,8 @@ library BLSTUtils {
      */
     function addG1(bytes memory p0, bytes memory p1) internal view returns (bytes memory) {
         require(p0.length == 128 && p1.length == 128, "Invalid G1 point length");
-        (bool success, bytes memory result) = BLS12381_G1_ADD_PRECOMPILE.staticcall(abi.encodePacked(p0, p1));
+        (bool success, bytes memory result) =
+            BLS12381_G1_ADD_PRECOMPILE.staticcall(abi.encodePacked(p0, p1));
         require(success, "Failed to add G1 points");
         return result;
     }
@@ -216,11 +233,12 @@ library BLSTUtils {
         return output;
     }
 
-    function _verifySignature(bytes memory publicKey, bytes memory signature, bytes memory message, bytes memory dst)
-        private
-        view
-        returns (bool)
-    {
+    function _verifySignature(
+        bytes memory publicKey,
+        bytes memory signature,
+        bytes memory message,
+        bytes memory dst
+    ) private view returns (bool) {
         // Check the input lengths
         require(publicKey.length == 128, "Invalid public key length");
         require(signature.length == 192, "Invalid signature length");
@@ -228,9 +246,11 @@ library BLSTUtils {
         // Hash the message to the G2 curve
         bytes memory messageG2 = hashToG2(message, dst);
 
-        bytes memory pairingCheckInput =
-            abi.encodePacked(publicKey, messageG2, BLS_G1_NEG_GENERATOR, formatUncompressedBLSTSignature(signature));
-        (bool success, bytes memory output) = BLS12381_PAIRING_CHECK_PRECOMPILE.staticcall(pairingCheckInput);
+        bytes memory pairingCheckInput = abi.encodePacked(
+            publicKey, messageG2, BLS_G1_NEG_GENERATOR, formatUncompressedBLSTSignature(signature)
+        );
+        (bool success, bytes memory output) =
+            BLS12381_PAIRING_CHECK_PRECOMPILE.staticcall(pairingCheckInput);
         require(success, "Failed to perform pairing check");
         require(output.length == 32, "Invalid pairing check output length");
         return uint256(bytes32(output)) == 1;
@@ -241,9 +261,12 @@ library BLSTUtils {
      * @param fp2 The field point to map
      * @return The G2 point
      */
-    function _mapFpToG2(FieldPoint2 memory fp2) private view returns (bytes memory) {
+    function _mapFpToG2(
+        FieldPoint2 memory fp2
+    ) private view returns (bytes memory) {
         bytes memory mapFp2ToG2input = abi.encodePacked(fp2.u[0], fp2.u[1], fp2.u_I[0], fp2.u_I[1]);
-        (bool success, bytes memory output) = BLS12381_MAP_FP2_G2_PRECOMPILE.staticcall(mapFp2ToG2input);
+        (bool success, bytes memory output) =
+            BLS12381_MAP_FP2_G2_PRECOMPILE.staticcall(mapFp2ToG2input);
         require(success, "Failed to map Fp2 to G2");
         return output;
     }
@@ -257,11 +280,11 @@ library BLSTUtils {
      * @param lenInBytes The length of the requested output in bytes
      * @return A field point
      */
-    function _expandMsgXmd(bytes memory message, bytes memory dst, uint16 lenInBytes)
-        private
-        pure
-        returns (bytes32[] memory)
-    {
+    function _expandMsgXmd(
+        bytes memory message,
+        bytes memory dst,
+        uint16 lenInBytes
+    ) private pure returns (bytes32[] memory) {
         // 1.  ell = ceil(len_in_bytes / b_in_bytes)
         // b_in_bytes seems to be 32 for sha256
         // ceil the division
@@ -343,8 +366,14 @@ library BLSTUtils {
             // we add the 0 prefix so that the result will be exactly 64 bytes
             // saves 300 gas per call instead of sending it along every time
             // places the first 32 bytes and the last 32 bytes of the field modulus
-            mstore(add(freemem, 0xc0), 0x000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd7)
-            mstore(add(freemem, 0xe0), 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab)
+            mstore(
+                add(freemem, 0xc0),
+                0x000000000000000000000000000000001a0111ea397fe69a4b1ba7b6434bacd7
+            )
+            mstore(
+                add(freemem, 0xe0),
+                0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
+            )
 
             // Invoke contract 0x5, put return value right after mod.length, @ 0x60
             let success :=
