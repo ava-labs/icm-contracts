@@ -6,8 +6,8 @@ package teleporterregistry
 import (
 	"fmt"
 
-	"github.com/ava-labs/subnet-evm/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/ava-labs/libevm/accounts/abi"
+	"github.com/ava-labs/libevm/common"
 	"github.com/pkg/errors"
 )
 

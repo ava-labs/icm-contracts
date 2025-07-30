@@ -9,7 +9,6 @@ import {TeleporterMessageInput, TeleporterFeeInfo} from "@teleporter/ITeleporter
 import {TokenTransferrerTest} from "./TokenTransferrerTests.t.sol";
 import {TokenRemote, IWarpMessenger} from "../TokenRemote/TokenRemote.sol";
 import {TeleporterRegistry} from "@teleporter/registry/TeleporterRegistry.sol";
-import {SendTokensInput, SendAndCallInput} from "../interfaces/ITokenTransferrer.sol";
 import {ITeleporterMessenger} from "@teleporter/ITeleporterMessenger.sol";
 import {TokenScalingUtils} from "@utilities/TokenScalingUtils.sol";
 import {

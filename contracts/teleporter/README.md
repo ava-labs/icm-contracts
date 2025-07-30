@@ -14,7 +14,7 @@
 - [Upgradability](#upgradability)
 - [Deploy TeleporterMessenger to an L1](#deploy-teleportermessenger-to-an-avalanche-l1)
 - [Deploy TeleporterRegistry to an L1](#deploy-teleporterregistry-to-an-avalanche-l1)
-- [Verify a Deployment of TeleporterMessenger](#verify-a-deployment-of-teleporterMessenger)
+- [Verify a Deployment of TeleporterMessenger](#verify-a-deployment-of-teleportermessenger)
 
 ## Overview
 

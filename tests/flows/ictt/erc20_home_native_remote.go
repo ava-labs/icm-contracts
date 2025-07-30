@@ -8,8 +8,8 @@ import (
 	nativetokenremote "github.com/ava-labs/icm-contracts/abi-bindings/go/ictt/TokenRemote/NativeTokenRemote"
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
+	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/gomega"
 )
 
