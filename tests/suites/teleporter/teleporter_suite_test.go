@@ -5,6 +5,7 @@ package teleporter_test
 
 import (
 	"context"
+	"flag"
 	"os"
 	"testing"
 	"time"
@@ -28,6 +29,9 @@ const (
 	teleporterMessengerLabel = "TeleporterMessenger"
 	upgradabilityLabel       = "upgradability"
 	utilsLabel               = "utils"
+
+	teleporterRegistryAddressFile = "TeleporterRegistryAddress.json"
+	validatorAddressesFile        = "ValidatorAddresses.json"
 )
 
 var (
@@ -36,12 +40,17 @@ var (
 	e2eFlags             *e2e.FlagVars
 )
 
+func TestMain(m *testing.M) {
+	e2eFlags = e2e.RegisterFlags()
+	flag.Parse()
+	os.Exit(m.Run())
+}
+
 func TestTeleporter(t *testing.T) {
 	if os.Getenv("RUN_E2E") == "" {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
 
-	e2eFlags = e2e.RegisterFlags()
 	RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Teleporter e2e test")
 }
@@ -97,33 +106,50 @@ var _ = ginkgo.BeforeSuite(func() {
 
 	// Only need to deploy Teleporter on the C-Chain since it is included in the genesis of the l1 chains.
 	_, fundedKey := LocalNetworkInstance.GetFundedAccountInfo()
-	TeleporterInfo.DeployTeleporterMessenger(
-		ctx,
-		LocalNetworkInstance.GetPrimaryNetworkInfo(),
-		teleporterDeployerTransaction,
-		teleporterDeployerAddress,
-		teleporterContractAddress,
-		fundedKey,
-	)
-
-	for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
-		TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
-		TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
-		TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
-	}
-
-	balance := 100 * units.Avax
-	for _, subnet := range LocalNetworkInstance.GetL1Infos() {
-		// Choose weights such that we can test validator churn
-		LocalNetworkInstance.ConvertSubnet(
+	if e2eFlags.NetworkDir() == "" {
+		TeleporterInfo.DeployTeleporterMessenger(
 			ctx,
-			subnet,
-			utils.PoAValidatorManager,
-			[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle},
-			[]uint64{balance, balance, balance, balance, balance},
+			LocalNetworkInstance.GetPrimaryNetworkInfo(),
+			teleporterDeployerTransaction,
+			teleporterDeployerAddress,
+			teleporterContractAddress,
 			fundedKey,
-			false,
 		)
+		balance := 100 * units.Avax
+		for _, subnet := range LocalNetworkInstance.GetL1Infos() {
+			// Choose weights such that we can test validator churn
+			LocalNetworkInstance.ConvertSubnet(
+				ctx,
+				subnet,
+				utils.PoAValidatorManager,
+				[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle},
+				[]uint64{balance, balance, balance, balance, balance},
+				fundedKey,
+				false,
+			)
+		}
+
+		for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
+			TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+			TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
+			TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
+		}
+
+		// Save the Teleporter registry address and validator addresses to files
+		utils.SaveRegistyAddress(TeleporterInfo, teleporterRegistryAddressFile)
+
+		LocalNetworkInstance.SaveValidatorAddress(validatorAddressesFile)
+	} else {
+		// Read the Teleporter registry address from the file
+		utils.SetTeleporterInfoFromFile(
+			teleporterRegistryAddressFile,
+			teleporterContractAddress,
+			TeleporterInfo,
+			LocalNetworkInstance.GetAllL1Infos(),
+		)
+
+		// Read the validator addresses from the file
+		LocalNetworkInstance.SetValidatorAddressFromFile(validatorAddressesFile)
 	}
 
 	log.Info("Set up ginkgo before suite")

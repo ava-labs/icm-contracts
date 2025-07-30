@@ -5,7 +5,9 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
+	"io/fs"
 	goLog "log"
+	"os"
 	"sort"
 	"time"
 
@@ -74,6 +76,69 @@ type L1Spec struct {
 	RequirePrimaryNetworkSigners bool
 }
 
+func newTmpnetNetwork(
+	name string,
+	globalFundedKey *secp256k1.PrivateKey,
+	warpGenesisTemplateFile string,
+	numPrimaryNetworkValidators int,
+	l1Specs []L1Spec,
+	flagVars *e2e.FlagVars,
+) *tmpnet.Network {
+	var l1s []*tmpnet.Subnet
+
+	bootstrapNodes := subnetEvmTestUtils.NewTmpnetNodes(numPrimaryNetworkValidators)
+	for i, l1Spec := range l1Specs {
+		// Create a single bootstrap node. This will be removed from the L1 validator set after it is converted,
+		// but will remain a primary network validator
+		initialL1Bootstrapper := bootstrapNodes[i] // One bootstrap node per L1
+
+		l1 := subnetEvmTestUtils.NewTmpnetSubnet(
+			l1Spec.Name,
+			utils.InstantiateGenesisTemplate(
+				warpGenesisTemplateFile,
+				l1Spec.EVMChainID,
+				l1Spec.TeleporterContractAddress,
+				l1Spec.TeleporterDeployedBytecode,
+				l1Spec.TeleporterDeployerAddress,
+				l1Spec.RequirePrimaryNetworkSigners,
+			),
+			utils.WarpEnabledChainConfig,
+			initialL1Bootstrapper,
+		)
+		l1.OwningKey = globalFundedKey
+		l1s = append(l1s, l1)
+	}
+
+	// Create new network
+	network := subnetEvmTestUtils.NewTmpnetNetwork(
+		name,
+		bootstrapNodes,
+		tmpnet.FlagsMap{},
+		l1s...,
+	)
+
+	Expect(network).ShouldNot(BeNil())
+
+	// Specify only a subset of the nodes to be bootstrapped
+	keysToFund := []*secp256k1.PrivateKey{
+		genesis.VMRQKey,
+		genesis.EWOQKey,
+		tmpnet.HardhatKey,
+	}
+	keysToFund = append(keysToFund, network.PreFundedKeys...)
+	genesis, err := tmpnet.NewTestGenesis(88888, bootstrapNodes, keysToFund)
+	Expect(err).Should(BeNil())
+	network.Genesis = genesis
+	network.PreFundedKeys = keysToFund
+
+	runtimeCfg, err := flagVars.NodeRuntimeConfig()
+	Expect(err).Should(BeNil())
+	runtimeCfg.Process.ReuseDynamicPorts = true
+	network.DefaultRuntimeConfig = *runtimeCfg
+
+	return network
+}
+
 func NewLocalNetwork(
 	ctx context.Context,
 	name string,
@@ -89,6 +154,11 @@ func NewLocalNetwork(
 	// Create extra nodes to be used to add more validators later
 	extraNodes := subnetEvmTestUtils.NewTmpnetNodes(extraNodeCount)
 
+	for _, l1Spec := range l1Specs {
+		initialVdrNodes := subnetEvmTestUtils.NewTmpnetNodes(l1Spec.NodeCount)
+		extraNodes = append(extraNodes, initialVdrNodes...)
+	}
+
 	fundedKey, err := hex.DecodeString(fundedKeyStr)
 	Expect(err).Should(BeNil())
 	globalFundedKey, err := secp256k1.ToPrivateKey(fundedKey)
@@ -97,60 +167,50 @@ func NewLocalNetwork(
 	globalFundedECDSAKey := globalFundedKey.ToECDSA()
 	Expect(err).Should(BeNil())
 
-	var l1s []*tmpnet.Subnet
 	deployedL1Specs := make(map[string]L1Spec)
-	bootstrapNodes := subnetEvmTestUtils.NewTmpnetNodes(numPrimaryNetworkValidators)
-	for i, l1Spec := range l1Specs {
-		// Create a single bootstrap node. This will be removed from the L1 validator set after it is converted,
-		// but will remain a primary network validator
-		initialL1Bootstrapper := bootstrapNodes[i] // One bootstrap node per L1
-
-		// Create validators to specify as the initial vdr set in the L1 conversion, and store them as extra nodes
-		initialVdrNodes := subnetEvmTestUtils.NewTmpnetNodes(l1Spec.NodeCount)
-		extraNodes = append(extraNodes, initialVdrNodes...)
-
-		l1 := subnetEvmTestUtils.NewTmpnetSubnet(
-			l1Spec.Name,
-			utils.InstantiateGenesisTemplate(
-				warpGenesisTemplateFile,
-				l1Spec.EVMChainID,
-				l1Spec.TeleporterContractAddress,
-				l1Spec.TeleporterDeployedBytecode,
-				l1Spec.TeleporterDeployerAddress,
-				l1Spec.RequirePrimaryNetworkSigners,
-			),
-			utils.WarpEnabledChainConfig,
-			initialL1Bootstrapper,
-		)
+	for _, l1Spec := range l1Specs {
 		deployedL1Specs[l1Spec.Name] = l1Spec
-		l1.OwningKey = globalFundedKey
-		l1s = append(l1s, l1)
 	}
-	network := subnetEvmTestUtils.NewTmpnetNetwork(
-		name,
-		bootstrapNodes,
-		tmpnet.FlagsMap{},
-		l1s...,
-	)
-	Expect(network).ShouldNot(BeNil())
 
-	// Specify only a subset of the nodes to be bootstrapped
-	keysToFund := []*secp256k1.PrivateKey{
-		genesis.VMRQKey,
-		genesis.EWOQKey,
-		tmpnet.HardhatKey,
+	isReuseNetwork := flagVars != nil && flagVars.NetworkDir() != ""
+
+	var network *tmpnet.Network
+	// All nodes are specified as bootstrap validators
+	var primaryNetworkValidators []*tmpnet.Node
+	if isReuseNetwork {
+		// Load existing network and restart nodes
+		network, err = tmpnet.ReadNetwork(context.Background(), logging.NoLog{}, flagVars.NetworkDir())
+		Expect(err).Should(BeNil())
+		Expect(network).ShouldNot(BeNil())
+
+		extraNodes = make([]*tmpnet.Node, 0)
+		for _, node := range network.Nodes {
+			err := node.Restart(ctx)
+			Expect(err).Should(BeNil(), "Failed to restart node %s: %v", node.NodeID, err)
+
+			if node.Flags[config.PartialSyncPrimaryNetworkKey] == "true" {
+				extraNodes = append(extraNodes, node)
+			} else {
+				primaryNetworkValidators = append(primaryNetworkValidators, node)
+			}
+		}
+
+		err := tmpnet.WaitForHealthyNodes(ctx, logging.NoLog{}, network.Nodes)
+		Expect(err).Should(BeNil())
+	} else {
+		network = newTmpnetNetwork(
+			name,
+			globalFundedKey,
+			warpGenesisTemplateFile,
+			numPrimaryNetworkValidators,
+			l1Specs,
+			flagVars,
+		)
+
+		primaryNetworkValidators = append(primaryNetworkValidators, network.Nodes...)
 	}
-	keysToFund = append(keysToFund, network.PreFundedKeys...)
-	genesis, err := tmpnet.NewTestGenesis(88888, bootstrapNodes, keysToFund)
-	Expect(err).Should(BeNil())
-	network.Genesis = genesis
-	network.PreFundedKeys = keysToFund
 
 	tc := e2e.NewTestContext()
-	runtimeCfg, err := flagVars.NodeRuntimeConfig()
-	Expect(err).Should(BeNil())
-	runtimeCfg.Process.ReuseDynamicPorts = true
-	network.DefaultRuntimeConfig = *runtimeCfg
 	env := e2e.NewTestEnvironment(tc, flagVars, network)
 	Expect(env).ShouldNot(BeNil())
 
@@ -161,13 +221,11 @@ func NewLocalNetwork(
 	goLog.Println("Network bootstrapped")
 
 	// Issue transactions to activate the proposerVM fork on the chains
-	for _, l1 := range network.Subnets {
-		utils.SetupProposerVM(ctx, globalFundedECDSAKey, network, l1.SubnetID)
+	if !isReuseNetwork {
+		for _, l1 := range network.Subnets {
+			utils.SetupProposerVM(ctx, globalFundedECDSAKey, network, l1.SubnetID)
+		}
 	}
-
-	// All nodes are specified as bootstrap validators
-	var primaryNetworkValidators []*tmpnet.Node
-	primaryNetworkValidators = append(primaryNetworkValidators, network.Nodes...)
 
 	localNetwork := &LocalNetwork{
 		Network:                         network,
@@ -596,4 +654,42 @@ func (n *LocalNetwork) GetTwoL1s() (
 	l1s := n.GetL1Infos()
 	Expect(len(l1s)).Should(BeNumerically(">=", 2))
 	return l1s[0], l1s[1]
+}
+
+func (n *LocalNetwork) SaveValidatorAddress(
+	fileName string,
+) {
+	validatorAddresses := make(map[string]map[string]string)
+	for _, subnet := range n.GetL1Infos() {
+		validator, validatorSpec := n.GetValidatorManager(subnet.SubnetID)
+		validatorAddresses[subnet.BlockchainID.Hex()] = make(map[string]string)
+		validatorAddresses[subnet.BlockchainID.Hex()]["validator"] = validator.Address.Hex()
+		validatorAddresses[subnet.BlockchainID.Hex()]["spec"] = validatorSpec.Address.Hex()
+	}
+
+	jsonData, err := json.Marshal(validatorAddresses)
+	Expect(err).Should(BeNil())
+	err = os.WriteFile(fileName, jsonData, fs.ModePerm)
+	Expect(err).Should(BeNil())
+}
+
+func (n *LocalNetwork) SetValidatorAddressFromFile(fileName string) {
+	validatorAddresses := make(map[string]map[string]string)
+	data, err := os.ReadFile(fileName)
+	Expect(err).Should(BeNil())
+	err = json.Unmarshal(data, &validatorAddresses)
+	Expect(err).Should(BeNil())
+
+	// Set the validator manager for each L1
+	for _, subnet := range n.GetL1Infos() {
+		validatorAddress := common.HexToAddress(validatorAddresses[subnet.BlockchainID.Hex()]["validator"])
+		validatorSpecAddress := common.HexToAddress(validatorAddresses[subnet.BlockchainID.Hex()]["spec"])
+
+		n.validatorManagers[subnet.SubnetID] = ProxyAddress{
+			Address: validatorAddress,
+		}
+		n.validatorManagerSpecializations[subnet.SubnetID] = ProxyAddress{
+			Address: validatorSpecAddress,
+		}
+	}
 }
