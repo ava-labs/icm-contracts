@@ -23,18 +23,18 @@ import (
 	nativeMinter "github.com/ava-labs/icm-contracts/abi-bindings/go/INativeMinter"
 	"github.com/ava-labs/icm-contracts/tests/interfaces"
 	gasUtils "github.com/ava-labs/icm-contracts/utils/gas-utils"
+	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/common/hexutil"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/crypto"
+	"github.com/ava-labs/libevm/eth/tracers"
+	"github.com/ava-labs/libevm/log"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	"github.com/ava-labs/subnet-evm/core/types"
-	"github.com/ava-labs/subnet-evm/eth/tracers"
 	"github.com/ava-labs/subnet-evm/ethclient"
-	subnetEvmInterfaces "github.com/ava-labs/subnet-evm/interfaces"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/nativeminter"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	subnetEvmUtils "github.com/ava-labs/subnet-evm/tests/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/log"
 	. "github.com/onsi/gomega"
 )
 
@@ -44,7 +44,7 @@ const (
 
 var NativeTransferGas uint64 = 21_000
 
-var WarpEnabledChainConfig = tmpnet.FlagsMap{
+var WarpEnabledChainConfig = map[string]any{
 	"log-level":         "debug",
 	"warp-api-enabled":  true,
 	"local-txs-enabled": true,
@@ -241,7 +241,7 @@ func waitForTransactionReceipt(
 			return receipt, nil
 		}
 
-		if errors.Is(err, subnetEvmInterfaces.NotFound) {
+		if errors.Is(err, ethereum.NotFound) {
 			log.Debug("Transaction not yet mined")
 		} else {
 			log.Error("Receipt retrieval failed", "err", err)
@@ -728,4 +728,56 @@ func SetupProposerVM(ctx context.Context, fundedKey *ecdsa.PrivateKey, network *
 
 	err = subnetEvmUtils.IssueTxsToActivateProposerVMFork(ctx, chainIDInt, fundedKey, client)
 	Expect(err).Should(BeNil())
+}
+
+// Adapted from [subnetEvmUtils.IssueTxsToActivateProposerVMFork]
+// Since those transactions with hardcoded low caps don't get included successfully
+// post Fortuna
+func IssueTxsToAdvanceChain(
+	ctx context.Context,
+	chainID *big.Int,
+	fundedKey *ecdsa.PrivateKey,
+	client ethclient.Client,
+	numTriggerTxs int,
+) error {
+	addr := crypto.PubkeyToAddress(fundedKey.PublicKey)
+	nonce, err := client.NonceAt(ctx, addr, nil)
+	Expect(err).Should(BeNil())
+
+	newHeads := make(chan *types.Header, 1)
+	sub, err := client.SubscribeNewHead(ctx, newHeads)
+	if err != nil {
+		return err
+	}
+	defer sub.Unsubscribe()
+
+	to := common.HexToAddress(string(common.Big1.Bytes()))
+	gasFeeCap := big.NewInt(0).SetUint64(225_000_000_000)
+
+	txSigner := types.LatestSignerForChainID(chainID)
+	for i := 0; i < numTriggerTxs; i++ {
+		tx := types.NewTx(&types.DynamicFeeTx{
+			ChainID:   chainID,
+			Nonce:     nonce,
+			To:        &to,
+			Gas:       NativeTransferGas,
+			GasFeeCap: gasFeeCap,
+			GasTipCap: common.Big0,
+			Value:     common.Big1,
+		})
+		triggerTx, err := types.SignTx(tx, txSigner, fundedKey)
+		if err != nil {
+			return err
+		}
+		if err := client.SendTransaction(ctx, triggerTx); err != nil {
+			return err
+		}
+		<-newHeads // wait for block to be accepted
+		nonce++
+	}
+	log.Info(
+		"Built required number of blocks",
+		"txCount", numTriggerTxs,
+	)
+	return nil
 }

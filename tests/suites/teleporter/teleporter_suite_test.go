@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ava-labs/avalanchego/tests/fixture/e2e"
 	"github.com/ava-labs/avalanchego/utils/units"
 	teleporterFlows "github.com/ava-labs/icm-contracts/tests/flows/teleporter"
 	registryFlows "github.com/ava-labs/icm-contracts/tests/flows/teleporter/registry"
 	"github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
 	deploymentUtils "github.com/ava-labs/icm-contracts/utils/deployment-utils"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/ava-labs/libevm/log"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -32,6 +33,7 @@ const (
 var (
 	LocalNetworkInstance *network.LocalNetwork
 	TeleporterInfo       utils.TeleporterTestInfo
+	e2eFlags             *e2e.FlagVars
 )
 
 func TestTeleporter(t *testing.T) {
@@ -39,6 +41,7 @@ func TestTeleporter(t *testing.T) {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
 
+	e2eFlags = e2e.RegisterFlags()
 	RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Teleporter e2e test")
 }
@@ -87,6 +90,7 @@ var _ = ginkgo.BeforeSuite(func() {
 		},
 		2,
 		2,
+		e2eFlags,
 	)
 	TeleporterInfo = utils.NewTeleporterTestInfo(LocalNetworkInstance.GetAllL1Infos())
 	log.Info("Started local network")
@@ -108,6 +112,7 @@ var _ = ginkgo.BeforeSuite(func() {
 		TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
 	}
 
+	balance := 100 * units.Avax
 	for _, subnet := range LocalNetworkInstance.GetL1Infos() {
 		// Choose weights such that we can test validator churn
 		LocalNetworkInstance.ConvertSubnet(
@@ -115,6 +120,7 @@ var _ = ginkgo.BeforeSuite(func() {
 			subnet,
 			utils.PoAValidatorManager,
 			[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle},
+			[]uint64{balance, balance, balance, balance, balance},
 			fundedKey,
 			false,
 		)

@@ -6,11 +6,21 @@ The Validator Manager contracts support migrating from a Proof-of-Authority secu
 
 Migrating from PoA to PoS consists of the following steps:
 
-### 1. Deploy `ValidatorManager` as PoA, setting the `admin` address in the constructor.
+### 1. Deploy `PoAManager`.
+The `PoAManager` is deployed as a standalone contract, separate from the `ValidatorManager`. During deployment, the address of the `ValidatorManager` is provided as a constructor argument to the `PoAManager`, which then delegates relevant calls to the underlying `ValidatorManager`.
 
-`ValidatorManager` is `Ownable`, which restricts initiation of validator set changes to the current owner, or `admin`. For PoA L1s, the `admin` has the exclusive ability to manage the validator set.
+- The **owner of the `PoAManager`** manages the validator set by invoking:
+    - `initiateValidatorRegistration`
+    - `initiateValidatorRemoval`
+    - `initiateValidatorWeightUpdate`
+    - `transferUnderlyingValidatorManagerOwnership`
 
-After the `ValidatorManager` is deployed, the desired PoA validators may be registered. See [below](#selecting-weights) for details on how to select the PoA validator weights.
+- The following functions are **permissionless** and may be called by anyone:
+    - `completeValidatorRegistration`
+    - `completeValidatorRemoval`
+    - `completeValidatorWeightUpdate`
+
+After the `PoAManager` is deployed, the desired PoA validators may be registered. See [below](#selecting-weights) for details on how to select the PoA validator weights.
 
 ### 2. Deploy `StakingManager`.
 
@@ -20,7 +30,7 @@ The `StakingManager` constructor also takes as an argument the `weightToValueFac
 
 ### 3. Transfer ownership of `ValidatorManager` to the `StakingManager`'s address.
 
-Ownership of the `ValidatorManager` can be transferred to the `StakingManager` by calling `transferOwnership` on the `ValidatorManager` from the `admin`. Once this is done, the `StakingManager` may update the L1's validator set via the `ValidatorManager`.
+Ownership of the underlying `ValidatorManager` can be transferred from the `PoAManager` to the `StakingManager` by calling `transferValidatorManagerOwnership` on the `PoAManager` from the `PoAManager`'s owner. Once this is done, the `StakingManager` may update the L1's validator set via the `ValidatorManager`.
 
 ### 4. Remove PoA validators in stages.
 

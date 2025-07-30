@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ava-labs/avalanchego/tests/fixture/e2e"
 	governanceFlows "github.com/ava-labs/icm-contracts/tests/flows/governance"
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/ava-labs/libevm/log"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -20,6 +21,7 @@ const (
 
 var (
 	LocalNetworkInstance *localnetwork.LocalNetwork
+	e2eFlags             *e2e.FlagVars
 )
 
 func TestGovernance(t *testing.T) {
@@ -27,6 +29,7 @@ func TestGovernance(t *testing.T) {
 		t.Skip("Environment variable RUN_E2E not set; skipping E2E tests")
 	}
 
+	e2eFlags = e2e.RegisterFlags()
 	RegisterFailHandler(ginkgo.Fail)
 	ginkgo.RunSpecs(t, "Governance e2e test")
 }
@@ -54,6 +57,7 @@ var _ = ginkgo.BeforeSuite(func() {
 		},
 		2,
 		2,
+		e2eFlags,
 	)
 	log.Info("Started local network")
 })
