@@ -43,3 +43,6 @@ server.log
 # Forge documentation
 docs/
 coverage/
+
+# Mac hidden files
+.DS_Store
