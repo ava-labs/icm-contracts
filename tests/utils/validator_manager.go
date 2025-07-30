@@ -792,75 +792,75 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	return registrationInitiatedEvent
 }
 
-func InitiateAndCompletePoAValidatorRegistration(
-	ctx context.Context,
-	signatureAggregator *SignatureAggregator,
-	ownerKey *ecdsa.PrivateKey,
-	l1Info interfaces.L1TestInfo,
-	pChainInfo interfaces.L1TestInfo,
-	validatorManager *validatormanager.ValidatorManager,
-	validatorManagerAddress common.Address,
-	expiry uint64,
-	node Node,
-	pchainWallet pwallet.Wallet,
-	networkID uint32,
-) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
-	// Initiate validator registration
-	receipt, registrationInitiatedEvent := InitiatePoAValidatorRegistration(
-		ctx,
-		ownerKey,
-		l1Info,
-		node,
-		validatorManager,
-		validatorManagerAddress,
-	)
-	validationID := registrationInitiatedEvent.ValidationID
+// func InitiateAndCompletePoAValidatorRegistration(
+// 	ctx context.Context,
+// 	signatureAggregator *SignatureAggregator,
+// 	ownerKey *ecdsa.PrivateKey,
+// 	l1Info interfaces.L1TestInfo,
+// 	pChainInfo interfaces.L1TestInfo,
+// 	validatorManager *validatormanager.ValidatorManager,
+// 	validatorManagerAddress common.Address,
+// 	expiry uint64,
+// 	node Node,
+// 	pchainWallet pwallet.Wallet,
+// 	networkID uint32,
+// ) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
+// 	// Initiate validator registration
+// 	receipt, registrationInitiatedEvent := InitiatePoAValidatorRegistration(
+// 		ctx,
+// 		ownerKey,
+// 		l1Info,
+// 		node,
+// 		validatorManager,
+// 		validatorManagerAddress,
+// 	)
+// 	validationID := registrationInitiatedEvent.ValidationID
 
-	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
-	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
+// 	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
+// 	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
 
-	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
-		100*units.Avax,
-		node.NodePoP.ProofOfPossession,
-		signedWarpMessage.Bytes(),
-	)
-	Expect(err).Should(BeNil())
-	PChainProposerVMWorkaround(pchainWallet)
-	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
+// 	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
+// 		100*units.Avax,
+// 		node.NodePoP.ProofOfPossession,
+// 		signedWarpMessage.Bytes(),
+// 	)
+// 	Expect(err).Should(BeNil())
+// 	PChainProposerVMWorkaround(pchainWallet)
+// 	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
 
-	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-	log.Println("Completing validator registration")
-	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
-		validationID,
-		expiry,
-		node,
-		true,
-		l1Info,
-		pChainInfo,
-		networkID,
-		signatureAggregator,
-	)
+// 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
+// 	log.Println("Completing validator registration")
+// 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
+// 		validationID,
+// 		expiry,
+// 		node,
+// 		true,
+// 		l1Info,
+// 		pChainInfo,
+// 		networkID,
+// 		signatureAggregator,
+// 	)
 
-	// Deliver the Warp message to the L1
-	receipt = CompleteValidatorRegistration(
-		ctx,
-		ownerKey,
-		l1Info,
-		validatorManagerAddress,
-		registrationSignedMessage,
-	)
-	// Check that the validator is registered in the staking contract
-	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
-	Expect(err).Should(BeNil())
-	registrationEvent, err := GetEventFromLogs(
-		receipt.Logs,
-		acp99Manager.ParseCompletedValidatorRegistration,
-	)
-	Expect(err).Should(BeNil())
-	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
+// 	// Deliver the Warp message to the L1
+// 	receipt = CompleteValidatorRegistration(
+// 		ctx,
+// 		ownerKey,
+// 		l1Info,
+// 		validatorManagerAddress,
+// 		registrationSignedMessage,
+// 	)
+// 	// Check that the validator is registered in the staking contract
+// 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
+// 	Expect(err).Should(BeNil())
+// 	registrationEvent, err := GetEventFromLogs(
+// 		receipt.Logs,
+// 		acp99Manager.ParseCompletedValidatorRegistration,
+// 	)
+// 	Expect(err).Should(BeNil())
+// 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
 
-	return registrationInitiatedEvent
-}
+// 	return registrationInitiatedEvent
+// }
 
 func InitiateAndCompleteERC20ValidatorRegistration(
 	ctx context.Context,

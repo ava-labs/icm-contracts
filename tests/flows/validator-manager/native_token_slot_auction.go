@@ -39,12 +39,14 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	ctx := context.Background()
 	pChainInfo := utils.GetPChainInfo(cChainInfo)
 
+	balance := 100 * units.Avax
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
 		utils.NativeTokenSlotAuctionManager,
 		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle,
 			units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{balance, balance, balance, balance, balance, balance},
 		fundedKey,
 		false,
 	)

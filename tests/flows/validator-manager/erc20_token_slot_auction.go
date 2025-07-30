@@ -42,12 +42,14 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	ctx := context.Background()
 	pChainInfo := utils.GetPChainInfo(cChainInfo)
 
+	balance := 100 * units.Avax
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
 		utils.ERC20TokenSlotAuctionManager,
 		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle,
 			units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{balance, balance, balance, balance, balance, balance},
 		fundedKey,
 		false,
 	)
@@ -62,7 +64,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 
 	Expect(err).Should(BeNil())
 
-	exampleERC20Address, err := ERC20TokenSlotAuctionManager.ERC20(&bind.CallOpts{})
+	exampleERC20Address, err := ERC20TokenSlotAuctionManager.Erc20(&bind.CallOpts{})
 	Expect(err).Should(BeNil())
 
 	exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
