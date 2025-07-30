@@ -10,26 +10,22 @@ import {IERC20Mintable} from "./interfaces/IERC20Mintable.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 import {SlotAuctionManager} from "./SlotAuctionManager.sol";
 import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";
-import {Initializable} from
-    "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {IERC20TokenSlotAuctionManager} from "./interfaces/IERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManagerSettings} from "./interfaces/ISlotAuctionManager.sol";
-import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
-import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
-
 
 contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuctionManager {
     using SafeERC20 for IERC20Mintable;
     using SafeERC20TransferFrom for IERC20Mintable;
 
     struct ERC20TokenSlotAuctionManagerStorage {
+        // solhint-disable-next-line private-vars-leading-underscore
         IERC20Mintable _token;
     }
 
     // keccak256(abi.encode(uint256(keccak256("avalanche-icm.storage.ERC20TokenSlotAuctionManager")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant ERC20_TOKEN_SLOT_AUCTION_MANAGER_STORAGE_LOCATION = 
+    bytes32 public constant ERC20_TOKEN_SLOT_AUCTION_MANAGER_STORAGE_LOCATION =
         0x04264d6e045c48d92b64fb3ce155b1f7a2673239fb0c9b60c505be1c17a7e700;
 
     // solhint-disable ordering
@@ -51,7 +47,6 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
             _disableInitializers();
         }
     }
-
 
     /**
      * @notice Initialize the ERC20 token slot auction manager
@@ -98,7 +93,7 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
     /**
      * @notice Returns the ERC20 token being bid
      */
-    function ERC20() external view returns (IERC20Mintable) {
+    function erc20() external view returns (IERC20Mintable) {
         ERC20TokenSlotAuctionManagerStorage storage $ = _getERC20SlotAuctionManagerStorage();
         return $._token;
     }

@@ -5,30 +5,12 @@
 
 pragma solidity 0.8.25;
 
-import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
-import {
-    IACP99Manager,
-    PChainOwner,
-    ConversionData,
-    InitialValidator
-} from "../interfaces/IACP99Manager.sol";
-import {
-    IValidatorManager,
-    ValidatorManager,
-    ValidatorStatus,
-    ValidatorManagerSettings
-} from "../ValidatorManager.sol";
+import {PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
+import {IValidatorManager, ValidatorManager} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {NativeTokenSlotAuctionManager} from "../NativeTokenSlotAuctionManager.sol";
-import {SlotAuctionManager} from "../SlotAuctionManager.sol";
-import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo, SlotAuctionManagerSettings, AuctionSettings
-} from "../interfaces/ISlotAuctionManager.sol";
-import {
-    WarpMessage,
-    IWarpMessenger
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {SlotAuctionManagerSettings} from "../interfaces/ISlotAuctionManager.sol";
 import {SlotAuctionManagerTest} from "./SlotAuctionManagerTests.t.sol";
 
 contract NativeTokenSlotAuctionManagerTest is SlotAuctionManagerTest {
@@ -49,9 +31,7 @@ contract NativeTokenSlotAuctionManagerTest is SlotAuctionManagerTest {
     function _setUp() internal override {
         // Construct the object under test
         validatorManager = new ValidatorManager(ICMInitializable.Allowed);
-        app = new NativeTokenSlotAuctionManager(
-            ICMInitializable.Allowed
-        );
+        app = new NativeTokenSlotAuctionManager(ICMInitializable.Allowed);
 
         app.initialize(
             SlotAuctionManagerSettings(
@@ -66,9 +46,11 @@ contract NativeTokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         slotauctionmanager = app;
     }
 
+    // solhint-disable no-empty-blocks
     function _beforeBid(uint256 amount, address spender) internal override {
         //Native tokes dont need to be pre approved
     }
+    // solhint-enable no-empty-blocks
 
     function _placeBid(
         uint256 bid,

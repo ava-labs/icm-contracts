@@ -43,7 +43,7 @@ struct ValidatorInfo {
     bytes nodeID;
     bytes blsPublicKey;
     bytes32 validationID;
-    uint64 validatorWeight;
+    uint64 weight;
 }
 
 /**
@@ -55,21 +55,22 @@ struct SlotAuctionManagerSettings {
     AuctionSettings auctionSettings;
 }
 /**
- * @dev Struct for auction settings, is a part of SlotAuctionManagerSettings but due 
+ * @dev Struct for auction settings, is a part of SlotAuctionManagerSettings but due
  * to the nature of being able to change auction settings a separate struct is provided
  */
+
 struct AuctionSettings {
     uint16 totalValidatorSlots;
-    uint64 Weight;
-    uint256 MinValidatorDuration;
-    uint256 MinAuctionDuration;
-    uint256 MinimumBid;
+    uint64 weight;
+    uint256 minValidatorDuration;
+    uint256 minAuctionDuration;
+    uint256 minimumBid;
 }
 /**
  * Proof of Purchase Validator Manager that takes ERC20 tokens.
  */
+
 interface ISlotAuctionManager {
-    
     /**
      * @notice Event emitted when a new auction has started.
      * @param validatorSlots The number of validators being auctioned off.
@@ -127,7 +128,7 @@ interface ISlotAuctionManager {
     /**
      * @notice returns the minimum bid required to enter auction
      */
-    function MinBidRequired() external returns (uint256);
+    function minBidRequired() external returns (uint256);
 
     function initiateValidatorRemoval(
         bytes32 validationID

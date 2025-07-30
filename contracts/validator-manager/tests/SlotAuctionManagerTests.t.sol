@@ -5,29 +5,11 @@
 
 pragma solidity 0.8.25;
 
-import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
-import {
-    IACP99Manager,
-    PChainOwner,
-    ConversionData,
-    InitialValidator
-} from "../interfaces/IACP99Manager.sol";
-import {
-    IValidatorManager,
-    ValidatorManager,
-    ValidatorStatus,
-    ValidatorManagerSettings
-} from "../ValidatorManager.sol";
-import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
+import {PChainOwner, ConversionData, InitialValidator} from "../interfaces/IACP99Manager.sol";
+import {ValidatorManager, ValidatorManagerSettings} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
-import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
-import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo, AuctionSettings, SlotAuctionManagerSettings
-} from "../interfaces/ISlotAuctionManager.sol";
-import {ExampleERC20} from "@mocks/ExampleERC20.sol";
-import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
+import {AuctionSettings} from "../interfaces/ISlotAuctionManager.sol";
 import {
     WarpMessage,
     IWarpMessenger
@@ -37,21 +19,10 @@ import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
 abstract contract SlotAuctionManagerTest is Test {
-    SlotAuctionManager public slotauctionmanager;
-
-    ValidatorManager public validatorManager;
-
-    PChainOwner public DEFAULT_P_CHAIN_OWNER;
+    // solhint-disable var-name-mixedcase
     bytes32 public constant DEFAULT_SUBNET_ID =
         bytes32(hex"1234567812345678123456781234567812345678123456781234567812345678");
     bytes public constant DEFAULT_NODE_ID = bytes(hex"1234123412341234123412341234123412341234");
-
-    bytes[4] public DEFAULT_BIDDING_VALIDATOR_NODEIDS = [
-        bytes(hex"4123412341234123412341234123412341234123"),
-        bytes(hex"2345234523452345234523452345234523452345"),
-        bytes(hex"3452345234523452345234523452345234523452"),
-        bytes(hex"4523452345234523452345234523452345234523")
-    ];
 
     bytes public constant DEFAULT_INITIAL_VALIDATOR_NODE_ID_1 =
         bytes(hex"2341234123412341234123412341234123412341");
@@ -66,18 +37,13 @@ abstract contract SlotAuctionManagerTest is Test {
     bytes32 public constant DEFAULT_SUBNET_CONVERSION_ID =
         bytes32(hex"67e8531265d8e97bd5c23534a37f4ea42d41934ddf8fe2c77c27fac9ef89f973");
     address public constant WARP_PRECOMPILE_ADDRESS = 0x0200000000000000000000000000000000000005;
-    address public constant DEFAULT_AUCTION_OWNER_ADRESS = 0x9900000000000000000000000000099999999999;
+    address public constant DEFAULT_AUCTION_OWNER_ADRESS =
+        0x9900000000000000000000000000099999999999;
     uint64 public constant DEFAULT_WEIGHT = 1e6;
     // Set the default weight to 1e10 to avoid churn issues
     uint64 public constant DEFAULT_INITIAL_VALIDATOR_WEIGHT = DEFAULT_WEIGHT * 1e4;
     uint64 public constant DEFAULT_INITIAL_TOTAL_WEIGHT =
         DEFAULT_INITIAL_VALIDATOR_WEIGHT + DEFAULT_WEIGHT;
-    address[4] public DEFAULT_SENDER_ADDRESSES = [
-        0x4321432143214321432143214321432143214321,
-        0x3214321432143214321432143214321432143214,
-        0x2143214321432143214321432143214321432143,
-        0x1432143214321432143214321432143214321432
-    ];
     uint64 public constant DEFAULT_CHURN_PERIOD = 1 hours;
     uint8 public constant DEFAULT_MAXIMUM_CHURN_PERCENTAGE = 20;
     // uint8 public constant DEFAULT_MAXIMUM_HOURLY_CHURN = 0;
@@ -98,6 +64,23 @@ abstract contract SlotAuctionManagerTest is Test {
         DEFAULT_MINIMUM_AUCTION_DURATION,
         DEFAULT_MINIMUM_BID
     );
+    address[4] public DEFAULT_SENDER_ADDRESSES = [
+        0x4321432143214321432143214321432143214321,
+        0x3214321432143214321432143214321432143214,
+        0x2143214321432143214321432143214321432143,
+        0x1432143214321432143214321432143214321432
+    ];
+    bytes[4] public DEFAULT_BIDDING_VALIDATOR_NODEIDS = [
+        bytes(hex"4123412341234123412341234123412341234123"),
+        bytes(hex"2345234523452345234523452345234523452345"),
+        bytes(hex"3452345234523452345234523452345234523452"),
+        bytes(hex"4523452345234523452345234523452345234523")
+    ];
+    PChainOwner public DEFAULT_P_CHAIN_OWNER;
+
+    SlotAuctionManager public slotauctionmanager;
+    ValidatorManager public validatorManager;
+    // solhint-enable var-name-mixedcase
 
     event NewValidatorAuction(
         uint16 validatorSlots,
@@ -173,14 +156,14 @@ abstract contract SlotAuctionManagerTest is Test {
 
     function testDuplicateBid() public {
         _startAuctionWithCheck();
-        _FundAndPlaceBidWithCheck(
-            DEFAULT_SENDER_ADDRESSES[0],
-            DEFAULT_MINIMUM_BID,
-            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
-            DEFAULT_BLS_PUBLIC_KEY,
-            DEFAULT_P_CHAIN_OWNER,
-            DEFAULT_P_CHAIN_OWNER
-        );
+        _fundAndPlaceBidWithCheck({
+            sender: DEFAULT_SENDER_ADDRESSES[0],
+            bid: DEFAULT_MINIMUM_BID,
+            nodeID: DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER
+        });
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlotAuctionManager.DuplicateBidInContention.selector, DEFAULT_MINIMUM_BID
@@ -197,14 +180,14 @@ abstract contract SlotAuctionManagerTest is Test {
 
     function testBidWithDuplicateNodeID() public {
         _startAuctionWithCheck();
-        _FundAndPlaceBidWithCheck(
-            DEFAULT_SENDER_ADDRESSES[0],
-            DEFAULT_MINIMUM_BID,
-            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
-            DEFAULT_BLS_PUBLIC_KEY,
-            DEFAULT_P_CHAIN_OWNER,
-            DEFAULT_P_CHAIN_OWNER
-        );
+        _fundAndPlaceBidWithCheck({
+            sender: DEFAULT_SENDER_ADDRESSES[0],
+            bid: DEFAULT_MINIMUM_BID,
+            nodeID: DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER
+        });
         vm.expectRevert(
             abi.encodeWithSelector(
                 SlotAuctionManager.DuplicateNodeIDInContention.selector,
@@ -238,7 +221,7 @@ abstract contract SlotAuctionManagerTest is Test {
 
     function testSetSlotAuctionSettings() public {
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
-        slotauctionmanager.setSlotAuctionSettings( 
+        slotauctionmanager.setSlotAuctionSettings(
             AuctionSettings(
                 DEFAULT_VALIDATOR_SLOTS - 2,
                 DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
@@ -249,7 +232,9 @@ abstract contract SlotAuctionManagerTest is Test {
         );
         vm.assertEq(slotauctionmanager.getTotalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
         vm.assertEq(slotauctionmanager.getValidatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1);
-        vm.assertEq(slotauctionmanager.getMinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1);
+        vm.assertEq(
+            slotauctionmanager.getMinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1
+        );
         vm.assertEq(
             slotauctionmanager.getMinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION + 1
         );
@@ -295,14 +280,14 @@ abstract contract SlotAuctionManagerTest is Test {
         );
         slotauctionmanager.initiateAuction();
 
-        _FundAndPlaceBidWithCheck(
-            DEFAULT_SENDER_ADDRESSES[0],
-            DEFAULT_MINIMUM_BID,
-            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
-            DEFAULT_BLS_PUBLIC_KEY,
-            DEFAULT_P_CHAIN_OWNER,
-            DEFAULT_P_CHAIN_OWNER
-        );
+        _fundAndPlaceBidWithCheck({
+            sender: DEFAULT_SENDER_ADDRESSES[0],
+            bid: DEFAULT_MINIMUM_BID,
+            nodeID: DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
+            blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER
+        });
 
         _beforeBid(DEFAULT_MINIMUM_BID + 1, address(this));
         vm.expectEmit(address(slotauctionmanager));
@@ -340,17 +325,6 @@ abstract contract SlotAuctionManagerTest is Test {
         slotauctionmanager.initiateAuction();
     }
 
-    function testOpenValidatorSlotDecrease() public {
-        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS);
-        _initiateAndCompleteValidatorRegistration(
-            DEFAULT_SENDER_ADDRESSES[0],
-            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
-            DEFAULT_BLS_PUBLIC_KEY,
-            DEFAULT_AUCTION_END_TIME
-        );
-        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 1);
-    }
-
     function testEndAuction() public {
         _startAuctionWithCheck();
         vm.warp(2000);
@@ -383,7 +357,6 @@ abstract contract SlotAuctionManagerTest is Test {
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
             AuctionSettings(
-
                 DEFAULT_VALIDATOR_SLOTS - 2,
                 DEFAULT_VALIDATOR_SLOT_WEIGHT,
                 DEFAULT_MINIMUM_AUCTION_DURATION,
@@ -402,15 +375,15 @@ abstract contract SlotAuctionManagerTest is Test {
             DEFAULT_MINIMUM_BID + 2,
             DEFAULT_MINIMUM_BID + 10
         ];
-        for (uint i = 0; i < 3; i++) {
-            _FundAndPlaceBidWithCheck(
-                DEFAULT_SENDER_ADDRESSES[i],
-                bids[i],
-                DEFAULT_BIDDING_VALIDATOR_NODEIDS[i],
-                DEFAULT_BLS_PUBLIC_KEY,
-                DEFAULT_P_CHAIN_OWNER,
-                DEFAULT_P_CHAIN_OWNER
-            );
+        for (uint8 i = 0; i < bids.length - 1; i++) {
+            _fundAndPlaceBidWithCheck({
+                sender: DEFAULT_SENDER_ADDRESSES[i],
+                bid: bids[i],
+                nodeID: DEFAULT_BIDDING_VALIDATOR_NODEIDS[i],
+                blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+                remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+                disableOwner: DEFAULT_P_CHAIN_OWNER
+            });
         }
         _beforeBid(DEFAULT_MINIMUM_BID + 10, DEFAULT_SENDER_ADDRESSES[3]);
         vm.deal(DEFAULT_SENDER_ADDRESSES[3], DEFAULT_MINIMUM_BID + 10);
@@ -434,22 +407,22 @@ abstract contract SlotAuctionManagerTest is Test {
         bytes32[3] memory validationIDs;
         bytes[3] memory registerL1ValidatorMessages;
 
-        for (uint i = 0; i < 3; i++) {
-            (validationIDs[i], registerL1ValidatorMessages[i]) = _packRegisterL1ValidatorMessage(
-                block.timestamp,
-                DEFAULT_SUBNET_ID,
-                DEFAULT_BIDDING_VALIDATOR_NODEIDS[i + 1],
-                DEFAULT_BLS_PUBLIC_KEY,
-                DEFAULT_P_CHAIN_OWNER,
-                DEFAULT_P_CHAIN_OWNER,
-                DEFAULT_VALIDATOR_SLOT_WEIGHT
-            );
+        for (uint8 i = 0; i < validationIDs.length; i++) {
+            (validationIDs[i], registerL1ValidatorMessages[i]) = _packRegisterL1ValidatorMessage({
+                auctionEndTime: block.timestamp,
+                subnetID: DEFAULT_SUBNET_ID,
+                nodeID: DEFAULT_BIDDING_VALIDATOR_NODEIDS[i + 1],
+                blsPublicKey: DEFAULT_BLS_PUBLIC_KEY,
+                remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+                disableOwner: DEFAULT_P_CHAIN_OWNER,
+                weight: DEFAULT_VALIDATOR_SLOT_WEIGHT
+            });
             _mockSendWarpMessage(registerL1ValidatorMessages[i], bytes32(0));
         }
 
         slotauctionmanager.endAuction();
 
-        for (uint i = 0; i < 3; i++) {
+        for (uint8 i = 0; i < validationIDs.length; i++) {
             bytes memory l1ValidatorRegistrationMessage =
                 ValidatorMessages.packL1ValidatorRegistrationMessage(validationIDs[i], true);
 
@@ -461,54 +434,21 @@ abstract contract SlotAuctionManagerTest is Test {
     function testChangeAuctionSettingsNonOwner() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
-                address(this)
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector, address(this)
             )
         );
         slotauctionmanager.setSlotAuctionSettings(DEFAULT_AUCTION_SETTINGS);
-    } 
-
-    function _packRegisterL1ValidatorMessage(
-        uint256 auctionEndTime,
-        bytes32 subnetID,
-        bytes memory nodeID,
-        bytes memory blsPublicKey,
-        PChainOwner memory remainingBalanceOwner,
-        PChainOwner memory disableOwner,
-        uint64 weight
-    ) internal pure returns (bytes32, bytes memory) {
-        uint64 registrationExpiry = uint64(auctionEndTime) + 1 days;
-
-        (bytes32 validationID, bytes memory registerL1ValidatorMessage) = ValidatorMessages
-            .packRegisterL1ValidatorMessage(
-            ValidatorMessages.ValidationPeriod({
-                nodeID: nodeID,
-                subnetID: subnetID,
-                blsPublicKey: blsPublicKey,
-                registrationExpiry: registrationExpiry,
-                remainingBalanceOwner: remainingBalanceOwner,
-                disableOwner: disableOwner,
-                weight: weight
-            })
-        );
-        return (validationID, registerL1ValidatorMessage);
     }
 
-    function _initiateAndCompleteValidatorRegistration(
-        address sender,
-        bytes memory nodeID,
-        bytes memory blsPublicKey,
-        uint256 auctionEndTime
-    ) public {
-        bytes32 validationID =
-            _initiateRegisterValidator(sender, nodeID, blsPublicKey, auctionEndTime);
-
-        bytes memory l1ValidatorRegistrationMessage =
-            ValidatorMessages.packL1ValidatorRegistrationMessage(validationID, true);
-
-        _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
-
-        slotauctionmanager.completeValidatorRegistration(0);
+    function testOpenValidatorSlotDecrease() public {
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS);
+        _initiateAndCompleteValidatorRegistration(
+            DEFAULT_SENDER_ADDRESSES[0],
+            DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
+            DEFAULT_BLS_PUBLIC_KEY,
+            DEFAULT_AUCTION_END_TIME
+        );
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 1);
     }
 
     // Simulates initiateRegisterValidator by bidding on an auction and ending it, causing the one person to win
@@ -517,17 +457,17 @@ abstract contract SlotAuctionManagerTest is Test {
         bytes memory nodeID,
         bytes memory blsPublicKey,
         uint256 auctionEndTime
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
         vm.warp(auctionEndTime - DEFAULT_MINIMUM_AUCTION_DURATION);
         _startAuctionWithCheck();
-        _FundAndPlaceBidWithCheck(
-            sender,
-            DEFAULT_MINIMUM_BID,
-            nodeID,
-            blsPublicKey,
-            DEFAULT_P_CHAIN_OWNER,
-            DEFAULT_P_CHAIN_OWNER
-        );
+        _fundAndPlaceBidWithCheck({
+            sender: sender,
+            bid: DEFAULT_MINIMUM_BID,
+            nodeID: nodeID,
+            blsPublicKey: blsPublicKey,
+            remainingBalanceOwner: DEFAULT_P_CHAIN_OWNER,
+            disableOwner: DEFAULT_P_CHAIN_OWNER
+        });
 
         uint64 registrationExpiry = uint64(auctionEndTime) + 1 days;
 
@@ -559,7 +499,7 @@ abstract contract SlotAuctionManagerTest is Test {
         return validationID;
     }
 
-    function _FundAndPlaceBidWithCheck(
+    function _fundAndPlaceBidWithCheck(
         address sender,
         uint256 bid,
         bytes memory nodeID,
@@ -585,17 +525,6 @@ abstract contract SlotAuctionManagerTest is Test {
             DEFAULT_MINIMUM_BID
         );
         slotauctionmanager.initiateAuction();
-    }
-
-    function _defaultSettings(
-        address admin
-    ) internal pure returns (ValidatorManagerSettings memory) {
-        return ValidatorManagerSettings({
-            admin: admin,
-            subnetID: DEFAULT_SUBNET_ID,
-            churnPeriodSeconds: DEFAULT_CHURN_PERIOD,
-            maximumChurnPercentage: DEFAULT_MAXIMUM_CHURN_PERCENTAGE
-        });
     }
 
     function _mockGetPChainWarpMessage(bytes memory expectedPayload, bool valid) internal {
@@ -641,6 +570,23 @@ abstract contract SlotAuctionManagerTest is Test {
         );
     }
 
+    function _initiateAndCompleteValidatorRegistration(
+        address sender,
+        bytes memory nodeID,
+        bytes memory blsPublicKey,
+        uint256 auctionEndTime
+    ) internal {
+        bytes32 validationID =
+            _initiateRegisterValidator(sender, nodeID, blsPublicKey, auctionEndTime);
+
+        bytes memory l1ValidatorRegistrationMessage =
+            ValidatorMessages.packL1ValidatorRegistrationMessage(validationID, true);
+
+        _mockGetPChainWarpMessage(l1ValidatorRegistrationMessage, true);
+
+        slotauctionmanager.completeValidatorRegistration(0);
+    }
+
     function _mockSendWarpMessage(bytes memory payload, bytes32 expectedMessageID) internal {
         vm.mockCall(
             WARP_PRECOMPILE_ADDRESS,
@@ -651,6 +597,18 @@ abstract contract SlotAuctionManagerTest is Test {
             WARP_PRECOMPILE_ADDRESS, abi.encodeCall(IWarpMessenger.sendWarpMessage, payload)
         );
     }
+
+    function _setUp() internal virtual;
+
+    function _beforeBid(uint256 amount, address spender) internal virtual;
+
+    function _placeBid(
+        uint256 bid,
+        bytes memory nodeID,
+        bytes memory blsPublicKey,
+        PChainOwner memory remainingBalanceOwner,
+        PChainOwner memory disableOwner
+    ) internal virtual;
 
     function _defaultConversionData() internal view returns (ConversionData memory) {
         InitialValidator[] memory initialValidators = new InitialValidator[](2);
@@ -683,15 +641,40 @@ abstract contract SlotAuctionManagerTest is Test {
         });
     }
 
-    function _setUp() internal virtual;
+    function _defaultSettings(
+        address admin
+    ) internal pure returns (ValidatorManagerSettings memory) {
+        return ValidatorManagerSettings({
+            admin: admin,
+            subnetID: DEFAULT_SUBNET_ID,
+            churnPeriodSeconds: DEFAULT_CHURN_PERIOD,
+            maximumChurnPercentage: DEFAULT_MAXIMUM_CHURN_PERCENTAGE
+        });
+    }
 
-    function _beforeBid(uint256 amount, address spender) internal virtual;
-
-    function _placeBid(
-        uint256 bid,
+    function _packRegisterL1ValidatorMessage(
+        uint256 auctionEndTime,
+        bytes32 subnetID,
         bytes memory nodeID,
         bytes memory blsPublicKey,
         PChainOwner memory remainingBalanceOwner,
-        PChainOwner memory disableOwner
-    ) internal virtual;
+        PChainOwner memory disableOwner,
+        uint64 weight
+    ) internal pure returns (bytes32, bytes memory) {
+        uint64 registrationExpiry = uint64(auctionEndTime) + 1 days;
+
+        (bytes32 validationID, bytes memory registerL1ValidatorMessage) = ValidatorMessages
+            .packRegisterL1ValidatorMessage(
+            ValidatorMessages.ValidationPeriod({
+                nodeID: nodeID,
+                subnetID: subnetID,
+                blsPublicKey: blsPublicKey,
+                registrationExpiry: registrationExpiry,
+                remainingBalanceOwner: remainingBalanceOwner,
+                disableOwner: disableOwner,
+                weight: weight
+            })
+        );
+        return (validationID, registerL1ValidatorMessage);
+    }
 }

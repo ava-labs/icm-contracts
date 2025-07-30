@@ -5,34 +5,15 @@
 
 pragma solidity 0.8.25;
 
-import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
-import {
-    IACP99Manager,
-    PChainOwner,
-    ConversionData,
-    InitialValidator
-} from "../interfaces/IACP99Manager.sol";
-import {
-    IValidatorManager,
-    ValidatorManager,
-    ValidatorStatus,
-    ValidatorManagerSettings
-} from "../ValidatorManager.sol";
+import {PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
+import {IValidatorManager, ValidatorManager} from "../ValidatorManager.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
-import {SlotAuctionManager} from "../SlotAuctionManager.sol";
-import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo, SlotAuctionManagerSettings, AuctionSettings
-} from "../interfaces/ISlotAuctionManager.sol";
+import {SlotAuctionManagerSettings} from "../interfaces/ISlotAuctionManager.sol";
 import {ExampleERC20} from "@mocks/ExampleERC20.sol";
 import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
-import {
-    WarpMessage,
-    IWarpMessenger
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
-import {Test} from "@forge-std/Test.sol";
 import {SlotAuctionManagerTest} from "./SlotAuctionManagerTests.t.sol";
 
 contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
@@ -70,9 +51,7 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         // Construct the object under test
         token = new ExampleERC20();
         validatorManager = new ValidatorManager(ICMInitializable.Allowed);
-        app = new ERC20TokenSlotAuctionManager(
-            ICMInitializable.Allowed
-        );
+        app = new ERC20TokenSlotAuctionManager(ICMInitializable.Allowed);
         app.initialize(
             token,
             SlotAuctionManagerSettings(

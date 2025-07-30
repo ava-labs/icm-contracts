@@ -653,7 +653,13 @@ func ConstructSignedWarpMessages( //DO NOT use if signing validator warp message
 	log.Info("Fetching aggregate signature from the source chain validators")
 	var signedMessages []*avalancheWarp.Message
 	for _, unsignedMessage := range unsignedMessages {
-		signedMessages = append(signedMessages, GetSignedMessage(source, destination, unsignedMessage, justification, signatureAggregator))
+		signedMessages = append(signedMessages, GetSignedMessage(
+			source,
+			destination,
+			unsignedMessage,
+			justification,
+			signatureAggregator,
+		))
 	}
 	return signedMessages
 }

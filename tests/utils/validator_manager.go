@@ -46,6 +46,7 @@ import (
 
 	. "github.com/onsi/gomega"
 )
+
 // Stake duration is used interchangibly with auction validator duration
 const (
 	DefaultMinDelegateFeeBips      uint16 = 1
@@ -58,10 +59,10 @@ const (
 	DefaultWeightToValueFactor     uint64 = 1e12
 	DefaultPChainAddress           string = "P-local18jma8ppw3nhx5r4ap8clazz0dps7rv5u00z96u"
 	DefaultRewardRecipientAddress  string = "0x000000000000000000000000000000000000002a"
-	DefaultValidatorSlots		   uint16 = 3
+	DefaultValidatorSlots          uint16 = 3
 	DefaultValidatorWeight         uint64 = 10
-	DefaultMinAuctionDuration	   uint64 = 5
-	DefaultMinBid				   uint64 = 10
+	DefaultMinAuctionDuration      uint64 = 5
+	DefaultMinBid                  uint64 = 10
 )
 
 type ValidatorManagerConcreteType int
@@ -154,7 +155,8 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 	switch managerType {
 	case ERC20TokenSlotAuctionManager:
-		erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerBin = erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerMetaData.Bin
+		erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerBin =
+			erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerMetaData.Bin
 
 		var manager *erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManager
 		address, tx, manager, err = erc20tokenslotauctionmanager.DeployERC20TokenSlotAuctionManager(
@@ -164,7 +166,7 @@ func DeployAndInitializeValidatorManagerSpecialization(
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())
-		
+
 		if proxy {
 			// Overwrite the manager address with the proxy address
 			address, proxyAdmin = DeployTransparentUpgradeableProxy(
@@ -183,14 +185,14 @@ func DeployAndInitializeValidatorManagerSpecialization(
 			opts,
 			erc20Address,
 			erc20tokenslotauctionmanager.SlotAuctionManagerSettings{
-				Admin: opts.From,
+				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: erc20tokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots: DefaultValidatorSlots,
-					Weight: DefaultValidatorWeight,
+					TotalValidatorSlots:  DefaultValidatorSlots,
+					Weight:               DefaultValidatorWeight,
 					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration: big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid: big.NewInt(0).SetUint64(DefaultMinBid),
+					MinAuctionDuration:   big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:           big.NewInt(0).SetUint64(DefaultMinBid),
 				},
 			},
 		)
@@ -199,7 +201,8 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 	case NativeTokenSlotAuctionManager:
 
-		nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerBin = nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerMetaData.Bin
+		nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerBin =
+			nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerMetaData.Bin
 
 		var manager *nativetokenslotauctionmanager.NativeTokenSlotAuctionManager
 		address, tx, manager, err = nativetokenslotauctionmanager.DeployNativeTokenSlotAuctionManager(
@@ -209,7 +212,7 @@ func DeployAndInitializeValidatorManagerSpecialization(
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())
-		
+
 		if proxy {
 			// Overwrite the manager address with the proxy address
 			address, proxyAdmin = DeployTransparentUpgradeableProxy(
@@ -224,14 +227,14 @@ func DeployAndInitializeValidatorManagerSpecialization(
 		tx, err = manager.Initialize(
 			opts,
 			nativetokenslotauctionmanager.SlotAuctionManagerSettings{
-				Admin: opts.From,
+				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: nativetokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots: DefaultValidatorSlots,
-					Weight: DefaultValidatorWeight,
+					TotalValidatorSlots:  DefaultValidatorSlots,
+					Weight:               DefaultValidatorWeight,
 					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration: big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid: big.NewInt(0).SetUint64(DefaultMinBid),
+					MinAuctionDuration:   big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:           big.NewInt(0).SetUint64(DefaultMinBid),
 				},
 			},
 		)
@@ -574,7 +577,7 @@ func PlaceBidOnERC20TokenAuction(
 		l1,
 		senderKey,
 	)
-	
+
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
 
@@ -616,7 +619,6 @@ func PlaceBidOnNativeTokenAuction(
 	receipt := WaitForTransactionSuccess(ctx, l1, tx.Hash())
 	return receipt
 }
-
 
 func InitiatePoAValidatorRegistration(
 	ctx context.Context,
@@ -2169,7 +2171,7 @@ func CreateAndFundNewAddress(
 	fundedKey *ecdsa.PrivateKey,
 	exampleERC20 *exampleerc20.ExampleERC20,
 	ERC20Funds *big.Int,
-) (*ecdsa.PrivateKey, common.Address) { 
+) (*ecdsa.PrivateKey, common.Address) {
 	senderOpts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
 	newPrivateKey, err := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
@@ -2178,12 +2180,12 @@ func CreateAndFundNewAddress(
 
 	// I know this works I just dont know if its common practice, instead of making a new
 	// function to also fund erc20 tokens I decided to lump it into one and if ERC20 funds
-	// are wanted than to put in an erc20 object, otherwise just pass in nil and itll forget 
+	// are wanted than to put in an erc20 object, otherwise just pass in nil and itll forget
 	// about it
 	if exampleERC20 != nil {
 		tx, err := exampleERC20.Transfer(senderOpts, newAddress, ERC20Funds)
 		Expect(err).Should(BeNil())
-		WaitForTransactionSuccess(ctx, l1Info, tx.Hash())		
+		WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
 	}
 
 	SendNativeTransfer(ctx, l1Info, fundedKey, newAddress, big.NewInt(1000000000000000000))
@@ -2289,19 +2291,19 @@ func EndAuctionAndCompleteValidatorRegistration(
 	Expect(err).Should(BeNil())
 
 	for _, completeEvent := range completedRegistrationEvents {
-		foo := slices.IndexFunc(registrationInitiatedEvents, func(n *acp99manager.ACP99ManagerInitiatedValidatorRegistration) bool {
-			return n.ValidationID == completeEvent.ValidationID
-		})
+		foo := slices.IndexFunc(
+			registrationInitiatedEvents,
+			func(n *acp99manager.ACP99ManagerInitiatedValidatorRegistration) bool {
+				return n.ValidationID == completeEvent.ValidationID
+			},
+		)
 		if foo == -1 {
 			err := errors.New("completed Register event not found")
 			Expect(err).Should(BeNil())
 		}
 	}
-
 }
 
-// I would like to make this so it takes a second argument with the type of interface but im not sure how to do that
-// so for right now imma just do this
 func ExtractRegisterL1ValidatorPayload(unsignedMsg *avalancheWarp.UnsignedMessage) *warpMessage.RegisterL1Validator {
 	msg, err := warpPayload.ParseAddressedCall(unsignedMsg.Payload)
 	Expect(err).Should(BeNil())

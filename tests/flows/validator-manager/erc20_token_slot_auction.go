@@ -46,7 +46,8 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		utils.ERC20TokenSlotAuctionManager,
-		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle,
+			units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
 		fundedKey,
 		false,
 	)
@@ -185,7 +186,4 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		network.GetNetworkID(),
 		nodes,
 	)
-
-	
-
 }

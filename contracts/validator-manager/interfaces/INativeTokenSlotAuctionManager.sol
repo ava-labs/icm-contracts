@@ -5,16 +5,11 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager} from "../interfaces/IValidatorManager.sol";
-
 import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.sol";
-
-import {IERC20Mintable} from "./IERC20Mintable.sol";
 
 import {ISlotAuctionManager} from "./ISlotAuctionManager.sol";
 
-
-interface INativeTokenSlotAuctionManager is ISlotAuctionManager{
+interface INativeTokenSlotAuctionManager is ISlotAuctionManager {
     /**
      * @notice Places a bid in the currently running auction
      * @param nodeID The ID of the node to add to the L1.

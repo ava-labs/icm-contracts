@@ -43,7 +43,8 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		utils.NativeTokenSlotAuctionManager,
-		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle,
+			units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
 		fundedKey,
 		false,
 	)
@@ -169,7 +170,4 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		network.GetNetworkID(),
 		nodes,
 	)
-
-	// OwnerOpts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
-
 }
