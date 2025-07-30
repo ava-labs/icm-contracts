@@ -31,7 +31,7 @@ var (
 
 // ISlotAuctionManagerMetaData contains all meta data concerning the ISlotAuctionManager contract.
 var ISlotAuctionManagerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"MinBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"MinBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinAuctionDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinValidatorDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumBid\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOpenValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTotalValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getValidatorWeight\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // ISlotAuctionManagerABI is the input ABI used to generate the binding from.
@@ -178,6 +178,192 @@ func (_ISlotAuctionManager *ISlotAuctionManagerTransactorRaw) Transfer(opts *bin
 // Transact invokes the (paid) contract method with params as input values.
 func (_ISlotAuctionManager *ISlotAuctionManagerTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _ISlotAuctionManager.Contract.contract.Transact(opts, method, params...)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinAuctionDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinAuctionDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinAuctionDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinAuctionDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinValidatorDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinValidatorDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinValidatorDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinValidatorDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinimumBid(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinimumBid")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinimumBid() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinimumBid(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinimumBid() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinimumBid(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetOpenValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getOpenValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetOpenValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetOpenValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetTotalValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getTotalValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetTotalValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetTotalValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetValidatorWeight is a free data retrieval call binding the contract method 0x72684dd3.
+//
+// Solidity: function getValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetValidatorWeight(opts *bind.CallOpts) (uint64, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getValidatorWeight")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
+}
+
+// GetValidatorWeight is a free data retrieval call binding the contract method 0x72684dd3.
+//
+// Solidity: function getValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetValidatorWeight() (uint64, error) {
+	return _ISlotAuctionManager.Contract.GetValidatorWeight(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetValidatorWeight is a free data retrieval call binding the contract method 0x72684dd3.
+//
+// Solidity: function getValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetValidatorWeight() (uint64, error) {
+	return _ISlotAuctionManager.Contract.GetValidatorWeight(&_ISlotAuctionManager.CallOpts)
 }
 
 // MinBidRequired is a paid mutator transaction binding the contract method 0x913ed0b1.

@@ -46,7 +46,7 @@ import (
 
 	. "github.com/onsi/gomega"
 )
-
+// Stake duration is used interchangibly with auction validator duration
 const (
 	DefaultMinDelegateFeeBips      uint16 = 1
 	DefaultMinStakeDurationSeconds uint64 = 1
@@ -154,22 +154,45 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 	switch managerType {
 	case ERC20TokenSlotAuctionManager:
-		erc20Address, transactionInfo, _, err := exampleerc20.DeployExampleERC20(opts, l1.RPCClient)
-		Expect(err).Should(BeNil())
-		WaitForTransactionSuccess(ctx, l1, transactionInfo.Hash())
-
 		erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerBin = erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManagerMetaData.Bin
 
-		address, tx, _, err = erc20tokenslotauctionmanager.DeployERC20TokenSlotAuctionManager(
+		var manager *erc20tokenslotauctionmanager.ERC20TokenSlotAuctionManager
+		address, tx, manager, err = erc20tokenslotauctionmanager.DeployERC20TokenSlotAuctionManager(
 			opts,
 			l1.RPCClient,
-			validatorManagerAddress,
+			0, // ICMInitializable.Allowed
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
+		
+		if proxy {
+			// Overwrite the manager address with the proxy address
+			address, proxyAdmin = DeployTransparentUpgradeableProxy(
+				ctx,
+				l1,
+				senderKey,
+				address,
+			)
+			manager, err = erc20tokenslotauctionmanager.NewERC20TokenSlotAuctionManager(address, l1.RPCClient)
+			Expect(err).Should(BeNil())
+		}
+
+		erc20Address, _ := DeployExampleERC20(ctx, senderKey, l1)
+
+		tx, err = manager.Initialize(
+			opts,
 			erc20Address,
-			DefaultValidatorSlots,
-			DefaultValidatorWeight,
-			big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-			big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-			big.NewInt(0).SetUint64(DefaultMinBid),
+			erc20tokenslotauctionmanager.SlotAuctionManagerSettings{
+				Admin: opts.From,
+				Manager: validatorManagerAddress,
+				AuctionSettings: erc20tokenslotauctionmanager.AuctionSettings{
+					TotalValidatorSlots: DefaultValidatorSlots,
+					Weight: DefaultValidatorWeight,
+					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration: big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid: big.NewInt(0).SetUint64(DefaultMinBid),
+				},
+			},
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())
@@ -178,15 +201,39 @@ func DeployAndInitializeValidatorManagerSpecialization(
 
 		nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerBin = nativetokenslotauctionmanager.NativeTokenSlotAuctionManagerMetaData.Bin
 
-		address, tx, _, err = nativetokenslotauctionmanager.DeployNativeTokenSlotAuctionManager(
+		var manager *nativetokenslotauctionmanager.NativeTokenSlotAuctionManager
+		address, tx, manager, err = nativetokenslotauctionmanager.DeployNativeTokenSlotAuctionManager(
 			opts,
 			l1.RPCClient,
-			validatorManagerAddress,
-			DefaultValidatorSlots,
-			DefaultValidatorWeight,
-			big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-			big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-			big.NewInt(0).SetUint64(DefaultMinBid),
+			0, // ICMInitializable.Allowed
+		)
+		Expect(err).Should(BeNil())
+		WaitForTransactionSuccess(ctx, l1, tx.Hash())
+		
+		if proxy {
+			// Overwrite the manager address with the proxy address
+			address, proxyAdmin = DeployTransparentUpgradeableProxy(
+				ctx,
+				l1,
+				senderKey,
+				address,
+			)
+			manager, err = nativetokenslotauctionmanager.NewNativeTokenSlotAuctionManager(address, l1.RPCClient)
+			Expect(err).Should(BeNil())
+		}
+		tx, err = manager.Initialize(
+			opts,
+			nativetokenslotauctionmanager.SlotAuctionManagerSettings{
+				Admin: opts.From,
+				Manager: validatorManagerAddress,
+				AuctionSettings: nativetokenslotauctionmanager.AuctionSettings{
+					TotalValidatorSlots: DefaultValidatorSlots,
+					Weight: DefaultValidatorWeight,
+					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration: big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid: big.NewInt(0).SetUint64(DefaultMinBid),
+				},
+			},
 		)
 		Expect(err).Should(BeNil())
 		WaitForTransactionSuccess(ctx, l1, tx.Hash())

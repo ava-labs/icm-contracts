@@ -11,7 +11,10 @@ import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.
 
 import {IERC20Mintable} from "./IERC20Mintable.sol";
 
-interface INativeTokenSlotAuctionManager {
+import {ISlotAuctionManager} from "./ISlotAuctionManager.sol";
+
+
+interface INativeTokenSlotAuctionManager is ISlotAuctionManager{
     /**
      * @notice Places a bid in the currently running auction
      * @param nodeID The ID of the node to add to the L1.

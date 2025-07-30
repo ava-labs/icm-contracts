@@ -24,7 +24,7 @@ import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
 import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo
+    ISlotAuctionManager, ValidatorBid, ValidatorInfo, SlotAuctionManagerSettings, AuctionSettings
 } from "../interfaces/ISlotAuctionManager.sol";
 import {ExampleERC20} from "@mocks/ExampleERC20.sol";
 import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
@@ -71,13 +71,15 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         token = new ExampleERC20();
         validatorManager = new ValidatorManager(ICMInitializable.Allowed);
         app = new ERC20TokenSlotAuctionManager(
-            address(validatorManager),
-            address(token),
-            DEFAULT_VALIDATOR_SLOTS,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT,
-            DEFAULT_MINIMUM_AUCTION_DURATION,
-            DEFAULT_MINIMUM_VALIDATION_DURATION,
-            DEFAULT_MINIMUM_BID
+            ICMInitializable.Allowed
+        );
+        app.initialize(
+            token,
+            SlotAuctionManagerSettings(
+                DEFAULT_AUCTION_OWNER_ADRESS,
+                IValidatorManager(address(validatorManager)),
+                DEFAULT_AUCTION_SETTINGS
+            )
         );
 
         validatorManager.initialize(_defaultSettings(address(app)));

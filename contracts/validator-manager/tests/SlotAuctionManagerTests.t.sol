@@ -24,7 +24,7 @@ import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
 import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo
+    ISlotAuctionManager, ValidatorBid, ValidatorInfo, AuctionSettings, SlotAuctionManagerSettings
 } from "../interfaces/ISlotAuctionManager.sol";
 import {ExampleERC20} from "@mocks/ExampleERC20.sol";
 import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
@@ -33,6 +33,8 @@ import {
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {Test} from "@forge-std/Test.sol";
+import {OwnableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
 abstract contract SlotAuctionManagerTest is Test {
     SlotAuctionManager public slotauctionmanager;
@@ -64,7 +66,7 @@ abstract contract SlotAuctionManagerTest is Test {
     bytes32 public constant DEFAULT_SUBNET_CONVERSION_ID =
         bytes32(hex"67e8531265d8e97bd5c23534a37f4ea42d41934ddf8fe2c77c27fac9ef89f973");
     address public constant WARP_PRECOMPILE_ADDRESS = 0x0200000000000000000000000000000000000005;
-
+    address public constant DEFAULT_AUCTION_OWNER_ADRESS = 0x9900000000000000000000000000099999999999;
     uint64 public constant DEFAULT_WEIGHT = 1e6;
     // Set the default weight to 1e10 to avoid churn issues
     uint64 public constant DEFAULT_INITIAL_VALIDATOR_WEIGHT = DEFAULT_WEIGHT * 1e4;
@@ -89,6 +91,13 @@ abstract contract SlotAuctionManagerTest is Test {
     uint256 public constant DEFAULT_MINIMUM_AUCTION_DURATION = 60 seconds;
     uint256 public constant DEFAULT_AUCTION_END_TIME = 1000 seconds;
     uint256 public constant DEFAULT_MINIMUM_BID = 10;
+    AuctionSettings public DEFAULT_AUCTION_SETTINGS = AuctionSettings(
+        DEFAULT_VALIDATOR_SLOTS,
+        DEFAULT_VALIDATOR_SLOT_WEIGHT,
+        DEFAULT_MINIMUM_VALIDATION_DURATION,
+        DEFAULT_MINIMUM_AUCTION_DURATION,
+        DEFAULT_MINIMUM_BID
+    );
 
     event NewValidatorAuction(
         uint16 validatorSlots,
@@ -228,43 +237,52 @@ abstract contract SlotAuctionManagerTest is Test {
     }
 
     function testSetSlotAuctionSettings() public {
-        slotauctionmanager.setSlotAuctionSettings(
-            DEFAULT_VALIDATOR_SLOTS - 2,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
-            DEFAULT_MINIMUM_AUCTION_DURATION + 1,
-            DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
-            DEFAULT_MINIMUM_BID + 1
+        vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
+        slotauctionmanager.setSlotAuctionSettings( 
+            AuctionSettings(
+                DEFAULT_VALIDATOR_SLOTS - 2,
+                DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
+                DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
+                DEFAULT_MINIMUM_AUCTION_DURATION + 1,
+                DEFAULT_MINIMUM_BID + 1
+            )
         );
-        vm.assertEq(slotauctionmanager.totalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
-        vm.assertEq(slotauctionmanager.validatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1);
-        vm.assertEq(slotauctionmanager.MinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1);
+        vm.assertEq(slotauctionmanager.getTotalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
+        vm.assertEq(slotauctionmanager.getValidatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1);
+        vm.assertEq(slotauctionmanager.getMinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1);
         vm.assertEq(
-            slotauctionmanager.MinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION + 1
+            slotauctionmanager.getMinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION + 1
         );
-        vm.assertEq(slotauctionmanager.MinimumBid(), DEFAULT_MINIMUM_BID + 1);
-        vm.assertEq(slotauctionmanager.openValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
+        vm.assertEq(slotauctionmanager.getMinimumBid(), DEFAULT_MINIMUM_BID + 1);
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
     }
 
     function testSetSlotAuctionSettingsDuringAuction() public {
         _startAuctionWithCheck();
         vm.expectRevert(abi.encodeWithSelector(SlotAuctionManager.AuctionInProgress.selector));
+        vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            DEFAULT_VALIDATOR_SLOTS + 1,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
-            DEFAULT_MINIMUM_AUCTION_DURATION + 1,
-            DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
-            DEFAULT_MINIMUM_BID + 1
+            AuctionSettings(
+                DEFAULT_VALIDATOR_SLOTS + 1,
+                DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
+                DEFAULT_MINIMUM_AUCTION_DURATION + 1,
+                DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
+                DEFAULT_MINIMUM_BID + 1
+            )
         );
     }
 
     function testBidEvicted() public {
         // Setting slots to 1
+        vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            1,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT,
-            DEFAULT_MINIMUM_AUCTION_DURATION,
-            DEFAULT_MINIMUM_VALIDATION_DURATION,
-            DEFAULT_MINIMUM_BID
+            AuctionSettings(
+                1,
+                DEFAULT_VALIDATOR_SLOT_WEIGHT,
+                DEFAULT_MINIMUM_VALIDATION_DURATION,
+                DEFAULT_MINIMUM_AUCTION_DURATION,
+                DEFAULT_MINIMUM_BID
+            )
         );
 
         vm.expectEmit(address(slotauctionmanager));
@@ -323,14 +341,14 @@ abstract contract SlotAuctionManagerTest is Test {
     }
 
     function testOpenValidatorSlotDecrease() public {
-        vm.assertEq(slotauctionmanager.openValidatorSlots(), DEFAULT_VALIDATOR_SLOTS);
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS);
         _initiateAndCompleteValidatorRegistration(
             DEFAULT_SENDER_ADDRESSES[0],
             DEFAULT_BIDDING_VALIDATOR_NODEIDS[0],
             DEFAULT_BLS_PUBLIC_KEY,
             DEFAULT_AUCTION_END_TIME
         );
-        vm.assertEq(slotauctionmanager.openValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 1);
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 1);
     }
 
     function testEndAuction() public {
@@ -353,7 +371,7 @@ abstract contract SlotAuctionManagerTest is Test {
             DEFAULT_AUCTION_END_TIME + 2 days
         );
 
-        vm.assertEq(slotauctionmanager.openValidatorSlots(), 1);
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), 1);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -362,12 +380,16 @@ abstract contract SlotAuctionManagerTest is Test {
                 2
             )
         );
+        vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            DEFAULT_VALIDATOR_SLOTS - 2,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT,
-            DEFAULT_MINIMUM_AUCTION_DURATION,
-            DEFAULT_MINIMUM_VALIDATION_DURATION,
-            DEFAULT_MINIMUM_BID
+            AuctionSettings(
+
+                DEFAULT_VALIDATOR_SLOTS - 2,
+                DEFAULT_VALIDATOR_SLOT_WEIGHT,
+                DEFAULT_MINIMUM_AUCTION_DURATION,
+                DEFAULT_MINIMUM_VALIDATION_DURATION,
+                DEFAULT_MINIMUM_BID
+            )
         );
     }
 
@@ -435,6 +457,16 @@ abstract contract SlotAuctionManagerTest is Test {
             slotauctionmanager.completeValidatorRegistration(0);
         }
     }
+
+    function testChangeAuctionSettingsNonOwner() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
+        slotauctionmanager.setSlotAuctionSettings(DEFAULT_AUCTION_SETTINGS);
+    } 
 
     function _packRegisterL1ValidatorMessage(
         uint256 auctionEndTime,
@@ -546,7 +578,7 @@ abstract contract SlotAuctionManagerTest is Test {
     function _startAuctionWithCheck() internal {
         vm.expectEmit(address(slotauctionmanager));
         emit NewValidatorAuction(
-            slotauctionmanager.openValidatorSlots(),
+            slotauctionmanager.getOpenValidatorSlots(),
             DEFAULT_VALIDATOR_SLOT_WEIGHT,
             DEFAULT_MINIMUM_VALIDATION_DURATION,
             DEFAULT_MINIMUM_AUCTION_DURATION + block.timestamp,

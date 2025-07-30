@@ -23,7 +23,7 @@ import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
 import {NativeTokenSlotAuctionManager} from "../NativeTokenSlotAuctionManager.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
 import {
-    ISlotAuctionManager, ValidatorBid, ValidatorInfo
+    ISlotAuctionManager, ValidatorBid, ValidatorInfo, SlotAuctionManagerSettings, AuctionSettings
 } from "../interfaces/ISlotAuctionManager.sol";
 import {
     WarpMessage,
@@ -50,12 +50,15 @@ contract NativeTokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         // Construct the object under test
         validatorManager = new ValidatorManager(ICMInitializable.Allowed);
         app = new NativeTokenSlotAuctionManager(
-            address(validatorManager),
-            DEFAULT_VALIDATOR_SLOTS,
-            DEFAULT_VALIDATOR_SLOT_WEIGHT,
-            DEFAULT_MINIMUM_AUCTION_DURATION,
-            DEFAULT_MINIMUM_VALIDATION_DURATION,
-            DEFAULT_MINIMUM_BID
+            ICMInitializable.Allowed
+        );
+
+        app.initialize(
+            SlotAuctionManagerSettings(
+                DEFAULT_AUCTION_OWNER_ADRESS,
+                IValidatorManager(address(validatorManager)),
+                DEFAULT_AUCTION_SETTINGS
+            )
         );
 
         validatorManager.initialize(_defaultSettings(address(app)));
