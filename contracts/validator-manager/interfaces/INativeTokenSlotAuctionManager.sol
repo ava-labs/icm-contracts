@@ -1,0 +1,28 @@
+// (c) 2025, Ava Labs, Inc. All rights reserved.
+// See the file LICENSE for licensing terms.
+
+// SPDX-License-Identifier: LicenseRef-Ecosystem
+
+pragma solidity 0.8.25;
+
+import {IValidatorManager} from "../interfaces/IValidatorManager.sol";
+
+import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.sol";
+
+import {IERC20Mintable} from "./IERC20Mintable.sol";
+
+interface INativeTokenSlotAuctionManager {
+    /**
+     * @notice Places a bid in the currently running auction
+     * @param nodeID The ID of the node to add to the L1.
+     * @param blsPublicKey The BLS public key of the validator.
+     * @param remainingBalanceOwner The remaining balance owner of the validator.
+     * @param disableOwner The disable owner of the validator.
+     */
+    function placeBid (
+        bytes memory nodeID,
+        bytes memory blsPublicKey,
+        PChainOwner memory remainingBalanceOwner,
+        PChainOwner memory disableOwner
+    ) external payable;
+}

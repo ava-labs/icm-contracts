@@ -112,6 +112,7 @@ var _ = ginkgo.BeforeSuite(func() {
 		TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
 	}
 
+	balance := 100 * units.Avax
 	for _, subnet := range LocalNetworkInstance.GetL1Infos() {
 		// Choose weights such that we can test validator churn
 		LocalNetworkInstance.ConvertSubnet(
@@ -119,6 +120,7 @@ var _ = ginkgo.BeforeSuite(func() {
 			subnet,
 			utils.PoAValidatorManager,
 			[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle},
+			[]uint64{balance, balance, balance, balance, balance},
 			fundedKey,
 			false,
 		)

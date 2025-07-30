@@ -42,11 +42,13 @@ func ERC20TokenStakingManager(network *localnetwork.LocalNetwork) {
 
 	ctx := context.Background()
 
+	balance := 100 * units.Avax
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
 		utils.ERC20TokenStakingManager,
 		[]uint64{units.Schmeckle, 1000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{balance, balance},
 		fundedKey,
 		false,
 	)

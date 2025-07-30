@@ -61,12 +61,14 @@ func PoAMigrationToPoS(network *localnetwork.LocalNetwork) {
 		fundAmount,
 	)
 
+	balance := 100 * units.Avax
 	// Deploy PoAManager
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
 		utils.PoAValidatorManager,
 		[]uint64{units.Schmeckle, 1000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{balance, balance},
 		ownerKey,
 		false,
 	)

@@ -37,6 +37,14 @@
       5
     ],
     "one-contract-per-file": "off",
-    "import-path-check": "off"
+    "import-path-check": "off",
+    "gas-calldata-parameters": "off",
+    "use-natspec": "off",
+    "function-max-lines": "off",
+    "gas-indexed-events": "off",
+    "gas-increment-by-one": "off",
+    "gas-struct-packing": "off",
+    "gas-small-strings": "off",
+    "gas-strict-inequalities": "off"
   }
 }

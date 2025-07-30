@@ -18,7 +18,6 @@ import (
 	"github.com/ava-labs/avalanchego/utils/crypto/secp256k1"
 	"github.com/ava-labs/avalanchego/utils/formatting/address"
 	"github.com/ava-labs/avalanchego/utils/logging"
-	"github.com/ava-labs/avalanchego/utils/units"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/txs"
 	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
@@ -189,9 +188,11 @@ func (n *LocalNetwork) ConvertSubnet(
 	l1 interfaces.L1TestInfo,
 	managerType utils.ValidatorManagerConcreteType,
 	weights []uint64,
+	balances []uint64,
 	senderKey *ecdsa.PrivateKey,
 	proxy bool,
 ) ([]utils.Node, []ids.ID) {
+	Expect(len(weights)).Should(Equal(len(balances)))
 	goLog.Println("Converting l1", l1.SubnetID)
 	cChainInfo := n.GetPrimaryNetworkInfo()
 	pClient := platformvm.NewClient(cChainInfo.NodeURIs[0])
@@ -268,7 +269,7 @@ func (n *LocalNetwork) ConvertSubnet(
 		vdrs[i] = &txs.ConvertSubnetToL1Validator{
 			NodeID:  node.NodeID.Bytes(),
 			Weight:  weights[i],
-			Balance: units.Avax * 100,
+			Balance: balances[i],
 			Signer:  *signer,
 			RemainingBalanceOwner: warpMessage.PChainOwner{
 				Threshold: 1,
