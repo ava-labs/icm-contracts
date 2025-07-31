@@ -67,10 +67,10 @@ struct AuctionSettings {
     uint256 minimumBid;
     uint256 auctionCooldownDuration;
 }
+
 /**
  * Proof of Purchase Validator Manager that takes ERC20 tokens.
  */
-
 interface ISlotAuctionManager {
     /**
      * @notice Event emitted when a new auction has started.
