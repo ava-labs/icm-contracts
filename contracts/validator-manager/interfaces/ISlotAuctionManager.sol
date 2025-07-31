@@ -58,7 +58,6 @@ struct SlotAuctionManagerSettings {
  * @dev Struct for auction settings, is a part of SlotAuctionManagerSettings but due
  * to the nature of being able to change auction settings a separate struct is provided
  */
-
 struct AuctionSettings {
     uint16 totalValidatorSlots;
     uint64 weight;
