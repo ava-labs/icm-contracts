@@ -224,7 +224,7 @@ abstract contract SlotAuctionManagerTest is Test {
     function testSetSlotAuctionSettings() public {
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            AuctionSettings( {
+            AuctionSettings({
                 totalValidatorSlots: DEFAULT_VALIDATOR_SLOTS - 2,
                 weight: DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
                 minValidatorDuration: DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
@@ -234,7 +234,9 @@ abstract contract SlotAuctionManagerTest is Test {
             })
         );
         vm.assertEq(slotauctionmanager.getTotalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
-        vm.assertEq(slotauctionmanager.getValidatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1);
+        vm.assertEq(
+            slotauctionmanager.getAuctioningValidatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1
+        );
         vm.assertEq(
             slotauctionmanager.getMinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1
         );
@@ -244,7 +246,6 @@ abstract contract SlotAuctionManagerTest is Test {
         vm.assertEq(slotauctionmanager.getMinimumBid(), DEFAULT_MINIMUM_BID + 1);
         vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
         vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
-
     }
 
     function testSetSlotAuctionSettingsDuringAuction() public {
@@ -258,7 +259,7 @@ abstract contract SlotAuctionManagerTest is Test {
         // Setting slots to 1
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            AuctionSettings( {
+            AuctionSettings({
                 totalValidatorSlots: 1,
                 weight: DEFAULT_VALIDATOR_SLOT_WEIGHT,
                 minValidatorDuration: DEFAULT_MINIMUM_VALIDATION_DURATION,
@@ -354,7 +355,7 @@ abstract contract SlotAuctionManagerTest is Test {
         );
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
-            AuctionSettings( {
+            AuctionSettings({
                 totalValidatorSlots: DEFAULT_VALIDATOR_SLOTS - 2,
                 weight: DEFAULT_VALIDATOR_SLOT_WEIGHT,
                 minValidatorDuration: DEFAULT_MINIMUM_VALIDATION_DURATION,

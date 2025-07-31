@@ -44,9 +44,9 @@ abstract contract SlotAuctionManager is
         /// @notice The total amount of validator slots being auctioned off
         uint16 _auctioningValidatorSlots;
         /// @notice The total amount of validator slots ready to be auctioned off
-        uint16 _openValidatorSlots;
+        uint16 _occupiedValidatorSlots;
         /// @notice The weight of validator slots being auctioned off
-        uint64 _validatorWeight;
+        uint64 _auctioningValidatorWeight;
         /// @notice The minimum amount of time a validator is allowed to validate
         uint256 _minValidatorDuration;
         /// @notice The minimum amount of time the auction must run
@@ -59,8 +59,6 @@ abstract contract SlotAuctionManager is
         uint256 _auctionCooldownEndtime;
         /// @notice Maps nodeIDs to boolean to check if nodeID is already in the running and capable of winning
         mapping(bytes nodeID => bool isQualified) _nodeIsQualified;
-        /// @notice Maps nodeIDs to a struct holding validator information
-        mapping(bytes nodeID => ValidatorInfo) _validatorsByNodeID;
         /// @notice Maps ValidationIDs to a struct holding validator information
         mapping(bytes32 validationID => ValidatorInfo) _validatorsByValidationID;
         /// @notice Maps bid amount to a struct containing the bidders info
@@ -86,10 +84,10 @@ abstract contract SlotAuctionManager is
     error AuctionEndTimeNotReached(uint256 auctionEndTime);
     error ValidatorTimeLimitNotPassed(uint256 validationTimeLimit);
     error ValidatorWeightTooHigh(uint64 validatorWeight);
-    error NoOpenValidatorSlots(uint16 validatorSlots);
+    error NoOpenValidatorSlots();
     error MoreActiveValidatorsThanTotalSlots(uint16 totalValidatorSlots, uint16 activeValidators);
     error AuctionInCooldown(uint256 auctionCooldownEndtime);
-    error InvalidWeight(uint64 weight);
+    error ZeroWeight();
     error InvalidMinValidatorDuration(uint256 minimumValidationDuration);
     error ZeroAddress();
     error ZeroMinBid();
@@ -142,17 +140,12 @@ abstract contract SlotAuctionManager is
         if (address(manager) == address(0)) {
             revert ZeroAddress();
         }
-        if (auctionSettings.weight == 0) {
-            revert InvalidWeight(auctionSettings.weight);
-        }
-        if (auctionSettings.minimumBid == 0) {
-            revert ZeroMinBid();
-        }
+        _validateSettings(auctionSettings);
 
         $._manager = manager;
         $._totalValidatorSlots = auctionSettings.totalValidatorSlots;
-        $._openValidatorSlots = auctionSettings.totalValidatorSlots;
-        $._validatorWeight = auctionSettings.weight;
+        $._occupiedValidatorSlots = 0;
+        $._auctioningValidatorWeight = auctionSettings.weight;
         $._minValidatorDuration = auctionSettings.minValidatorDuration;
         $._minAuctionDuration = auctionSettings.minAuctionDuration;
         $._minimumBid = auctionSettings.minimumBid;
@@ -174,26 +167,27 @@ abstract contract SlotAuctionManager is
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         $._auctionState = AuctionState.AuctionInProgress;
         $._auctionEndTime = block.timestamp + $._minAuctionDuration;
-        $._secondPrice = 0;
-        if ($._openValidatorSlots == 0) {
-            revert NoOpenValidatorSlots($._openValidatorSlots);
+        $._secondPrice = $._minimumBid;
+        if ($._occupiedValidatorSlots == $._totalValidatorSlots) {
+            revert NoOpenValidatorSlots();
         }
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
         // than the current amount of available slots
-        uint64 maxValidatorSlotsBeforeChurn = ($._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()) 
-            / $._validatorWeight * 100;
+        uint64 maxValidatorSlotsBeforeChurn = (
+            $._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
+        ) / $._auctioningValidatorWeight * 100;
 
         if (maxValidatorSlotsBeforeChurn == 0) {
-            revert ValidatorWeightTooHigh($._validatorWeight);
+            revert ValidatorWeightTooHigh($._auctioningValidatorWeight);
         }
-        if (maxValidatorSlotsBeforeChurn > $._openValidatorSlots) {
-            $._auctioningValidatorSlots = $._openValidatorSlots;
+        if (maxValidatorSlotsBeforeChurn > $._totalValidatorSlots - $._occupiedValidatorSlots) {
+            $._auctioningValidatorSlots = $._totalValidatorSlots - $._occupiedValidatorSlots;
         } else {
             $._auctioningValidatorSlots = uint16(maxValidatorSlotsBeforeChurn);
         }
         emit NewValidatorAuction(
             $._auctioningValidatorSlots,
-            $._validatorWeight,
+            $._auctioningValidatorWeight,
             $._minValidatorDuration,
             $._auctionEndTime,
             $._minimumBid
@@ -209,11 +203,6 @@ abstract contract SlotAuctionManager is
             revert AuctionEndTimeNotReached($._auctionEndTime);
         }
 
-        // avoids array out of bounds for Heap.peek
-        if ($._secondPrice == 0 && Heap.length($._bids) != 0) {
-            $._secondPrice = Heap.peek($._bids);
-        }
-
         while (Heap.length($._bids) > 0) {
             uint256 currentBid = Heap.pop($._bids);
             ValidatorBid memory bidInfo = $._bidderInfo[currentBid];
@@ -223,27 +212,20 @@ abstract contract SlotAuctionManager is
             if (currentBid - $._secondPrice != 0) {
                 _unlock(bidInfo.addr, currentBid - $._secondPrice);
             }
+            ++$._occupiedValidatorSlots;
             bytes32 validationID = $._manager.initiateValidatorRegistration(
                 bidInfo.nodeID,
                 bidInfo.blsPublicKey,
                 bidInfo.remainingBalanceOwner,
                 bidInfo.disableOwner,
-                $._validatorWeight
+                $._auctioningValidatorWeight
             );
             emit InitiatedAuctionValidatorRegistration(
                 validationID,
                 bidInfo.addr,
                 $._minValidatorDuration + $._auctionEndTime,
-                $._validatorWeight
+                $._auctioningValidatorWeight
             );
-            $._validatorsByNodeID[bidInfo.nodeID] = ValidatorInfo({
-                addr: bidInfo.addr,
-                endTime: $._minValidatorDuration + $._auctionEndTime,
-                nodeID: bidInfo.nodeID,
-                blsPublicKey: bidInfo.blsPublicKey,
-                validationID: validationID,
-                weight: $._validatorWeight
-            });
 
             $._validatorsByValidationID[validationID] = ValidatorInfo({
                 addr: bidInfo.addr,
@@ -251,7 +233,7 @@ abstract contract SlotAuctionManager is
                 nodeID: bidInfo.nodeID,
                 blsPublicKey: bidInfo.blsPublicKey,
                 validationID: validationID,
-                weight: $._validatorWeight
+                weight: $._auctioningValidatorWeight
             });
 
             $._secondPrice = currentBid;
@@ -271,9 +253,8 @@ abstract contract SlotAuctionManager is
         if ($._validatorsByValidationID[validationID].endTime > block.timestamp) {
             revert ValidatorTimeLimitNotPassed($._validatorsByValidationID[validationID].endTime);
         }
-        delete $._validatorsByNodeID[$._validatorsByValidationID[validationID].nodeID];
         delete $._validatorsByValidationID[validationID];
-        $._openValidatorSlots++;
+        --$._occupiedValidatorSlots;
         $._manager.initiateValidatorRemoval(validationID);
     }
 
@@ -299,7 +280,6 @@ abstract contract SlotAuctionManager is
     ) external returns (bytes32) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        $._openValidatorSlots--;
         return $._manager.completeValidatorRegistration(messageIndex);
     }
 
@@ -316,27 +296,19 @@ abstract contract SlotAuctionManager is
     ) external AuctionOff onlyOwner {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        // OnlyOwner
-        // Make sure validator slots are not pushed below the current amount of slotted validators
-        if (auctionSettings.totalValidatorSlots > $._totalValidatorSlots) {
-            $._openValidatorSlots += auctionSettings.totalValidatorSlots - $._totalValidatorSlots;
-            $._totalValidatorSlots = auctionSettings.totalValidatorSlots;
-        } else {
-            if (
-                $._totalValidatorSlots - $._openValidatorSlots > auctionSettings.totalValidatorSlots
-            ) {
-                revert MoreActiveValidatorsThanTotalSlots(
-                    auctionSettings.totalValidatorSlots,
-                    $._totalValidatorSlots - $._openValidatorSlots
-                );
-            }
-            $._openValidatorSlots -= $._totalValidatorSlots - auctionSettings.totalValidatorSlots;
-            $._totalValidatorSlots = auctionSettings.totalValidatorSlots;
+        _validateSettings(auctionSettings);
+
+        // Make sure validator slots are not below occupied slots
+        if (auctionSettings.totalValidatorSlots < $._occupiedValidatorSlots) {
+            revert MoreActiveValidatorsThanTotalSlots(
+                auctionSettings.totalValidatorSlots, $._occupiedValidatorSlots
+            );
         }
+        $._totalValidatorSlots = auctionSettings.totalValidatorSlots;
         $._minAuctionDuration = auctionSettings.minAuctionDuration;
         $._minValidatorDuration = auctionSettings.minValidatorDuration;
         $._minimumBid = auctionSettings.minimumBid;
-        $._validatorWeight = auctionSettings.weight;
+        $._auctioningValidatorWeight = auctionSettings.weight;
     }
 
     function minBidRequired() external view AuctionOn returns (uint256) {
@@ -377,14 +349,15 @@ abstract contract SlotAuctionManager is
         } else if (Heap.peek($._bids) < bid) {
             _lock(bid);
 
-            $._secondPrice = Heap.replace($._bids, bid);
-            emit BidEvicted($._secondPrice, $._bidderInfo[$._secondPrice].nodeID);
+            uint256 evictedBid = Heap.replace($._bids, bid);
+            emit BidEvicted(evictedBid, $._bidderInfo[evictedBid].nodeID);
             // send back held funds if lost auction
-            _unlock($._bidderInfo[$._secondPrice].addr, $._secondPrice);
+            _unlock($._bidderInfo[evictedBid].addr, evictedBid);
 
             // deletes info of bidder no longer needed along with replacing it in the heap
-            delete $._nodeIsQualified[$._bidderInfo[$._secondPrice].nodeID];
-            delete $._bidderInfo[$._secondPrice];
+            delete $._nodeIsQualified[$._bidderInfo[evictedBid].nodeID];
+            delete $._bidderInfo[evictedBid];
+            $._secondPrice = evictedBid;
         } else {
             revert InsufficientBidToWinAuction(Heap.peek($._bids) + 1, bid);
         }
@@ -400,14 +373,25 @@ abstract contract SlotAuctionManager is
         emit SuccessfulBidPlaced(bid, nodeID);
     }
 
+    function _validateSettings(
+        AuctionSettings calldata auctionSettings
+    ) internal pure {
+        if (auctionSettings.weight == 0) {
+            revert ZeroWeight();
+        }
+        if (auctionSettings.minimumBid == 0) {
+            revert ZeroMinBid();
+        }
+    }
+
     function getTotalValidatorSlots() external view returns (uint16) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         return $._totalValidatorSlots;
     }
 
-    function getValidatorWeight() external view returns (uint64) {
+    function getAuctioningValidatorWeight() external view returns (uint64) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
-        return $._validatorWeight;
+        return $._auctioningValidatorWeight;
     }
 
     function getMinAuctionDuration() external view returns (uint256) {
@@ -427,7 +411,7 @@ abstract contract SlotAuctionManager is
 
     function getOpenValidatorSlots() external view returns (uint16) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
-        return $._openValidatorSlots;
+        return $._totalValidatorSlots - $._occupiedValidatorSlots;
     }
 
     function getAuctionCooldownDuration() external view returns (uint256) {

@@ -153,7 +153,7 @@ interface ISlotAuctionManager {
 
     function getTotalValidatorSlots() external view returns (uint16);
 
-    function getValidatorWeight() external view returns (uint64);
+    function getAuctioningValidatorWeight() external view returns (uint64);
 
     function getMinAuctionDuration() external view returns (uint256);
 
