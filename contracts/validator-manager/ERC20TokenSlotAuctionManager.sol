@@ -15,6 +15,11 @@ import {IERC20TokenSlotAuctionManager} from "./interfaces/IERC20TokenSlotAuction
 import {SlotAuctionManagerSettings} from "./interfaces/ISlotAuctionManager.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 
+/**
+ * @dev Implementation of the {IERC20TokenSlotAuctionManager} interface.
+ *
+ * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
+ */
 contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuctionManager {
     using SafeERC20 for IERC20Mintable;
     using SafeERC20TransferFrom for IERC20Mintable;
@@ -57,13 +62,13 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
         IERC20Mintable token,
         SlotAuctionManagerSettings calldata settings
     ) external initializer {
-        __ERC20TokenSlotAuctionManager_init(settings, token);
+        __ERC20TokenSlotAuctionManager_init(token, settings);
     }
 
     // solhint-disable-next-line func-name-mixedcase
     function __ERC20TokenSlotAuctionManager_init(
-        SlotAuctionManagerSettings calldata settings,
-        IERC20Mintable token
+        IERC20Mintable token,
+        SlotAuctionManagerSettings calldata settings
     ) internal onlyInitializing {
         __SlotAuctionManager_init(settings);
         __ERC20TokenSlotAuctionManager_init_unchained(token);

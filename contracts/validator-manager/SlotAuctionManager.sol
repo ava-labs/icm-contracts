@@ -53,7 +53,9 @@ abstract contract SlotAuctionManager is
         uint256 _minAuctionDuration;
         /// @notice The minimum bid to be placed into the auction
         uint256 _minimumBid;
-        /// @notice The amount of time until the next auciton can be initiated
+        /// @notice The length of time for the auction cooldown
+        uint256 _auctionCooldownDuration;
+        /// @notice The timestamp of when the next auction can be initiated
         uint256 _auctionCooldownEndtime;
         /// @notice Maps nodeIDs to boolean to check if nodeID is already in the running and capable of winning
         mapping(bytes nodeID => bool isQualified) _nodeIsQualified;
@@ -83,7 +85,6 @@ abstract contract SlotAuctionManager is
     error InsufficientBidToWinAuction(uint256 smallestAcceptableBid, uint256 userBid);
     error AuctionEndTimeNotReached(uint256 auctionEndTime);
     error ValidatorTimeLimitNotPassed(uint256 validationTimeLimit);
-    error AuctionFinalizing();
     error ValidatorWeightTooHigh(uint64 validatorWeight);
     error NoOpenValidatorSlots(uint16 validatorSlots);
     error MoreActiveValidatorsThanTotalSlots(uint16 totalValidatorSlots, uint16 activeValidators);
@@ -107,11 +108,8 @@ abstract contract SlotAuctionManager is
     modifier AuctionOff() {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        if ($._auctionState == AuctionState.AuctionInProgress) {
+        if ($._auctionState != AuctionState.NoAuction) {
             revert AuctionInProgress();
-        }
-        if ($._auctionState == AuctionState.AuctionFinalizing) {
-            revert AuctionFinalizing();
         }
         _;
     }
@@ -144,10 +142,6 @@ abstract contract SlotAuctionManager is
         if (address(manager) == address(0)) {
             revert ZeroAddress();
         }
-        // Minimum stake duration should be at least one churn period in order to prevent churn tracker abuse.
-        if (auctionSettings.minValidatorDuration < manager.getChurnPeriodSeconds()) {
-            revert InvalidMinValidatorDuration(auctionSettings.minValidatorDuration);
-        }
         if (auctionSettings.weight == 0) {
             revert InvalidWeight(auctionSettings.weight);
         }
@@ -162,6 +156,7 @@ abstract contract SlotAuctionManager is
         $._minValidatorDuration = auctionSettings.minValidatorDuration;
         $._minAuctionDuration = auctionSettings.minAuctionDuration;
         $._minimumBid = auctionSettings.minimumBid;
+        $._auctionCooldownDuration = auctionSettings.auctionCooldownDuration;
     }
 
     function _getSlotAuctionManagerStorage()
@@ -185,8 +180,8 @@ abstract contract SlotAuctionManager is
         }
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
         // than the current amount of available slots
-        uint64 maxValidatorSlotsBeforeChurn = $._manager.getMaximumChurnPercentage()
-            * $._manager.l1TotalWeight() / $._validatorWeight * 100;
+        uint64 maxValidatorSlotsBeforeChurn = ($._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()) 
+            / $._validatorWeight * 100;
 
         if (maxValidatorSlotsBeforeChurn == 0) {
             revert ValidatorWeightTooHigh($._validatorWeight);
@@ -208,7 +203,7 @@ abstract contract SlotAuctionManager is
     function endAuction() external nonReentrant AuctionOn {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        $._auctionCooldownEndtime = block.timestamp + 1 days;
+        $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
         $._auctionState = AuctionState.AuctionFinalizing;
         if (block.timestamp < $._auctionEndTime) {
             revert AuctionEndTimeNotReached($._auctionEndTime);
@@ -433,6 +428,11 @@ abstract contract SlotAuctionManager is
     function getOpenValidatorSlots() external view returns (uint16) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         return $._openValidatorSlots;
+    }
+
+    function getAuctionCooldownDuration() external view returns (uint256) {
+        SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
+        return $._auctionCooldownDuration;
     }
     /**
      * @notice Locks tokens in this contract.

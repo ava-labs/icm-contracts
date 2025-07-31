@@ -12,7 +12,11 @@ import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 import {Address} from "@openzeppelin/contracts@5.0.2/utils/Address.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 import {SlotAuctionManagerSettings} from "./interfaces/ISlotAuctionManager.sol";
-
+/**
+ * @dev Implementation of the {INativeTokenSlotAuctionManager} interface.
+ *
+ * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
+ */
 contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager {
     using Address for address payable;
 

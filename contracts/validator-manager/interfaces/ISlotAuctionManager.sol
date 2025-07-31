@@ -65,6 +65,7 @@ struct AuctionSettings {
     uint256 minValidatorDuration;
     uint256 minAuctionDuration;
     uint256 minimumBid;
+    uint256 auctionCooldownDuration;
 }
 /**
  * Proof of Purchase Validator Manager that takes ERC20 tokens.
@@ -162,6 +163,7 @@ interface ISlotAuctionManager {
 
     function getOpenValidatorSlots() external view returns (uint16);
 
+    function getAuctionCooldownDuration() external view returns (uint256);
     // function getValidatorInfoByNodeID(
     //     bytes memory nodeID
     // ) external returns (ValidatorInfo memory);

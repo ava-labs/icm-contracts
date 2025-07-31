@@ -65,6 +65,7 @@ const (
 	DefaultValidatorWeight         uint64 = 10
 	DefaultMinAuctionDuration      uint64 = 5
 	DefaultMinBid                  uint64 = 10
+	DefaultAuctionCooldownDuration uint64 = 86400
 )
 
 type ValidatorManagerConcreteType int
@@ -190,11 +191,12 @@ func DeployAndInitializeValidatorManagerSpecialization(
 				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: erc20tokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots:  DefaultValidatorSlots,
-					Weight:               DefaultValidatorWeight,
-					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration:   big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid:           big.NewInt(0).SetUint64(DefaultMinBid),
+					TotalValidatorSlots:  	 DefaultValidatorSlots,
+					Weight:               	 DefaultValidatorWeight,
+					MinValidatorDuration: 	 big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration:   	 big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:           	 big.NewInt(0).SetUint64(DefaultMinBid),
+					AuctionCooldownDuration: big.NewInt(0).SetUint64(DefaultAuctionCooldownDuration),
 				},
 			},
 		)
@@ -232,11 +234,12 @@ func DeployAndInitializeValidatorManagerSpecialization(
 				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: nativetokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots:  DefaultValidatorSlots,
-					Weight:               DefaultValidatorWeight,
-					MinValidatorDuration: big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration:   big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid:           big.NewInt(0).SetUint64(DefaultMinBid),
+					TotalValidatorSlots:  	 DefaultValidatorSlots,
+					Weight:               	 DefaultValidatorWeight,
+					MinValidatorDuration: 	 big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration:   	 big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:           	 big.NewInt(0).SetUint64(DefaultMinBid),
+					AuctionCooldownDuration: big.NewInt(0).SetUint64(DefaultAuctionCooldownDuration),
 				},
 			},
 		)
