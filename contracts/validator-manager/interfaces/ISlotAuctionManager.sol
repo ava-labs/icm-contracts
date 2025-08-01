@@ -54,6 +54,7 @@ struct SlotAuctionManagerSettings {
     IValidatorManager manager;
     AuctionSettings auctionSettings;
 }
+
 /**
  * @dev Struct for auction settings, is a part of SlotAuctionManagerSettings but due
  * to the nature of being able to change auction settings a separate struct is provided

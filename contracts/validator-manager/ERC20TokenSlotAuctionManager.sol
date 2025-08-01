@@ -13,7 +13,6 @@ import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {IERC20TokenSlotAuctionManager} from "./interfaces/IERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManagerSettings} from "./interfaces/ISlotAuctionManager.sol";
-import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 
 /**
  * @dev Implementation of the {IERC20TokenSlotAuctionManager} interface.

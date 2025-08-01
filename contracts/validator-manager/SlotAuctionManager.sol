@@ -23,6 +23,11 @@ import {ContextUpgradeable} from
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 
+/**
+ * @dev Implementation of the {ISlotAuctionManager} interface.
+ *
+ * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
+ */
 abstract contract SlotAuctionManager is
     ISlotAuctionManager,
     ContextUpgradeable,
@@ -253,8 +258,6 @@ abstract contract SlotAuctionManager is
         if ($._validatorsByValidationID[validationID].endTime > block.timestamp) {
             revert ValidatorTimeLimitNotPassed($._validatorsByValidationID[validationID].endTime);
         }
-        delete $._validatorsByValidationID[validationID];
-        --$._occupiedValidatorSlots;
         $._manager.initiateValidatorRemoval(validationID);
     }
 
@@ -287,8 +290,10 @@ abstract contract SlotAuctionManager is
         uint32 messageIndex
     ) external returns (bytes32) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
-
-        return $._manager.completeValidatorRemoval(messageIndex);
+        bytes32 validationID = $._manager.completeValidatorRemoval(messageIndex);
+        --$._occupiedValidatorSlots;
+        delete $._validatorsByValidationID[validationID];
+        return validationID;
     }
 
     function setSlotAuctionSettings(

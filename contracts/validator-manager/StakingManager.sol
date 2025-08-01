@@ -383,7 +383,7 @@ abstract contract StakingManager is
     ) external nonReentrant returns (bytes32) {
         StakingManagerStorage storage $ = _getStakingManagerStorage();
 
-        // Check if the validator has been already been removed from the validator manager.
+        // Check if the validator has already been removed from the validator manager.
         bytes32 validationID = $._manager.completeValidatorRemoval(messageIndex);
         Validator memory validator = $._manager.getValidator(validationID);
 

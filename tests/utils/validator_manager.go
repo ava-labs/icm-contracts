@@ -45,7 +45,6 @@ import (
 	"github.com/ava-labs/subnet-evm/warp/messages"
 	"google.golang.org/protobuf/proto"
 
-
 	. "github.com/onsi/gomega"
 )
 
@@ -191,11 +190,11 @@ func DeployAndInitializeValidatorManagerSpecialization(
 				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: erc20tokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots:  	 DefaultValidatorSlots,
-					Weight:               	 DefaultValidatorWeight,
-					MinValidatorDuration: 	 big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration:   	 big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid:           	 big.NewInt(0).SetUint64(DefaultMinBid),
+					TotalValidatorSlots:     DefaultValidatorSlots,
+					Weight:                  DefaultValidatorWeight,
+					MinValidatorDuration:    big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration:      big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:              big.NewInt(0).SetUint64(DefaultMinBid),
 					AuctionCooldownDuration: big.NewInt(0).SetUint64(DefaultAuctionCooldownDuration),
 				},
 			},
@@ -234,11 +233,11 @@ func DeployAndInitializeValidatorManagerSpecialization(
 				Admin:   opts.From,
 				Manager: validatorManagerAddress,
 				AuctionSettings: nativetokenslotauctionmanager.AuctionSettings{
-					TotalValidatorSlots:  	 DefaultValidatorSlots,
-					Weight:               	 DefaultValidatorWeight,
-					MinValidatorDuration: 	 big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
-					MinAuctionDuration:   	 big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
-					MinimumBid:           	 big.NewInt(0).SetUint64(DefaultMinBid),
+					TotalValidatorSlots:     DefaultValidatorSlots,
+					Weight:                  DefaultValidatorWeight,
+					MinValidatorDuration:    big.NewInt(0).SetUint64(DefaultMinStakeDurationSeconds),
+					MinAuctionDuration:      big.NewInt(0).SetUint64(DefaultMinAuctionDuration),
+					MinimumBid:              big.NewInt(0).SetUint64(DefaultMinBid),
 					AuctionCooldownDuration: big.NewInt(0).SetUint64(DefaultAuctionCooldownDuration),
 				},
 			},
