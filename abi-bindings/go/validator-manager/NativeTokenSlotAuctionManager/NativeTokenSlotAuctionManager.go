@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"strings"
 
+	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/event"
 	"github.com/ava-labs/subnet-evm/accounts/abi"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	"github.com/ava-labs/subnet-evm/core/types"
-	"github.com/ava-labs/subnet-evm/interfaces"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +21,7 @@ var (
 	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
-	_ = interfaces.NotFound
+	_ = ethereum.NotFound
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -29,16 +29,33 @@ var (
 	_ = abi.ConvertType
 )
 
+// AuctionSettings is an auto generated low-level Go binding around an user-defined struct.
+type AuctionSettings struct {
+	TotalValidatorSlots     uint16
+	Weight                  uint64
+	MinValidatorDuration    *big.Int
+	MinAuctionDuration      *big.Int
+	MinimumBid              *big.Int
+	AuctionCooldownDuration *big.Int
+}
+
 // PChainOwner is an auto generated low-level Go binding around an user-defined struct.
 type PChainOwner struct {
 	Threshold uint32
 	Addresses []common.Address
 }
 
+// SlotAuctionManagerSettings is an auto generated low-level Go binding around an user-defined struct.
+type SlotAuctionManagerSettings struct {
+	Admin           common.Address
+	Manager         common.Address
+	AuctionSettings AuctionSettings
+}
+
 // NativeTokenSlotAuctionManagerMetaData contains all meta data concerning the NativeTokenSlotAuctionManager contract.
 var NativeTokenSlotAuctionManagerMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"vmAddress\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"}],\"name\":\"AuctionEndTimeNotReached\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AuctionFinalizing\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AuctionInProgress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AuctionNotInProgress\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"minumumBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"userBid\",\"type\":\"uint256\"}],\"name\":\"BidSmallerThanMinimum\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"}],\"name\":\"DuplicateBidInContention\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"needed\",\"type\":\"uint256\"}],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"smallestAcceptableBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"userBid\",\"type\":\"uint256\"}],\"name\":\"InsufficientBidToWinAuction\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidInitialization\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"NodeIsValidator\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"NodeIsWinning\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotInitializing\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuardReentrantCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validationTimeLimit\",\"type\":\"uint256\"}],\"name\":\"ValidatorTimeLimitNotPassed\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"version\",\"type\":\"uint64\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"MinBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MinValidatorDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MinimumBid\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"TOKEN_CONTRACT\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"VALIDATOR_MANAGER\",\"outputs\":[{\"internalType\":\"contractIValidatorManager\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"auctionEndTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"}],\"name\":\"bidderInfo\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsPublicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"remainingBalanceOwner\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"disableOwner\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"validatorslots\",\"type\":\"uint16\"},{\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minAuctionDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsPublicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"remainingBalanceOwner\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"disableOwner\",\"type\":\"tuple\"}],\"name\":\"placeBid\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"validatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"validatorWeight\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
-	Bin: "0x6080604052348015600e575f80fd5b50604051612277380380612277833981016040819052602b91604f565b600180546001600160a81b0319166001600160a01b0392909216919091179055607a565b5f60208284031215605e575f80fd5b81516001600160a01b03811681146073575f80fd5b9392505050565b6121f0806100875f395ff3fe6080604052600436106100f9575f3560e01c8063913ed0b111610092578063ae9483e011610062578063ae9483e0146102bc578063b6e6a2ca146102db578063c7d546f2146102fa578063f556f60a1461030d578063fe67a54b14610322575f80fd5b8063913ed0b11461024b5780639681d9401461025f578063a3a65e481461027e578063a476f6751461029d575f80fd5b806336339388116100cd57806336339388146101be5780634b449cba146101f45780636fe4d1e1146102175780637a7df9321461022c575f80fd5b8062d841f8146100fd57806305af82561461013f5780630d5daf3b146101605780631077830a14610191575b5f80fd5b348015610108575f80fd5b50600354610122906201000090046001600160401b031681565b6040516001600160401b0390911681526020015b60405180910390f35b34801561014a575f80fd5b5061015e610159366004611aae565b610336565b005b34801561016b575f80fd5b5061017f61017a366004611ac7565b6103ab565b60405161013696959493929190611b91565b34801561019c575f80fd5b506003546101ab9061ffff1681565b60405161ffff9091168152602001610136565b3480156101c9575f80fd5b505f546101dc906001600160a01b031681565b6040516001600160a01b039091168152602001610136565b3480156101ff575f80fd5b5061020960025481565b604051908152602001610136565b348015610222575f80fd5b5061020960045481565b348015610237575f80fd5b5061015e610246366004611bfe565b6105e0565b348015610256575f80fd5b50610209610731565b34801561026a575f80fd5b50610209610279366004611aae565b6107a5565b348015610289575f80fd5b50610209610298366004611aae565b61081d565b3480156102a8575f80fd5b5061015e6102b7366004611ac7565b610853565b3480156102c7575f80fd5b506001546101dc906001600160a01b031681565b3480156102e6575f80fd5b5061015e6102f5366004611ac7565b6108b0565b61015e610308366004611e07565b610a04565b348015610318575f80fd5b5061020960055481565b34801561032d575f80fd5b5061015e610a35565b60015460405163025a076560e61b815263ffffffff831660048201526001600160a01b0390911690639681d940906024016020604051808303815f875af1158015610383573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906103a79190611eac565b5050565b60096020525f90815260409020805460018201546002830180546001600160a01b039093169391926103dc90611ec3565b80601f016020809104026020016040519081016040528092919081815260200182805461040890611ec3565b80156104535780601f1061042a57610100808354040283529160200191610453565b820191905f5260205f20905b81548152906001019060200180831161043657829003601f168201915b50505050509080600301805461046890611ec3565b80601f016020809104026020016040519081016040528092919081815260200182805461049490611ec3565b80156104df5780601f106104b6576101008083540402835291602001916104df565b820191905f5260205f20905b8154815290600101906020018083116104c257829003601f168201915b505060408051808201825260048701805463ffffffff16825260058801805484516020828102820181019096528181529899989397509195508387019450919283018282801561055657602002820191905f5260205f20905b81546001600160a01b03168152600190910190602001808311610538575b50505091909252505060408051808201825260068501805463ffffffff168252600786018054845160208281028201810190965281815296979693955091938086019392908301828280156105d257602002820191905f5260205f20905b81546001600160a01b031681526001909101906020018083116105b4575b505050505081525050905086565b60018054600160a01b900460ff1660028111156105ff576105ff611efb565b0361061d57604051639bbb1f3b60e01b815260040160405180910390fd5b6002600154600160a01b900460ff16600281111561063d5761063d611efb565b0361065b57604051631f86de2560e21b815260040160405180910390fd5b6001805460ff60a01b1916600160a01b1790556003805469ffffffffffffffff00001916620100006001600160401b0387160217905561069b8342611f23565b6002556003805461ffff191661ffff8716179055600482905560058190555f600a8190556106cb90600b906119ca565b6003546005546040805161ffff90931683526001600160401b038716602084015282018490526060820185905260808201527f50e40b07b3cd91a269f83830c35b4c090f74ebd0cc06dce4db251ccc23627b549060a00160405180910390a15050505050565b5f60018054600160a01b900460ff16600281111561075157610751611efb565b1461076e576040516232f00d60e71b815260040160405180910390fd5b60035461ffff1661077e600b5490565b101561078b575060055490565b610795600b6110ad565b6107a0906001611f23565b905090565b60015460405163025a076560e61b815263ffffffff831660048201525f916001600160a01b031690639681d940906024015b6020604051808303815f875af11580156107f3573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906108179190611eac565b92915050565b600154604051631474cbc960e31b815263ffffffff831660048201525f916001600160a01b03169063a3a65e48906024016107d7565b600154604051635b73516560e11b8152600481018390526001600160a01b039091169063b6e6a2ca906024015b5f604051808303815f87803b158015610897575f80fd5b505af11580156108a9573d5f803e3d5ffd5b5050505050565b5f818152600860205260409020600101544210156108fc575f8181526008602052604090819020600101549051631a936b7b60e11b815260048101919091526024015b60405180910390fd5b600760085f8381526020019081526020015f2060020160405161091f9190611f36565b90815260405190819003602001902080546001600160a01b03191681555f6001820181905561095160028301826119e8565b61095e600383015f6119e8565b505f600482018190556005909101805467ffffffffffffffff1916905581815260086020526040812080546001600160a01b031916815560018101829055906109aa60028301826119e8565b6109b7600383015f6119e8565b505f6004828101919091556005909101805467ffffffffffffffff19169055600154604051635b73516560e11b81529182018390526001600160a01b03169063b6e6a2ca90602401610880565b610a0c6110d2565b610a193485858585611109565b610a2f60015f8051602061219b83398151915255565b50505050565b610a3d6110d2565b60018054600160a01b900460ff166002811115610a5c57610a5c611efb565b14610a79576040516232f00d60e71b815260040160405180910390fd5b6001805460ff60a01b1916600160a11b1790556002544211610ab457600254604051638230260760e01b81526004016108f391815260200190565b5f600255600a54158015610ac95750600b5415155b15610adc57610ad8600b6110ad565b600a555b5f610ae6600b5490565b1115611080575f610af7600b61163f565b5f818152600960209081526040808320815160c08101835281546001600160a01b0316815260018201549381019390935260028101805495965093949293909291840191610b4490611ec3565b80601f0160208091040260200160405190810160405280929190818152602001828054610b7090611ec3565b8015610bbb5780601f10610b9257610100808354040283529160200191610bbb565b820191905f5260205f20905b815481529060010190602001808311610b9e57829003601f168201915b50505050508152602001600382018054610bd490611ec3565b80601f0160208091040260200160405190810160405280929190818152602001828054610c0090611ec3565b8015610c4b5780601f10610c2257610100808354040283529160200191610c4b565b820191905f5260205f20905b815481529060010190602001808311610c2e57829003601f168201915b505050918352505060408051808201825260048401805463ffffffff168252600585018054845160208281028201810190965281815295850195939492938584019390929190830182828015610cc857602002820191905f5260205f20905b81546001600160a01b03168152600190910190602001808311610caa575b50505091909252505050815260408051808201825260068401805463ffffffff168252600785018054845160208281028201810190965281815295850195939492938584019390929190830182828015610d4957602002820191905f5260205f20905b81546001600160a01b03168152600190910190602001808311610d2b575b505050919092525050509052508051600a54919250610d7191610d6c9085611fa8565b61164c565b6001546040828101516060840151608085015160a08601516003549451634e5bb12760e11b81525f966001600160a01b031695639cb7624e95610dce9590949093909290916201000090046001600160401b031690600401611fbb565b6020604051808303815f875af1158015610dea573d5f803e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610e0e9190611eac565b9050815f01516001600160a01b0316817f032100a60b84cf31291641706872970585d53fa5be412562041fbf66a99ce285600254600454610e4f9190611f23565b60035460408051928352620100009091046001600160401b031660208301520160405180910390a36040518060c00160405280835f01516001600160a01b03168152602001600254600454610ea49190611f23565b81526040848101805160208401526060808701518385015283018590526003546201000090046001600160401b031660809093019290925290519051600791610eec91612023565b9081526040805160209281900383019020835181546001600160a01b0319166001600160a01b039091161781559183015160018301558201516002820190610f349082612082565b5060608201516003820190610f499082612082565b506080820151816004015560a0820151816005015f6101000a8154816001600160401b0302191690836001600160401b031602179055509050506040518060c00160405280835f01516001600160a01b03168152602001600254600454610fb09190611f23565b81526040848101516020808401919091526060808701518385015283018590526003546201000090046001600160401b03166080909301929092525f84815260088352819020835181546001600160a01b0319166001600160a01b03909116178155918301516001830155820151600282019061102d9082612082565b50606082015160038201906110429082612082565b506080820151600482015560a0909101516005909101805467ffffffffffffffff19166001600160401b039092169190911790555050600a55610adc565b6003805461ffff191690555f6004556001805460ff60a01b191681555f8051602061219b83398151915255565b5f815f015f815481106110c2576110c2612141565b905f5260205f2001549050919050565b5f8051602061219b83398151915280546001190161110357604051633ee5aeb560e01b815260040160405180910390fd5b60029055565b6111116110d2565b60018054600160a01b900460ff16600281111561113057611130611efb565b1461114d576040516232f00d60e71b815260040160405180910390fd5b60015460405163d47a948b60e01b81526001600160a01b039091169063d47a948b9061117d908790600401612155565b602060405180830381865afa158015611198573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906111bc9190611eac565b156111dc578360405163f3c815f760e01b81526004016108f39190612155565b6006846040516111ec9190612023565b9081526040519081900360200190205460ff161561121f578360405163f3c1d91160e01b81526004016108f39190612155565b5f858152600960205260409020546001600160a01b03161561125757604051630517e2e760e21b8152600481018690526024016108f3565b846005541115611288576005546040516301a0013b60e61b81526004810191909152602481018690526044016108f3565b60035461ffff16611298600b5490565b1015611326575f546040516323b872dd60e01b8152336004820152306024820152604481018790526001600160a01b03909116906323b872dd906064016020604051808303815f875af11580156112f1573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906113159190612167565b50611321600b8661165f565b6114b3565b84611331600b6110ad565b101561147a575f611343600b8761166c565b600a8190555f8181526009602052604090819020905191925061136b91600290910190611f36565b6040519081900381209082907fdbb7ff16cd6e3cc5c7aca1a615bf0d56f746d9f5708e12d52ebe243518b536cc905f90a35f818152600960205260409020546113bd906001600160a01b03168261164c565b600660095f8381526020019081526020015f206002016040516113e09190611f36565b9081526040805160209281900383019020805460ff191690555f8381526009909252812080546001600160a01b0319168155600181018290559061142760028301826119e8565b611434600383015f6119e8565b60048201805463ffffffff191681555f61145160058501826119ca565b505060068201805463ffffffff191681555f61147060078501826119ca565b50505050506114b3565b611484600b6110ad565b61148f906001611f23565b604051631a79674760e11b81526004810191909152602481018690526044016108f3565b6040805160c0810182523381526020808201888152828401888152606084018890526080840187905260a084018690525f8a8152600990935293909120825181546001600160a01b0319166001600160a01b0390911617815590516001820155915190919060028201906115279082612082565b506060820151600382019061153c9082612082565b506080820151805160048301805463ffffffff191663ffffffff90921691909117815560208083015180516115779260058701920190611a1f565b50505060a0820151805160068301805463ffffffff191663ffffffff90921691909117815560208083015180516115b49260078701920190611a1f565b50505090505060016006856040516115cc9190612023565b908152604051908190036020018120805492151560ff19909316929092179091556115f8908590612023565b6040519081900381209086907f864a2110bb41c315e04bd6122b668384bca4b0d8509e55850db8347e86a95029905f90a36108a960015f8051602061219b83398151915255565b5f61081782611681611685565b6103a76001600160a01b03831682611716565b6103a782826116816117b5565b5f61167a83836116816117e0565b9392505050565b1190565b5f8061168f845490565b9050805f036116a2576116a2603161182d565b5f6116ad858261183e565b5490505f6116be865f19850161183e565b5486549091508690806116d3576116d3612186565b600190038181905f5260205f20015f90559055806116fc5f885f0161183e90919063ffffffff16565b5561170d865f1985015f8489611865565b50949350505050565b804710156117405760405163cf47918160e01b8152476004820152602481018290526044016108f3565b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f8114611789576040519150601f19603f3d011682016040523d82523d5f602084013e61178e565b606091505b50509050806117b05760405163d6bda27560e01b815260040160405180910390fd5b505050565b5f6117be845490565b84546001810186555f86815260209020018490559050610a2f8482858561195a565b5f806117ea855490565b9050805f036117fd576117fd603161182d565b5f611808868261183e565b54905084611816875f61183e565b5561182486835f8888611865565b95945050505050565b634e487b715f52806020526024601cfd5b5f8261185d61185a84611856845f9081526020902090565b0190565b90565b949350505050565b6001600160ff1b038310156108a95760028381026001810191018581101561190e575f611892888461183e565b5490505f6118a0898461183e565b5490506118b1828763ffffffff8816565b806118c557506118c581878763ffffffff16565b15611907575f6118eb85856118de86868b63ffffffff16565b1515918118919091021890565b90506118f88a89836119a2565b6119058a8a838a8a611865565b505b5050611951565b85821015611951575f611921888461183e565b549050611932818663ffffffff8716565b1561194f576119428887856119a2565b61194f8888858888611865565b505b50505050505050565b8215610a2f5760025f198401045f611972868361183e565b549050611983818563ffffffff8616565b1561198f575050610a2f565b61199a8686846119a2565b50925061195a565b5f6119ad848461183e565b90505f6119ba858461183e565b8054835490915590915550505050565b5080545f8255905f5260205f20908101906119e59190611a82565b50565b5080546119f490611ec3565b5f825580601f10611a03575050565b601f0160209004905f5260205f20908101906119e59190611a82565b828054828255905f5260205f20908101928215611a72579160200282015b82811115611a7257825182546001600160a01b0319166001600160a01b03909116178255602090920191600190910190611a3d565b50611a7e929150611a82565b5090565b5b80821115611a7e575f8155600101611a83565b803563ffffffff81168114611aa9575f80fd5b919050565b5f60208284031215611abe575f80fd5b61167a82611a96565b5f60208284031215611ad7575f80fd5b5035919050565b5f5b83811015611af8578181015183820152602001611ae0565b50505f910152565b5f8151808452611b17816020860160208601611ade565b601f01601f19169290920160200192915050565b5f6040830163ffffffff8351168452602080840151604060208701528281518085526060880191506020830194505f92505b80831015611b865784516001600160a01b03168252938301936001929092019190830190611b5d565b509695505050505050565b60018060a01b038716815285602082015260c060408201525f611bb760c0830187611b00565b8281036060840152611bc98187611b00565b90508281036080840152611bdd8186611b2b565b905082810360a0840152611bf18185611b2b565b9998505050505050505050565b5f805f805f60a08688031215611c12575f80fd5b853561ffff81168114611c23575f80fd5b945060208601356001600160401b0381168114611c3e575f80fd5b94979496505050506040830135926060810135926080909101359150565b634e487b7160e01b5f52604160045260245ffd5b604080519081016001600160401b0381118282101715611c9257611c92611c5c565b60405290565b604051601f8201601f191681016001600160401b0381118282101715611cc057611cc0611c5c565b604052919050565b5f82601f830112611cd7575f80fd5b81356001600160401b03811115611cf057611cf0611c5c565b611d03601f8201601f1916602001611c98565b818152846020838601011115611d17575f80fd5b816020850160208301375f918101602001919091529392505050565b5f60408284031215611d43575f80fd5b611d4b611c70565b9050611d5682611a96565b81526020808301356001600160401b0380821115611d72575f80fd5b818501915085601f830112611d85575f80fd5b813581811115611d9757611d97611c5c565b8060051b9150611da8848301611c98565b8181529183018401918481019088841115611dc1575f80fd5b938501935b83851015611df657843592506001600160a01b0383168314611de6575f80fd5b8282529385019390850190611dc6565b808688015250505050505092915050565b5f805f8060808587031215611e1a575f80fd5b84356001600160401b0380821115611e30575f80fd5b611e3c88838901611cc8565b95506020870135915080821115611e51575f80fd5b611e5d88838901611cc8565b94506040870135915080821115611e72575f80fd5b611e7e88838901611d33565b93506060870135915080821115611e93575f80fd5b50611ea087828801611d33565b91505092959194509250565b5f60208284031215611ebc575f80fd5b5051919050565b600181811c90821680611ed757607f821691505b602082108103611ef557634e487b7160e01b5f52602260045260245ffd5b50919050565b634e487b7160e01b5f52602160045260245ffd5b634e487b7160e01b5f52601160045260245ffd5b8082018082111561081757610817611f0f565b5f808354611f4381611ec3565b60018281168015611f5b5760018114611f7057611f9c565b60ff1984168752821515830287019450611f9c565b875f526020805f205f5b85811015611f935781548a820152908401908201611f7a565b50505082870194505b50929695505050505050565b8181038181111561081757610817611f0f565b60a081525f611fcd60a0830188611b00565b8281036020840152611fdf8188611b00565b90508281036040840152611ff38187611b2b565b905082810360608401526120078186611b2b565b9150506001600160401b03831660808301529695505050505050565b5f8251612034818460208701611ade565b9190910192915050565b601f8211156117b057805f5260205f20601f840160051c810160208510156120635750805b601f840160051c820191505b818110156108a9575f815560010161206f565b81516001600160401b0381111561209b5761209b611c5c565b6120af816120a98454611ec3565b8461203e565b602080601f8311600181146120e2575f84156120cb5750858301515b5f19600386901b1c1916600185901b178555612139565b5f85815260208120601f198616915b82811015612110578886015182559484019460019091019084016120f1565b508582101561212d57878501515f19600388901b60f8161c191681555b505060018460011b0185555b505050505050565b634e487b7160e01b5f52603260045260245ffd5b602081525f61167a6020830184611b00565b5f60208284031215612177575f80fd5b8151801515811461167a575f80fd5b634e487b7160e01b5f52603160045260245ffdfe9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00a2646970667358221220d9dbae405a685a505bae7092ccaa4048aba3643a3121d28cbd3fe05ac300dcce64736f6c63430008190033",
+	ABI: "[{\"inputs\":[{\"internalType\":\"enumICMInitializable\",\"name\":\"init\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"}],\"name\":\"AuctionEndTimeNotReached\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"auctionCooldownEndtime\",\"type\":\"uint256\"}],\"name\":\"AuctionInCooldown\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AuctionInProgress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AuctionNotInProgress\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"minumumBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"userBid\",\"type\":\"uint256\"}],\"name\":\"BidSmallerThanMinimum\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"}],\"name\":\"DuplicateBidInContention\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"DuplicateNodeIDInContention\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"FailedCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"needed\",\"type\":\"uint256\"}],\"name\":\"InsufficientBalance\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"smallestAcceptableBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"userBid\",\"type\":\"uint256\"}],\"name\":\"InsufficientBidToWinAuction\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidInitialization\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"minimumValidationDuration\",\"type\":\"uint256\"}],\"name\":\"InvalidMinValidatorDuration\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"totalValidatorSlots\",\"type\":\"uint16\"},{\"internalType\":\"uint16\",\"name\":\"activeValidators\",\"type\":\"uint16\"}],\"name\":\"MoreActiveValidatorsThanTotalSlots\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NoOpenValidatorSlots\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"NodeIsValidator\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotInitializing\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuardReentrantCall\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"validationTimeLimit\",\"type\":\"uint256\"}],\"name\":\"ValidatorTimeLimitNotPassed\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"}],\"name\":\"ValidatorWeightTooHigh\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroMinBid\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ZeroWeight\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"version\",\"type\":\"uint64\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"SLOT_AUCTION_MANAGER_STORAGE_LOCATION\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAuctionCooldownDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAuctioningValidatorWeight\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinAuctionDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinValidatorDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumBid\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOpenValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTotalValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"admin\",\"type\":\"address\"},{\"internalType\":\"contractIValidatorManager\",\"name\":\"manager\",\"type\":\"address\"},{\"components\":[{\"internalType\":\"uint16\",\"name\":\"totalValidatorSlots\",\"type\":\"uint16\"},{\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minAuctionDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"auctionCooldownDuration\",\"type\":\"uint256\"}],\"internalType\":\"structAuctionSettings\",\"name\":\"auctionSettings\",\"type\":\"tuple\"}],\"internalType\":\"structSlotAuctionManagerSettings\",\"name\":\"settings\",\"type\":\"tuple\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsPublicKey\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"remainingBalanceOwner\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"uint32\",\"name\":\"threshold\",\"type\":\"uint32\"},{\"internalType\":\"address[]\",\"name\":\"addresses\",\"type\":\"address[]\"}],\"internalType\":\"structPChainOwner\",\"name\":\"disableOwner\",\"type\":\"tuple\"}],\"name\":\"placeBid\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"uint16\",\"name\":\"totalValidatorSlots\",\"type\":\"uint16\"},{\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minAuctionDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"auctionCooldownDuration\",\"type\":\"uint256\"}],\"internalType\":\"structAuctionSettings\",\"name\":\"auctionSettings\",\"type\":\"tuple\"}],\"name\":\"setSlotAuctionSettings\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	Bin: "0x608060405234801561000f575f80fd5b50604051612ac8380380612ac883398101604081905261002e91610107565b60018160018111156100425761004261012c565b0361004f5761004f610055565b50610140565b7ff0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a00805468010000000000000000900460ff16156100a55760405163f92ee8a960e01b815260040160405180910390fd5b80546001600160401b03908116146101045780546001600160401b0319166001600160401b0390811782556040519081527fc7f505b2f371ae2175ee4913f4499e1f2633a7b5936321eed1cdaeb6115181d29060200160405180910390a15b50565b5f60208284031215610117575f80fd5b815160028110610125575f80fd5b9392505050565b634e487b7160e01b5f52602160045260245ffd5b61297b8061014d5f395ff3fe608060405260043610610131575f3560e01c8063a11ab940116100a8578063c5b636001161006d578063c5b6360014610353578063c7d546f214610367578063f1c7b8d21461037a578063f2fde38b1461038e578063f714b6aa146103ad578063fe67a54b146103c1575f80fd5b8063a11ab940146102a4578063a3a65e48146102c3578063a476f675146102e2578063aaab851614610301578063b6e6a2ca14610334575f80fd5b8063671ef477116100f9578063671ef477146101d7578063715018a61461020357806378eb9c10146102175780638da5cb5b1461022b5780639681d940146102715780639940d4c614610290575f80fd5b806301f6cec81461013557806305af82561461015c578063267579b61461017d57806331b6822e1461019c5780635561f9df146101c3575b5f80fd5b348015610140575f80fd5b506101496103d5565b6040519081526020015b60405180910390f35b348015610167575f80fd5b5061017b61017636600461219d565b6103e9565b005b348015610188575f80fd5b5061017b6101973660046121b6565b610468565b3480156101a7575f80fd5b506101b06105b7565b60405161ffff9091168152602001610153565b3480156101ce575f80fd5b5061017b6105cf565b3480156101e2575f80fd5b506101eb610911565b6040516001600160401b039091168152602001610153565b34801561020e575f80fd5b5061017b610935565b348015610222575f80fd5b506101b0610948565b348015610236575f80fd5b507f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c199300546040516001600160a01b039091168152602001610153565b34801561027c575f80fd5b5061014961028b36600461219d565b610977565b34801561029b575f80fd5b50610149610a92565b3480156102af575f80fd5b5061017b6102be3660046121cc565b610aa6565b3480156102ce575f80fd5b506101496102dd36600461219d565b610bb2565b3480156102ed575f80fd5b5061017b6102fc3660046121dd565b610c34565b34801561030c575f80fd5b506101497f6494e1e6ac2d5f44a06b929c1549cec0c499347f244a852c37aef6b6707be60081565b34801561033f575f80fd5b5061017b61034e3660046121dd565b610c93565b34801561035e575f80fd5b50610149610d1a565b61017b6103753660046123a8565b610d2e565b348015610385575f80fd5b50610149610d5f565b348015610399575f80fd5b5061017b6103a836600461244d565b610df6565b3480156103b8575f80fd5b50610149610e33565b3480156103cc575f80fd5b5061017b610e47565b5f806103df6114dc565b6003015492915050565b5f6103f26114dc565b805460405163025a076560e61b815263ffffffff851660048201529192506001600160a01b031690639681d940906024016020604051808303815f875af115801561043f573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906104639190612468565b505050565b5f6104716114dc565b90505f8154600160a01b900460ff1660028111156104915761049161247f565b146104af57604051639bbb1f3b60e01b815260040160405180910390fd5b6104b7611500565b5f6104c06114dc565b90506104cb8361155b565b6002810154600160201b900461ffff166104e86020850185612493565b61ffff161015610539576104ff6020840184612493565b600282015460405163942cc62360e01b815261ffff9283166004820152600160201b90910490911660248201526044015b60405180910390fd5b6105466020840184612493565b60028201805461ffff191661ffff929092169190911790556060830135600482015560408301803560038301556080840135600583015561058a90602085016124c8565b8160020160066101000a8154816001600160401b0302191690836001600160401b03160217905550505050565b5f806105c16114dc565b6002015461ffff1692915050565b5f6105d86114dc565b90505f8154600160a01b900460ff1660028111156105f8576105f861247f565b1461061657604051639bbb1f3b60e01b815260040160405180910390fd5b5f61061f6114dc565b9050806007015442101561064e578060070154604051638fc300c160e01b815260040161053091815260200190565b5f6106576114dc565b805460ff60a01b1916600160a01b178155600481015490915061067a90426124f7565b60018201556005810154600b820155600281015461ffff808216600160201b90920416036106bb576040516327388c6f60e21b815260040160405180910390fd5b6002810154815460408051631761632760e31b815290515f93600160301b90046001600160401b0316926001600160a01b03169163bb0b19389160048083019260209291908290030181865afa158015610717573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061073b919061250a565b835460408051633002a2bb60e21b815290516001600160a01b039092169163c00a8aec916004808201926020929091908290030181865afa158015610782573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906107a69190612525565b60ff166107b39190612545565b6107bd9190612570565b6107c8906064612545565b9050806001600160401b03165f0361080a576002820154604051632bfe056160e01b8152600160301b9091046001600160401b03166004820152602401610530565b60028201546108269061ffff600160201b8204811691166125a1565b61ffff16816001600160401b031611156108795760028201546108569061ffff600160201b8204811691166125a1565b8260020160026101000a81548161ffff021916908361ffff160217905550610894565b60028201805463ffff000019166201000061ffff8416021790555b60028201546003830154600184015460058501546040805162010000860461ffff168152600160301b9095046001600160401b03166020860152840192909252606083015260808201527f50e40b07b3cd91a269f83830c35b4c090f74ebd0cc06dce4db251ccc23627b549060a00160405180910390a150505050565b5f8061091b6114dc565b60020154600160301b90046001600160401b031692915050565b61093d611500565b6109465f6115b7565b565b5f806109526114dc565b60028101549091506109719061ffff600160201b8204811691166125a1565b91505090565b5f806109816114dc565b805460405163025a076560e61b815263ffffffff861660048201529192505f916001600160a01b0390911690639681d940906024016020604051808303815f875af11580156109d2573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906109f69190612468565b905081600201600481819054906101000a900461ffff16610a16906125c3565b825461ffff9182166101009390930a92830291909202199091161790555f818152600983016020526040812080546001600160a01b03191681556001810182905590610a6560028301826120c4565b610a72600383015f6120c4565b505f6004820155600501805467ffffffffffffffff191690559392505050565b5f80610a9c6114dc565b6004015492915050565b7ff0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a008054600160401b810460ff1615906001600160401b03165f81158015610aea5750825b90505f826001600160401b03166001148015610b055750303b155b905081158015610b13575080155b15610b315760405163f92ee8a960e01b815260040160405180910390fd5b845467ffffffffffffffff191660011785558315610b5b57845460ff60401b1916600160401b1785555b610b6486611627565b8315610baa57845460ff60401b19168555604051600181527fc7f505b2f371ae2175ee4913f4499e1f2633a7b5936321eed1cdaeb6115181d29060200160405180910390a15b505050505050565b5f80610bbc6114dc565b8054604051631474cbc960e31b815263ffffffff861660048201529192506001600160a01b03169063a3a65e48906024016020604051808303815f875af1158015610c09573d5f803e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610c2d9190612468565b9392505050565b5f610c3d6114dc565b8054604051635b73516560e11b8152600481018590529192506001600160a01b03169063b6e6a2ca906024015b5f604051808303815f87803b158015610c81575f80fd5b505af1158015610baa573d5f803e3d5ffd5b5f610c9c6114dc565b5f838152600982016020526040902060010154909150421015610cea575f82815260098201602052604090819020600101549051631a936b7b60e11b81526004810191909152602401610530565b8054604051635b73516560e11b8152600481018490526001600160a01b039091169063b6e6a2ca90602401610c6a565b5f80610d246114dc565b6005015492915050565b610d36611638565b610d43348585858561166f565b610d5960015f8051602061292683398151915255565b50505050565b5f80610d696114dc565b905060018154600160a01b900460ff166002811115610d8a57610d8a61247f565b14610da7576040516232f00d60e71b815260040160405180910390fd5b5f610db06114dc565b600281015490915061ffff16610dc7600c83015490565b1015610dd7576005015491505090565b610de381600c01611b67565b610dee9060016124f7565b9250505b5090565b610dfe611500565b6001600160a01b038116610e2757604051631e4fbdf760e01b81525f6004820152602401610530565b610e30816115b7565b50565b5f80610e3d6114dc565b6006015492915050565b610e4f611638565b5f610e586114dc565b905060018154600160a01b900460ff166002811115610e7957610e7961247f565b14610e96576040516232f00d60e71b815260040160405180910390fd5b5f610e9f6114dc565b9050806006015442610eb191906124f7565b6007820155805460ff60a01b1916600160a11b1781556001810154421015610ef4578060010154604051638230260760e01b815260040161053091815260200190565b5f610f0082600c015490565b11156114a5575f610f1382600c01611b8c565b5f818152600a840160209081526040808320815160c08101835281546001600160a01b0316815260018201549381019390935260028101805495965093949293909291840191610f62906125df565b80601f0160208091040260200160405190810160405280929190818152602001828054610f8e906125df565b8015610fd95780601f10610fb057610100808354040283529160200191610fd9565b820191905f5260205f20905b815481529060010190602001808311610fbc57829003601f168201915b50505050508152602001600382018054610ff2906125df565b80601f016020809104026020016040519081016040528092919081815260200182805461101e906125df565b80156110695780601f1061104057610100808354040283529160200191611069565b820191905f5260205f20905b81548152906001019060200180831161104c57829003601f168201915b505050918352505060408051808201825260048401805463ffffffff1682526005850180548451602082810282018101909652818152958501959394929385840193909291908301828280156110e657602002820191905f5260205f20905b81546001600160a01b031681526001909101906020018083116110c8575b50505091909252505050815260408051808201825260068401805463ffffffff16825260078501805484516020828102820181019096528181529585019593949293858401939092919083018282801561116757602002820191905f5260205f20905b81546001600160a01b03168152600190910190602001808311611149575b505050919092525050509052505f838152600a85016020526040812080546001600160a01b0319168155600181018290559192506111a860028301826120c4565b6111b5600383015f6120c4565b60048201805463ffffffff191681555f6111d260058501826120fb565b505060068201805463ffffffff191681555f6111f160078501826120fb565b5050505082600801816040015160405161120b9190612633565b908152604051908190036020019020805460ff19169055600b830154611231908361264e565b15611251578051600b840154611251919061124c908561264e565b611b9f565b60028301805460049061126e90600160201b900461ffff16612661565b825461ffff9182166101009390930a928302919092021990911617905582546040808301516060840151608085015160a086015160028901549451634e5bb12760e11b81525f966001600160a01b031695639cb7624e956112eb9590949093909290916001600160401b03600160301b9091041690600401612712565b6020604051808303815f875af1158015611307573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061132b9190612468565b9050815f01516001600160a01b0316817f032100a60b84cf31291641706872970585d53fa5be412562041fbf66a99ce2858660010154876003015461137091906124f7565b600288015460408051928352600160301b9091046001600160401b031660208301520160405180910390a36040518060c00160405280835f01516001600160a01b03168152602001856001015486600301546113cc91906124f7565b8152604084810151602080840191909152606080870151838501528301859052600288810154600160301b90046001600160401b03166080909401939093525f858152600989018252829020845181546001600160a01b0319166001600160a01b0390911617815590840151600182015590830151909182019061145090826127be565b506060820151600382019061146590826127be565b506080820151600482015560a0909101516005909101805467ffffffffffffffff19166001600160401b039092169190911790555050600b820155610ef4565b5f600182015560028101805463ffff000019169055805460ff60a01b191690555061094660015f8051602061292683398151915255565b7f6494e1e6ac2d5f44a06b929c1549cec0c499347f244a852c37aef6b6707be60090565b336115327f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c199300546001600160a01b031690565b6001600160a01b0316146109465760405163118cdaa760e01b8152336004820152602401610530565b61156b60408201602083016124c8565b6001600160401b03165f03611593576040516319a2a9bd60e01b815260040160405180910390fd5b80608001355f03610e30576040516309a501d360e21b815260040160405180910390fd5b7f9016d09d72d40fdae2fd8ceac6b6234c7706214fd39c1cd1e609a0528c19930080546001600160a01b031981166001600160a01b03848116918217845560405192169182907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0905f90a3505050565b61162f611bb6565b610e3081611bff565b5f8051602061292683398151915280546001190161166957604051633ee5aeb560e01b815260040160405180910390fd5b60029055565b5f6116786114dc565b905060018154600160a01b900460ff1660028111156116995761169961247f565b146116b6576040516232f00d60e71b815260040160405180910390fd5b5f6116bf6114dc565b805460405163d47a948b60e01b81529192506001600160a01b03169063d47a948b906116ef908990600401612879565b602060405180830381865afa15801561170a573d5f803e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061172e9190612468565b1561174e578560405163f3c815f760e01b81526004016105309190612879565b80600801866040516117609190612633565b9081526040519081900360200190205460ff1615611793578560405163da1fb87960e01b81526004016105309190612879565b5f878152600a820160205260409020546001600160a01b0316156117cd57604051630517e2e760e21b815260048101889052602401610530565b86816005015411156118025760058101546040516301a0013b60e61b8152600481019190915260248101889052604401610530565b600281015461ffff620100009091041661181d600c83015490565b10156118355761183081600c0188611c40565b6119d1565b8661184282600c01611b67565b1015611996575f61185682600c0189611c4d565b905081600a015f8281526020019081526020015f2060020160405161187b919061288b565b6040519081900381209082907fdbb7ff16cd6e3cc5c7aca1a615bf0d56f746d9f5708e12d52ebe243518b536cc905f90a35f818152600a830160205260409020546118cf906001600160a01b031682611b9f565b8160080182600a015f8381526020019081526020015f206002016040516118f6919061288b565b9081526040805160209281900383019020805460ff191690555f838152600a8501909252812080546001600160a01b0319168155600181018290559061193f60028301826120c4565b61194c600383015f6120c4565b60048201805463ffffffff191681555f61196960058501826120fb565b505060068201805463ffffffff191681555f61198860078501826120fb565b50505050600b8201556119d1565b6119a281600c01611b67565b6119ad9060016124f7565b604051631a79674760e11b8152600481019190915260248101889052604401610530565b6040805160c08101825233815260208082018a81528284018a8152606084018a90526080840189905260a084018890525f8c8152600a870190935293909120825181546001600160a01b0319166001600160a01b039091161781559051600182015591519091906002820190611a4790826127be565b5060608201516003820190611a5c90826127be565b506080820151805160048301805463ffffffff191663ffffffff9092169190911781556020808301518051611a979260058701920190612116565b50505060a0820151805160068301805463ffffffff191663ffffffff9092169190911781556020808301518051611ad49260078701920190612116565b50505090505060018160080187604051611aee9190612633565b908152604051908190036020018120805492151560ff1990931692909217909155611b1a908790612633565b6040519081900381209088907f864a2110bb41c315e04bd6122b668384bca4b0d8509e55850db8347e86a95029905f90a350505050505050565b60015f8051602061292683398151915255565b5f815f015f81548110611b7c57611b7c6128fd565b905f5260205f2001549050919050565b5f611b9982611c5b611c5f565b92915050565b611bb26001600160a01b03831682611cf0565b5050565b7ff0c57e16840df040f15088dc2f81fe391c3923bec73e23a9662efc9c229c6a0054600160401b900460ff1661094657604051631afcd79f60e31b815260040160405180910390fd5b611c07611bb6565b611c0f611d8a565b611c24611c1f602083018361244d565b611d9a565b610e30611c37604083016020840161244d565b82604001611dab565b611bb28282611c5b611e9e565b5f610c2d8383611c5b611ec9565b1190565b5f80611c69845490565b9050805f03611c7c57611c7c6031611f16565b5f611c878582611f27565b5490505f611c98865f198501611f27565b548654909150869080611cad57611cad612911565b600190038181905f5260205f20015f9055905580611cd65f885f01611f2790919063ffffffff16565b55611ce7865f1985015f8489611f4e565b50949350505050565b80471015611d1a5760405163cf47918160e01b815247600482015260248101829052604401610530565b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f8114611d63576040519150601f19603f3d011682016040523d82523d5f602084013e611d68565b606091505b50509050806104635760405163d6bda27560e01b815260040160405180910390fd5b611d92611bb6565b610946612044565b611da2611bb6565b610e308161204c565b611db3611bb6565b5f611dbc6114dc565b90506001600160a01b038316611de55760405163d92e233d60e01b815260040160405180910390fd5b611dee8261155b565b80546001600160a01b0319166001600160a01b038416178155611e146020830183612493565b60028201805465ffff0000ffff191661ffff92909216919091179055611e4060408301602084016124c8565b6002820180546001600160401b0392909216600160301b026dffffffffffffffff0000000000001990921691909117905560408201356003820155606082013560048201556080820135600582015560a09091013560069091015550565b5f611ea7845490565b84546001810186555f86815260209020018490559050610d5984828585612054565b5f80611ed3855490565b9050805f03611ee657611ee66031611f16565b5f611ef18682611f27565b54905084611eff875f611f27565b55611f0d86835f8888611f4e565b95945050505050565b634e487b715f52806020526024601cfd5b5f82611f46611f4384611f3f845f9081526020902090565b0190565b90565b949350505050565b6001600160ff1b0383101561203d57600283810260018101910185811015611ff7575f611f7b8884611f27565b5490505f611f898984611f27565b549050611f9a828763ffffffff8816565b80611fae5750611fae81878763ffffffff16565b15611ff0575f611fd48585611fc786868b63ffffffff16565b1515918118919091021890565b9050611fe18a898361209c565b611fee8a8a838a8a611f4e565b505b505061203a565b8582101561203a575f61200a8884611f27565b54905061201b818663ffffffff8716565b156120385761202b88878561209c565b6120388888858888611f4e565b505b50505b5050505050565b611b54611bb6565b610dfe611bb6565b8215610d595760025f198401045f61206c8683611f27565b54905061207d818563ffffffff8616565b15612089575050610d59565b61209486868461209c565b509250612054565b5f6120a78484611f27565b90505f6120b48584611f27565b8054835490915590915550505050565b5080546120d0906125df565b5f825580601f106120df575050565b601f0160209004905f5260205f2090810190610e309190612171565b5080545f8255905f5260205f2090810190610e309190612171565b828054828255905f5260205f20908101928215612169579160200282015b8281111561216957825182546001600160a01b0319166001600160a01b03909116178255602090920191600190910190612134565b50610df29291505b5b80821115610df2575f8155600101612172565b803563ffffffff81168114612198575f80fd5b919050565b5f602082840312156121ad575f80fd5b610c2d82612185565b5f60c082840312156121c6575f80fd5b50919050565b5f61010082840312156121c6575f80fd5b5f602082840312156121ed575f80fd5b5035919050565b634e487b7160e01b5f52604160045260245ffd5b604080519081016001600160401b038111828210171561222a5761222a6121f4565b60405290565b604051601f8201601f191681016001600160401b0381118282101715612258576122586121f4565b604052919050565b5f82601f83011261226f575f80fd5b81356001600160401b03811115612288576122886121f4565b61229b601f8201601f1916602001612230565b8181528460208386010111156122af575f80fd5b816020850160208301375f918101602001919091529392505050565b6001600160a01b0381168114610e30575f80fd5b5f604082840312156122ef575f80fd5b6122f7612208565b905061230282612185565b81526020808301356001600160401b038082111561231e575f80fd5b818501915085601f830112612331575f80fd5b813581811115612343576123436121f4565b8060051b9150612354848301612230565b818152918301840191848101908884111561236d575f80fd5b938501935b838510156123975784359250612387836122cb565b8282529385019390850190612372565b808688015250505050505092915050565b5f805f80608085870312156123bb575f80fd5b84356001600160401b03808211156123d1575f80fd5b6123dd88838901612260565b955060208701359150808211156123f2575f80fd5b6123fe88838901612260565b94506040870135915080821115612413575f80fd5b61241f888389016122df565b93506060870135915080821115612434575f80fd5b50612441878288016122df565b91505092959194509250565b5f6020828403121561245d575f80fd5b8135610c2d816122cb565b5f60208284031215612478575f80fd5b5051919050565b634e487b7160e01b5f52602160045260245ffd5b5f602082840312156124a3575f80fd5b813561ffff81168114610c2d575f80fd5b6001600160401b0381168114610e30575f80fd5b5f602082840312156124d8575f80fd5b8135610c2d816124b4565b634e487b7160e01b5f52601160045260245ffd5b80820180821115611b9957611b996124e3565b5f6020828403121561251a575f80fd5b8151610c2d816124b4565b5f60208284031215612535575f80fd5b815160ff81168114610c2d575f80fd5b6001600160401b03818116838216028082169190828114612568576125686124e3565b505092915050565b5f6001600160401b038084168061259557634e487b7160e01b5f52601260045260245ffd5b92169190910492915050565b61ffff8281168282160390808211156125bc576125bc6124e3565b5092915050565b5f61ffff8216806125d6576125d66124e3565b5f190192915050565b600181811c908216806125f357607f821691505b6020821081036121c657634e487b7160e01b5f52602260045260245ffd5b5f5b8381101561262b578181015183820152602001612613565b50505f910152565b5f8251612644818460208701612611565b9190910192915050565b81810381811115611b9957611b996124e3565b5f61ffff808316818103612677576126776124e3565b6001019392505050565b5f8151808452612698816020860160208601612611565b601f01601f19169290920160200192915050565b5f6040830163ffffffff8351168452602080840151604060208701528281518085526060880191506020830194505f92505b808310156127075784516001600160a01b031682529383019360019290920191908301906126de565b509695505050505050565b60a081525f61272460a0830188612681565b82810360208401526127368188612681565b9050828103604084015261274a81876126ac565b9050828103606084015261275e81866126ac565b9150506001600160401b03831660808301529695505050505050565b601f82111561046357805f5260205f20601f840160051c8101602085101561279f5750805b601f840160051c820191505b8181101561203d575f81556001016127ab565b81516001600160401b038111156127d7576127d76121f4565b6127eb816127e584546125df565b8461277a565b602080601f83116001811461281e575f84156128075750858301515b5f19600386901b1c1916600185901b178555610baa565b5f85815260208120601f198616915b8281101561284c5788860151825594840194600190910190840161282d565b508582101561286957878501515f19600388901b60f8161c191681555b5050505050600190811b01905550565b602081525f610c2d6020830184612681565b5f808354612898816125df565b600182811680156128b057600181146128c5576128f1565b60ff19841687528215158302870194506128f1565b875f526020805f205f5b858110156128e85781548a8201529084019082016128cf565b50505082870194505b50929695505050505050565b634e487b7160e01b5f52603260045260245ffd5b634e487b7160e01b5f52603160045260245ffdfe9b779b17422d0df92223018b32b4d1fa46e071723d6817e2486d003becc55f00a26469706673582212209dd5862bbc446922af7b109c9b50308b9ada44bfab3bc595fbeacfe1c6db175164736f6c63430008190033",
 }
 
 // NativeTokenSlotAuctionManagerABI is the input ABI used to generate the binding from.
@@ -50,7 +67,7 @@ var NativeTokenSlotAuctionManagerABI = NativeTokenSlotAuctionManagerMetaData.ABI
 var NativeTokenSlotAuctionManagerBin = NativeTokenSlotAuctionManagerMetaData.Bin
 
 // DeployNativeTokenSlotAuctionManager deploys a new Ethereum contract, binding an instance of NativeTokenSlotAuctionManager to it.
-func DeployNativeTokenSlotAuctionManager(auth *bind.TransactOpts, backend bind.ContractBackend, vmAddress common.Address) (common.Address, *types.Transaction, *NativeTokenSlotAuctionManager, error) {
+func DeployNativeTokenSlotAuctionManager(auth *bind.TransactOpts, backend bind.ContractBackend, init uint8) (common.Address, *types.Transaction, *NativeTokenSlotAuctionManager, error) {
 	parsed, err := NativeTokenSlotAuctionManagerMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -59,7 +76,7 @@ func DeployNativeTokenSlotAuctionManager(auth *bind.TransactOpts, backend bind.C
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(NativeTokenSlotAuctionManagerBin), backend, vmAddress)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(NativeTokenSlotAuctionManagerBin), backend, init)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -208,12 +225,43 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorRaw
 	return _NativeTokenSlotAuctionManager.Contract.contract.Transact(opts, method, params...)
 }
 
-// MinBidRequired is a free data retrieval call binding the contract method 0x913ed0b1.
+// SLOTAUCTIONMANAGERSTORAGELOCATION is a free data retrieval call binding the contract method 0xaaab8516.
 //
-// Solidity: function MinBidRequired() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) MinBidRequired(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function SLOT_AUCTION_MANAGER_STORAGE_LOCATION() view returns(bytes32)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) SLOTAUCTIONMANAGERSTORAGELOCATION(opts *bind.CallOpts) ([32]byte, error) {
 	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "MinBidRequired")
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "SLOT_AUCTION_MANAGER_STORAGE_LOCATION")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// SLOTAUCTIONMANAGERSTORAGELOCATION is a free data retrieval call binding the contract method 0xaaab8516.
+//
+// Solidity: function SLOT_AUCTION_MANAGER_STORAGE_LOCATION() view returns(bytes32)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) SLOTAUCTIONMANAGERSTORAGELOCATION() ([32]byte, error) {
+	return _NativeTokenSlotAuctionManager.Contract.SLOTAUCTIONMANAGERSTORAGELOCATION(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// SLOTAUCTIONMANAGERSTORAGELOCATION is a free data retrieval call binding the contract method 0xaaab8516.
+//
+// Solidity: function SLOT_AUCTION_MANAGER_STORAGE_LOCATION() view returns(bytes32)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) SLOTAUCTIONMANAGERSTORAGELOCATION() ([32]byte, error) {
+	return _NativeTokenSlotAuctionManager.Contract.SLOTAUCTIONMANAGERSTORAGELOCATION(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
+//
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetAuctionCooldownDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getAuctionCooldownDuration")
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -225,277 +273,26 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) MinBi
 
 }
 
-// MinBidRequired is a free data retrieval call binding the contract method 0x913ed0b1.
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
 //
-// Solidity: function MinBidRequired() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) MinBidRequired() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinBidRequired(&_NativeTokenSlotAuctionManager.CallOpts)
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetAuctionCooldownDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetAuctionCooldownDuration(&_NativeTokenSlotAuctionManager.CallOpts)
 }
 
-// MinBidRequired is a free data retrieval call binding the contract method 0x913ed0b1.
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
 //
-// Solidity: function MinBidRequired() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) MinBidRequired() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinBidRequired(&_NativeTokenSlotAuctionManager.CallOpts)
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetAuctionCooldownDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetAuctionCooldownDuration(&_NativeTokenSlotAuctionManager.CallOpts)
 }
 
-// MinValidatorDuration is a free data retrieval call binding the contract method 0x6fe4d1e1.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function MinValidatorDuration() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) MinValidatorDuration(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetAuctioningValidatorWeight(opts *bind.CallOpts) (uint64, error) {
 	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "MinValidatorDuration")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// MinValidatorDuration is a free data retrieval call binding the contract method 0x6fe4d1e1.
-//
-// Solidity: function MinValidatorDuration() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) MinValidatorDuration() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinValidatorDuration(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// MinValidatorDuration is a free data retrieval call binding the contract method 0x6fe4d1e1.
-//
-// Solidity: function MinValidatorDuration() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) MinValidatorDuration() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinValidatorDuration(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// MinimumBid is a free data retrieval call binding the contract method 0xf556f60a.
-//
-// Solidity: function MinimumBid() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) MinimumBid(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "MinimumBid")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// MinimumBid is a free data retrieval call binding the contract method 0xf556f60a.
-//
-// Solidity: function MinimumBid() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) MinimumBid() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinimumBid(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// MinimumBid is a free data retrieval call binding the contract method 0xf556f60a.
-//
-// Solidity: function MinimumBid() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) MinimumBid() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.MinimumBid(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// TOKENCONTRACT is a free data retrieval call binding the contract method 0x36339388.
-//
-// Solidity: function TOKEN_CONTRACT() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) TOKENCONTRACT(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "TOKEN_CONTRACT")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// TOKENCONTRACT is a free data retrieval call binding the contract method 0x36339388.
-//
-// Solidity: function TOKEN_CONTRACT() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) TOKENCONTRACT() (common.Address, error) {
-	return _NativeTokenSlotAuctionManager.Contract.TOKENCONTRACT(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// TOKENCONTRACT is a free data retrieval call binding the contract method 0x36339388.
-//
-// Solidity: function TOKEN_CONTRACT() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) TOKENCONTRACT() (common.Address, error) {
-	return _NativeTokenSlotAuctionManager.Contract.TOKENCONTRACT(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// VALIDATORMANAGER is a free data retrieval call binding the contract method 0xae9483e0.
-//
-// Solidity: function VALIDATOR_MANAGER() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) VALIDATORMANAGER(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "VALIDATOR_MANAGER")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// VALIDATORMANAGER is a free data retrieval call binding the contract method 0xae9483e0.
-//
-// Solidity: function VALIDATOR_MANAGER() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) VALIDATORMANAGER() (common.Address, error) {
-	return _NativeTokenSlotAuctionManager.Contract.VALIDATORMANAGER(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// VALIDATORMANAGER is a free data retrieval call binding the contract method 0xae9483e0.
-//
-// Solidity: function VALIDATOR_MANAGER() view returns(address)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) VALIDATORMANAGER() (common.Address, error) {
-	return _NativeTokenSlotAuctionManager.Contract.VALIDATORMANAGER(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// AuctionEndTime is a free data retrieval call binding the contract method 0x4b449cba.
-//
-// Solidity: function auctionEndTime() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) AuctionEndTime(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "auctionEndTime")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// AuctionEndTime is a free data retrieval call binding the contract method 0x4b449cba.
-//
-// Solidity: function auctionEndTime() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) AuctionEndTime() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.AuctionEndTime(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// AuctionEndTime is a free data retrieval call binding the contract method 0x4b449cba.
-//
-// Solidity: function auctionEndTime() view returns(uint256)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) AuctionEndTime() (*big.Int, error) {
-	return _NativeTokenSlotAuctionManager.Contract.AuctionEndTime(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// BidderInfo is a free data retrieval call binding the contract method 0x0d5daf3b.
-//
-// Solidity: function bidderInfo(uint256 bid) view returns(address addr, uint256 bid, bytes nodeID, bytes blsPublicKey, (uint32,address[]) remainingBalanceOwner, (uint32,address[]) disableOwner)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) BidderInfo(opts *bind.CallOpts, bid *big.Int) (struct {
-	Addr                  common.Address
-	Bid                   *big.Int
-	NodeID                []byte
-	BlsPublicKey          []byte
-	RemainingBalanceOwner PChainOwner
-	DisableOwner          PChainOwner
-}, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "bidderInfo", bid)
-
-	outstruct := new(struct {
-		Addr                  common.Address
-		Bid                   *big.Int
-		NodeID                []byte
-		BlsPublicKey          []byte
-		RemainingBalanceOwner PChainOwner
-		DisableOwner          PChainOwner
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.Addr = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-	outstruct.Bid = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
-	outstruct.NodeID = *abi.ConvertType(out[2], new([]byte)).(*[]byte)
-	outstruct.BlsPublicKey = *abi.ConvertType(out[3], new([]byte)).(*[]byte)
-	outstruct.RemainingBalanceOwner = *abi.ConvertType(out[4], new(PChainOwner)).(*PChainOwner)
-	outstruct.DisableOwner = *abi.ConvertType(out[5], new(PChainOwner)).(*PChainOwner)
-
-	return *outstruct, err
-
-}
-
-// BidderInfo is a free data retrieval call binding the contract method 0x0d5daf3b.
-//
-// Solidity: function bidderInfo(uint256 bid) view returns(address addr, uint256 bid, bytes nodeID, bytes blsPublicKey, (uint32,address[]) remainingBalanceOwner, (uint32,address[]) disableOwner)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) BidderInfo(bid *big.Int) (struct {
-	Addr                  common.Address
-	Bid                   *big.Int
-	NodeID                []byte
-	BlsPublicKey          []byte
-	RemainingBalanceOwner PChainOwner
-	DisableOwner          PChainOwner
-}, error) {
-	return _NativeTokenSlotAuctionManager.Contract.BidderInfo(&_NativeTokenSlotAuctionManager.CallOpts, bid)
-}
-
-// BidderInfo is a free data retrieval call binding the contract method 0x0d5daf3b.
-//
-// Solidity: function bidderInfo(uint256 bid) view returns(address addr, uint256 bid, bytes nodeID, bytes blsPublicKey, (uint32,address[]) remainingBalanceOwner, (uint32,address[]) disableOwner)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) BidderInfo(bid *big.Int) (struct {
-	Addr                  common.Address
-	Bid                   *big.Int
-	NodeID                []byte
-	BlsPublicKey          []byte
-	RemainingBalanceOwner PChainOwner
-	DisableOwner          PChainOwner
-}, error) {
-	return _NativeTokenSlotAuctionManager.Contract.BidderInfo(&_NativeTokenSlotAuctionManager.CallOpts, bid)
-}
-
-// ValidatorSlots is a free data retrieval call binding the contract method 0x1077830a.
-//
-// Solidity: function validatorSlots() view returns(uint16)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) ValidatorSlots(opts *bind.CallOpts) (uint16, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "validatorSlots")
-
-	if err != nil {
-		return *new(uint16), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
-
-	return out0, err
-
-}
-
-// ValidatorSlots is a free data retrieval call binding the contract method 0x1077830a.
-//
-// Solidity: function validatorSlots() view returns(uint16)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) ValidatorSlots() (uint16, error) {
-	return _NativeTokenSlotAuctionManager.Contract.ValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// ValidatorSlots is a free data retrieval call binding the contract method 0x1077830a.
-//
-// Solidity: function validatorSlots() view returns(uint16)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) ValidatorSlots() (uint16, error) {
-	return _NativeTokenSlotAuctionManager.Contract.ValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
-}
-
-// ValidatorWeight is a free data retrieval call binding the contract method 0x00d841f8.
-//
-// Solidity: function validatorWeight() view returns(uint64)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) ValidatorWeight(opts *bind.CallOpts) (uint64, error) {
-	var out []interface{}
-	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "validatorWeight")
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getAuctioningValidatorWeight")
 
 	if err != nil {
 		return *new(uint64), err
@@ -507,18 +304,235 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) Valid
 
 }
 
-// ValidatorWeight is a free data retrieval call binding the contract method 0x00d841f8.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function validatorWeight() view returns(uint64)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) ValidatorWeight() (uint64, error) {
-	return _NativeTokenSlotAuctionManager.Contract.ValidatorWeight(&_NativeTokenSlotAuctionManager.CallOpts)
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetAuctioningValidatorWeight() (uint64, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetAuctioningValidatorWeight(&_NativeTokenSlotAuctionManager.CallOpts)
 }
 
-// ValidatorWeight is a free data retrieval call binding the contract method 0x00d841f8.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function validatorWeight() view returns(uint64)
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) ValidatorWeight() (uint64, error) {
-	return _NativeTokenSlotAuctionManager.Contract.ValidatorWeight(&_NativeTokenSlotAuctionManager.CallOpts)
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetAuctioningValidatorWeight() (uint64, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetAuctioningValidatorWeight(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetMinAuctionDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getMinAuctionDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinAuctionDuration(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinAuctionDuration(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetMinValidatorDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getMinValidatorDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinValidatorDuration(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinValidatorDuration(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetMinimumBid(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getMinimumBid")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetMinimumBid() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinimumBid(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetMinimumBid() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetMinimumBid(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetOpenValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getOpenValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetOpenValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetOpenValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) GetTotalValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "getTotalValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetTotalValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _NativeTokenSlotAuctionManager.Contract.GetTotalValidatorSlots(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// MinBidRequired is a free data retrieval call binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) MinBidRequired(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "minBidRequired")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// MinBidRequired is a free data retrieval call binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) MinBidRequired() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.MinBidRequired(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// MinBidRequired is a free data retrieval call binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() view returns(uint256)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) MinBidRequired() (*big.Int, error) {
+	return _NativeTokenSlotAuctionManager.Contract.MinBidRequired(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _NativeTokenSlotAuctionManager.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) Owner() (common.Address, error) {
+	return _NativeTokenSlotAuctionManager.Contract.Owner(&_NativeTokenSlotAuctionManager.CallOpts)
+}
+
+// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+//
+// Solidity: function owner() view returns(address)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerCallerSession) Owner() (common.Address, error) {
+	return _NativeTokenSlotAuctionManager.Contract.Owner(&_NativeTokenSlotAuctionManager.CallOpts)
 }
 
 // CompleteRemoveInitialValidator is a paid mutator transaction binding the contract method 0x05af8256.
@@ -605,25 +619,46 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSes
 	return _NativeTokenSlotAuctionManager.Contract.EndAuction(&_NativeTokenSlotAuctionManager.TransactOpts)
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// Initialize is a paid mutator transaction binding the contract method 0xa11ab940.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) InitiateAuction(opts *bind.TransactOpts, validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "initiateAuction", validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
+// Solidity: function initialize((address,address,(uint16,uint64,uint256,uint256,uint256,uint256)) settings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) Initialize(opts *bind.TransactOpts, settings SlotAuctionManagerSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "initialize", settings)
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// Initialize is a paid mutator transaction binding the contract method 0xa11ab940.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) InitiateAuction(validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _NativeTokenSlotAuctionManager.Contract.InitiateAuction(&_NativeTokenSlotAuctionManager.TransactOpts, validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
+// Solidity: function initialize((address,address,(uint16,uint64,uint256,uint256,uint256,uint256)) settings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) Initialize(settings SlotAuctionManagerSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.Initialize(&_NativeTokenSlotAuctionManager.TransactOpts, settings)
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// Initialize is a paid mutator transaction binding the contract method 0xa11ab940.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) InitiateAuction(validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _NativeTokenSlotAuctionManager.Contract.InitiateAuction(&_NativeTokenSlotAuctionManager.TransactOpts, validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
+// Solidity: function initialize((address,address,(uint16,uint64,uint256,uint256,uint256,uint256)) settings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) Initialize(settings SlotAuctionManagerSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.Initialize(&_NativeTokenSlotAuctionManager.TransactOpts, settings)
+}
+
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
+//
+// Solidity: function initiateAuction() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) InitiateAuction(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "initiateAuction")
+}
+
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
+//
+// Solidity: function initiateAuction() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) InitiateAuction() (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.InitiateAuction(&_NativeTokenSlotAuctionManager.TransactOpts)
+}
+
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
+//
+// Solidity: function initiateAuction() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) InitiateAuction() (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.InitiateAuction(&_NativeTokenSlotAuctionManager.TransactOpts)
 }
 
 // InitiateRemoveInitialValidator is a paid mutator transaction binding the contract method 0xa476f675.
@@ -689,6 +724,69 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSes
 	return _NativeTokenSlotAuctionManager.Contract.PlaceBid(&_NativeTokenSlotAuctionManager.TransactOpts, nodeID, blsPublicKey, remainingBalanceOwner, disableOwner)
 }
 
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "renounceOwnership")
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) RenounceOwnership() (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.RenounceOwnership(&_NativeTokenSlotAuctionManager.TransactOpts)
+}
+
+// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+//
+// Solidity: function renounceOwnership() returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) RenounceOwnership() (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.RenounceOwnership(&_NativeTokenSlotAuctionManager.TransactOpts)
+}
+
+// SetSlotAuctionSettings is a paid mutator transaction binding the contract method 0x267579b6.
+//
+// Solidity: function setSlotAuctionSettings((uint16,uint64,uint256,uint256,uint256,uint256) auctionSettings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) SetSlotAuctionSettings(opts *bind.TransactOpts, auctionSettings AuctionSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "setSlotAuctionSettings", auctionSettings)
+}
+
+// SetSlotAuctionSettings is a paid mutator transaction binding the contract method 0x267579b6.
+//
+// Solidity: function setSlotAuctionSettings((uint16,uint64,uint256,uint256,uint256,uint256) auctionSettings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) SetSlotAuctionSettings(auctionSettings AuctionSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.SetSlotAuctionSettings(&_NativeTokenSlotAuctionManager.TransactOpts, auctionSettings)
+}
+
+// SetSlotAuctionSettings is a paid mutator transaction binding the contract method 0x267579b6.
+//
+// Solidity: function setSlotAuctionSettings((uint16,uint64,uint256,uint256,uint256,uint256) auctionSettings) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) SetSlotAuctionSettings(auctionSettings AuctionSettings) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.SetSlotAuctionSettings(&_NativeTokenSlotAuctionManager.TransactOpts, auctionSettings)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.contract.Transact(opts, "transferOwnership", newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.TransferOwnership(&_NativeTokenSlotAuctionManager.TransactOpts, newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _NativeTokenSlotAuctionManager.Contract.TransferOwnership(&_NativeTokenSlotAuctionManager.TransactOpts, newOwner)
+}
+
 // NativeTokenSlotAuctionManagerBidEvictedIterator is returned from FilterBidEvicted and is used to iterate over the raw logs and unpacked data for BidEvicted events raised by the NativeTokenSlotAuctionManager contract.
 type NativeTokenSlotAuctionManagerBidEvictedIterator struct {
 	Event *NativeTokenSlotAuctionManagerBidEvicted // Event containing the contract specifics and raw log
@@ -696,10 +794,10 @@ type NativeTokenSlotAuctionManagerBidEvictedIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -849,10 +947,10 @@ type NativeTokenSlotAuctionManagerInitializedIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -983,10 +1081,10 @@ type NativeTokenSlotAuctionManagerInitiatedAuctionValidatorRegistrationIterator 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1138,10 +1236,10 @@ type NativeTokenSlotAuctionManagerNewValidatorAuctionIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1269,6 +1367,159 @@ func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerFilterer) Par
 	return event, nil
 }
 
+// NativeTokenSlotAuctionManagerOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the NativeTokenSlotAuctionManager contract.
+type NativeTokenSlotAuctionManagerOwnershipTransferredIterator struct {
+	Event *NativeTokenSlotAuctionManagerOwnershipTransferred // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *NativeTokenSlotAuctionManagerOwnershipTransferredIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(NativeTokenSlotAuctionManagerOwnershipTransferred)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(NativeTokenSlotAuctionManagerOwnershipTransferred)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *NativeTokenSlotAuctionManagerOwnershipTransferredIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *NativeTokenSlotAuctionManagerOwnershipTransferredIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// NativeTokenSlotAuctionManagerOwnershipTransferred represents a OwnershipTransferred event raised by the NativeTokenSlotAuctionManager contract.
+type NativeTokenSlotAuctionManagerOwnershipTransferred struct {
+	PreviousOwner common.Address
+	NewOwner      common.Address
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*NativeTokenSlotAuctionManagerOwnershipTransferredIterator, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _NativeTokenSlotAuctionManager.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &NativeTokenSlotAuctionManagerOwnershipTransferredIterator{contract: _NativeTokenSlotAuctionManager.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
+}
+
+// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *NativeTokenSlotAuctionManagerOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
+
+	var previousOwnerRule []interface{}
+	for _, previousOwnerItem := range previousOwner {
+		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
+	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
+
+	logs, sub, err := _NativeTokenSlotAuctionManager.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(NativeTokenSlotAuctionManagerOwnershipTransferred)
+				if err := _NativeTokenSlotAuctionManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
+//
+// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
+func (_NativeTokenSlotAuctionManager *NativeTokenSlotAuctionManagerFilterer) ParseOwnershipTransferred(log types.Log) (*NativeTokenSlotAuctionManagerOwnershipTransferred, error) {
+	event := new(NativeTokenSlotAuctionManagerOwnershipTransferred)
+	if err := _NativeTokenSlotAuctionManager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // NativeTokenSlotAuctionManagerSuccessfulBidPlacedIterator is returned from FilterSuccessfulBidPlaced and is used to iterate over the raw logs and unpacked data for SuccessfulBidPlaced events raised by the NativeTokenSlotAuctionManager contract.
 type NativeTokenSlotAuctionManagerSuccessfulBidPlacedIterator struct {
 	Event *NativeTokenSlotAuctionManagerSuccessfulBidPlaced // Event containing the contract specifics and raw log
@@ -1276,10 +1527,10 @@ type NativeTokenSlotAuctionManagerSuccessfulBidPlacedIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there

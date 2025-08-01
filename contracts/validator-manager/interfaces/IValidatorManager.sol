@@ -86,4 +86,6 @@ interface IValidatorManager is IACP99Manager {
     ) external view returns (bytes32);
 
     function getChurnPeriodSeconds() external view returns (uint64);
+
+    function getMaximumChurnPercentage() external view returns (uint8);
 }
