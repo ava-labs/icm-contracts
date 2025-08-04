@@ -42,8 +42,6 @@ abstract contract SlotAuctionManager is
         IValidatorManager _manager;
         /// @notice The current state of the auction
         AuctionState _auctionState;
-        /// @notice The endtime of the current running auction (No bids are allowed on auctionEndTime)
-        uint256 _auctionEndTime;
         /// @notice The total amount of validator slots used or unused
         uint16 _totalValidatorSlots;
         /// @notice The total amount of validator slots being auctioned off
@@ -62,15 +60,17 @@ abstract contract SlotAuctionManager is
         uint256 _auctionCooldownDuration;
         /// @notice The timestamp of when the next auction can be initiated
         uint256 _auctionCooldownEndtime;
+        /// @notice The endtime of the current running auction (No bids are allowed on auctionEndTime)
+        uint256 _auctionEndTime;
         /// @notice Maps nodeIDs to boolean to check if nodeID is already in the running and capable of winning
+        uint256 _secondPrice;
+        /// @notice The data structure holding auction bid information
         mapping(bytes nodeID => bool isQualified) _nodeIsQualified;
         /// @notice Maps ValidationIDs to a struct holding validator information
         mapping(bytes32 validationID => ValidatorInfo) _validatorsByValidationID;
         /// @notice Maps bid amount to a struct containing the bidders info
         mapping(uint256 bid => ValidatorBid) _bidderInfo;
         /// @notice The current second price for the lowest slot winner, is 0 if no second price
-        uint256 _secondPrice;
-        /// @notice The data structure holding auction bid information
         Heap.Uint256Heap _bids;
     }
     // solhint-enable private-vars-leading-underscore
@@ -178,9 +178,8 @@ abstract contract SlotAuctionManager is
         }
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
         // than the current amount of available slots
-        uint64 maxValidatorSlotsBeforeChurn = (
-            $._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
-        ) / $._auctioningValidatorWeight * 100;
+        uint64 maxValidatorSlotsBeforeChurn = ($._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
+                ) / ($._auctioningValidatorWeight * 100);
 
         if (maxValidatorSlotsBeforeChurn == 0) {
             revert ValidatorWeightTooHigh($._auctioningValidatorWeight);

@@ -13,7 +13,7 @@ import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.
  */
 
 /**
- * @dev AuctionFinalizing is necessary (potentially) in the case where
+ * @dev AuctionFinalizing is necessary in the case where
  * a new auction is initiated while the auction is finalizing.
  */
 enum AuctionState {
