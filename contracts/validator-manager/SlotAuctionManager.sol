@@ -178,8 +178,9 @@ abstract contract SlotAuctionManager is
         }
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
         // than the current amount of available slots
-        uint64 maxValidatorSlotsBeforeChurn = ($._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
-                ) / ($._auctioningValidatorWeight * 100);
+        uint64 maxValidatorSlotsBeforeChurn = (
+            $._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
+        ) / ($._auctioningValidatorWeight * 100);
 
         if (maxValidatorSlotsBeforeChurn == 0) {
             revert ValidatorWeightTooHigh($._auctioningValidatorWeight);
