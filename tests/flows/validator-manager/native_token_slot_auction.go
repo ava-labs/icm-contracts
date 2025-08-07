@@ -51,11 +51,11 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		false,
 	)
 
-	validatorManagerProxy, SlotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
-	NativeTokenSlotAuctionManagerAddress := SlotAuctionManagerProxy.Address
+	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
+	nativeTokenSlotAuctionManagerAddress := slotAuctionManagerProxy.Address
 
-	NativeTokenSlotAuctionManager, err := nativetokenslotauctionmanager.NewNativeTokenSlotAuctionManager(
-		NativeTokenSlotAuctionManagerAddress,
+	nativeTokenSlotAuctionManager, err := nativetokenslotauctionmanager.NewNativeTokenSlotAuctionManager(
+		nativeTokenSlotAuctionManagerAddress,
 		l1AInfo.RPCClient,
 	)
 	Expect(err).Should(BeNil())
@@ -70,11 +70,11 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	defer signatureAggregator.Shutdown()
 
 	log.Println("Creating extra accounts with balances")
-	Account1PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey, nil, nil)
-	Account2PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey, nil, nil)
+	account1PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey)
+	account2PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey)
 
 	iSlotAuctionManager, err := islotauctionmanager.NewISlotAuctionManager(
-		SlotAuctionManagerProxy.Address,
+		slotAuctionManagerProxy.Address,
 		l1AInfo.RPCClient,
 	)
 	Expect(err).Should(BeNil())
@@ -86,7 +86,7 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		NativeTokenSlotAuctionManagerAddress,
+		nativeTokenSlotAuctionManagerAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[0],
 		0,
@@ -102,7 +102,7 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		NativeTokenSlotAuctionManagerAddress,
+		nativeTokenSlotAuctionManagerAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[1],
 		1,
@@ -118,7 +118,7 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		NativeTokenSlotAuctionManagerAddress,
+		nativeTokenSlotAuctionManagerAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[2],
 		2,
@@ -136,27 +136,27 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 
 	utils.PlaceBidOnNativeTokenAuction(
 		ctx,
-		Account1PrivKey,
+		account1PrivKey,
 		l1AInfo,
 		big.NewInt(50),
 		nodes[0],
-		NativeTokenSlotAuctionManager,
+		nativeTokenSlotAuctionManager,
 	)
 	utils.PlaceBidOnNativeTokenAuction(
 		ctx,
-		Account2PrivKey,
+		account2PrivKey,
 		l1AInfo,
 		big.NewInt(10),
 		nodes[1],
-		NativeTokenSlotAuctionManager,
+		nativeTokenSlotAuctionManager,
 	)
 	utils.PlaceBidOnNativeTokenAuction(
 		ctx,
-		Account1PrivKey,
+		account1PrivKey,
 		l1AInfo,
 		big.NewInt(20),
 		nodes[2],
-		NativeTokenSlotAuctionManager,
+		nativeTokenSlotAuctionManager,
 	)
 
 	utils.EndAuctionAndCompleteValidatorRegistration(
@@ -166,7 +166,7 @@ func NativeTokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		NativeTokenSlotAuctionManagerAddress,
+		nativeTokenSlotAuctionManagerAddress,
 		validatorManagerProxy.Address,
 		network.GetPChainWallet(),
 		network.GetNetworkID(),

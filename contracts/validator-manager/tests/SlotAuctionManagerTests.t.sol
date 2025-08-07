@@ -6,7 +6,7 @@
 pragma solidity 0.8.25;
 
 import {PChainOwner, ConversionData, InitialValidator} from "../interfaces/IACP99Manager.sol";
-import {ValidatorManager, ValidatorManagerSettings} from "../ValidatorManager.sol";
+import {ValidatorManagerSettings} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
 import {SlotAuctionManager} from "../SlotAuctionManager.sol";
 import {AuctionSettings} from "../interfaces/ISlotAuctionManager.sol";
@@ -14,44 +14,15 @@ import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
-import {Test} from "@forge-std/Test.sol";
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
+import {ValidatorManagerFunctionality} from "./ValidatorManagerFunctionality.t.sol";
 
-abstract contract SlotAuctionManagerTest is Test {
+abstract contract SlotAuctionManagerTest is ValidatorManagerFunctionality {
     // solhint-disable var-name-mixedcase
-    bytes32 public constant DEFAULT_SUBNET_ID =
-        bytes32(hex"1234567812345678123456781234567812345678123456781234567812345678");
-    bytes public constant DEFAULT_NODE_ID = bytes(hex"1234123412341234123412341234123412341234");
 
-    bytes public constant DEFAULT_INITIAL_VALIDATOR_NODE_ID_1 =
-        bytes(hex"2341234123412341234123412341234123412341");
-    bytes public constant DEFAULT_INITIAL_VALIDATOR_NODE_ID_2 =
-        bytes(hex"3412341234123412341234123412341234123412");
-
-    bytes public constant DEFAULT_BLS_PUBLIC_KEY = bytes(
-        hex"123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678"
-    );
-    bytes32 public constant DEFAULT_SOURCE_BLOCKCHAIN_ID =
-        bytes32(hex"abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd");
-    bytes32 public constant DEFAULT_SUBNET_CONVERSION_ID =
-        bytes32(hex"67e8531265d8e97bd5c23534a37f4ea42d41934ddf8fe2c77c27fac9ef89f973");
-    address public constant WARP_PRECOMPILE_ADDRESS = 0x0200000000000000000000000000000000000005;
     address public constant DEFAULT_AUCTION_OWNER_ADRESS =
         0x9900000000000000000000000000099999999999;
-    uint64 public constant DEFAULT_WEIGHT = 1e6;
-    // Set the default weight to 1e10 to avoid churn issues
-    uint64 public constant DEFAULT_INITIAL_VALIDATOR_WEIGHT = DEFAULT_WEIGHT * 1e4;
-    uint64 public constant DEFAULT_INITIAL_TOTAL_WEIGHT =
-        DEFAULT_INITIAL_VALIDATOR_WEIGHT + DEFAULT_WEIGHT;
-    uint64 public constant DEFAULT_CHURN_PERIOD = 1 hours;
-    uint8 public constant DEFAULT_MAXIMUM_CHURN_PERCENTAGE = 20;
-    // uint8 public constant DEFAULT_MAXIMUM_HOURLY_CHURN = 0;
-    uint64 public constant DEFAULT_REGISTRATION_TIMESTAMP = 1000;
-    // uint256 public constant DEFAULT_STARTING_TOTAL_WEIGHT = 1e10 + DEFAULT_WEIGHT;
-    uint64 public constant DEFAULT_MINIMUM_VALIDATION_DURATION = 24 hours;
-    // uint64 public constant DEFAULT_COMPLETION_TIMESTAMP = 100_000;
-    uint64 public constant REGISTRATION_EXPIRY_LENGTH = 1 days;
     uint16 public constant DEFAULT_VALIDATOR_SLOTS = 3;
     uint64 public constant DEFAULT_VALIDATOR_SLOT_WEIGHT = 10;
     uint256 public constant DEFAULT_MINIMUM_AUCTION_DURATION = 60 seconds;
@@ -78,10 +49,8 @@ abstract contract SlotAuctionManagerTest is Test {
         bytes(hex"3452345234523452345234523452345234523452"),
         bytes(hex"4523452345234523452345234523452345234523")
     ];
-    PChainOwner public DEFAULT_P_CHAIN_OWNER;
 
     SlotAuctionManager public slotauctionmanager;
-    ValidatorManager public validatorManager;
     // solhint-enable var-name-mixedcase
 
     event NewValidatorAuction(
@@ -103,12 +72,10 @@ abstract contract SlotAuctionManagerTest is Test {
         uint64 weight
     );
 
-    function setUp() public virtual {
-        // This stays
+    function setUp() public virtual override {
         address[] memory addresses = new address[](1);
         addresses[0] = 0x1234567812345678123456781234567812345678;
         DEFAULT_P_CHAIN_OWNER = PChainOwner({threshold: 1, addresses: addresses});
-        // no matter what
     }
 
     function testStartAuction() public {
@@ -222,30 +189,31 @@ abstract contract SlotAuctionManagerTest is Test {
     }
 
     function testSetSlotAuctionSettings() public {
+        AuctionSettings memory testAuctionSettings = AuctionSettings({
+            totalValidatorSlots: DEFAULT_VALIDATOR_SLOTS - 2,
+            weight: DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
+            minValidatorDuration: DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
+            minAuctionDuration: DEFAULT_MINIMUM_AUCTION_DURATION + 1,
+            minimumBid: DEFAULT_MINIMUM_BID + 1,
+            auctionCooldownDuration: DEFUALT_AUCTION_COOLDOWN_DURATION + 1 days
+        });
+
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
-        slotauctionmanager.setSlotAuctionSettings(
-            AuctionSettings({
-                totalValidatorSlots: DEFAULT_VALIDATOR_SLOTS - 2,
-                weight: DEFAULT_VALIDATOR_SLOT_WEIGHT + 1,
-                minValidatorDuration: DEFAULT_MINIMUM_VALIDATION_DURATION + 1,
-                minAuctionDuration: DEFAULT_MINIMUM_AUCTION_DURATION + 1,
-                minimumBid: DEFAULT_MINIMUM_BID + 1,
-                auctionCooldownDuration: DEFUALT_AUCTION_COOLDOWN_DURATION + 1 days
-            })
-        );
-        vm.assertEq(slotauctionmanager.getTotalValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
+        slotauctionmanager.setSlotAuctionSettings(testAuctionSettings);
         vm.assertEq(
-            slotauctionmanager.getAuctioningValidatorWeight(), DEFAULT_VALIDATOR_SLOT_WEIGHT + 1
+            slotauctionmanager.getTotalValidatorSlots(), testAuctionSettings.totalValidatorSlots
+        );
+        vm.assertEq(slotauctionmanager.getAuctioningValidatorWeight(), testAuctionSettings.weight);
+        vm.assertEq(
+            slotauctionmanager.getMinAuctionDuration(), testAuctionSettings.minAuctionDuration
         );
         vm.assertEq(
-            slotauctionmanager.getMinAuctionDuration(), DEFAULT_MINIMUM_AUCTION_DURATION + 1
+            slotauctionmanager.getMinValidatorDuration(), testAuctionSettings.minValidatorDuration
         );
+        vm.assertEq(slotauctionmanager.getMinimumBid(), testAuctionSettings.minimumBid);
         vm.assertEq(
-            slotauctionmanager.getMinValidatorDuration(), DEFAULT_MINIMUM_VALIDATION_DURATION + 1
+            slotauctionmanager.getOpenValidatorSlots(), testAuctionSettings.totalValidatorSlots
         );
-        vm.assertEq(slotauctionmanager.getMinimumBid(), DEFAULT_MINIMUM_BID + 1);
-        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
-        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
     }
 
     function testSetSlotAuctionSettingsDuringAuction() public {
@@ -344,15 +312,8 @@ abstract contract SlotAuctionManagerTest is Test {
             DEFAULT_AUCTION_END_TIME + 2 days
         );
 
-        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), 1);
+        vm.assertEq(slotauctionmanager.getOpenValidatorSlots(), DEFAULT_VALIDATOR_SLOTS - 2);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SlotAuctionManager.MoreActiveValidatorsThanTotalSlots.selector,
-                DEFAULT_VALIDATOR_SLOTS - 2,
-                2
-            )
-        );
         vm.prank(DEFAULT_AUCTION_OWNER_ADRESS);
         slotauctionmanager.setSlotAuctionSettings(
             AuctionSettings({
@@ -367,7 +328,6 @@ abstract contract SlotAuctionManagerTest is Test {
     }
 
     function testMultipleWinners() public {
-        //TODO: Refactor this gross test with loops somehow
         _startAuctionWithCheck();
         uint256[4] memory bids = [
             DEFAULT_MINIMUM_BID,
@@ -375,6 +335,11 @@ abstract contract SlotAuctionManagerTest is Test {
             DEFAULT_MINIMUM_BID + 2,
             DEFAULT_MINIMUM_BID + 10
         ];
+        /**
+         * Skips the last index because _fundAndPlaceBidWithCheck will throw an error since
+         * it checks for successful bid placed, and if a bid is evicted then the BidEvicted event
+         * is emitted first causing a false negative
+         */
         for (uint8 i = 0; i < bids.length - 1; i++) {
             _fundAndPlaceBidWithCheck({
                 sender: DEFAULT_SENDER_ADDRESSES[i],
@@ -388,6 +353,9 @@ abstract contract SlotAuctionManagerTest is Test {
         _beforeBid(DEFAULT_MINIMUM_BID + 10, DEFAULT_SENDER_ADDRESSES[3]);
         vm.deal(DEFAULT_SENDER_ADDRESSES[3], DEFAULT_MINIMUM_BID + 10);
 
+        /**
+         * Sends the final bid with appropriate checks here
+         */
         vm.expectEmit(address(slotauctionmanager));
         emit BidEvicted(DEFAULT_MINIMUM_BID, DEFAULT_BIDDING_VALIDATOR_NODEIDS[0]);
         vm.expectEmit(address(slotauctionmanager));

@@ -794,76 +794,6 @@ func InitiateAndCompleteNativeValidatorRegistration(
 	return registrationInitiatedEvent
 }
 
-// func InitiateAndCompletePoAValidatorRegistration(
-// 	ctx context.Context,
-// 	signatureAggregator *SignatureAggregator,
-// 	ownerKey *ecdsa.PrivateKey,
-// 	l1Info interfaces.L1TestInfo,
-// 	pChainInfo interfaces.L1TestInfo,
-// 	validatorManager *validatormanager.ValidatorManager,
-// 	validatorManagerAddress common.Address,
-// 	expiry uint64,
-// 	node Node,
-// 	pchainWallet pwallet.Wallet,
-// 	networkID uint32,
-// ) *acp99manager.ACP99ManagerInitiatedValidatorRegistration {
-// 	// Initiate validator registration
-// 	receipt, registrationInitiatedEvent := InitiatePoAValidatorRegistration(
-// 		ctx,
-// 		ownerKey,
-// 		l1Info,
-// 		node,
-// 		validatorManager,
-// 		validatorManagerAddress,
-// 	)
-// 	validationID := registrationInitiatedEvent.ValidationID
-
-// 	// Gather subnet-evm Warp signatures for the RegisterL1ValidatorMessage & relay to the P-Chain
-// 	signedWarpMessage := ConstructSignedWarpMessage(ctx, receipt, l1Info, pChainInfo, nil, signatureAggregator)
-
-// 	_, err := pchainWallet.IssueRegisterL1ValidatorTx(
-// 		100*units.Avax,
-// 		node.NodePoP.ProofOfPossession,
-// 		signedWarpMessage.Bytes(),
-// 	)
-// 	Expect(err).Should(BeNil())
-// 	PChainProposerVMWorkaround(pchainWallet)
-// 	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
-
-// 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-// 	log.Println("Completing validator registration")
-// 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessage(
-// 		validationID,
-// 		expiry,
-// 		node,
-// 		true,
-// 		l1Info,
-// 		pChainInfo,
-// 		networkID,
-// 		signatureAggregator,
-// 	)
-
-// 	// Deliver the Warp message to the L1
-// 	receipt = CompleteValidatorRegistration(
-// 		ctx,
-// 		ownerKey,
-// 		l1Info,
-// 		validatorManagerAddress,
-// 		registrationSignedMessage,
-// 	)
-// 	// Check that the validator is registered in the staking contract
-// 	acp99Manager, err := acp99manager.NewACP99Manager(validatorManagerAddress, l1Info.RPCClient)
-// 	Expect(err).Should(BeNil())
-// 	registrationEvent, err := GetEventFromLogs(
-// 		receipt.Logs,
-// 		acp99Manager.ParseCompletedValidatorRegistration,
-// 	)
-// 	Expect(err).Should(BeNil())
-// 	Expect(registrationEvent.ValidationID[:]).Should(Equal(validationID[:]))
-
-// 	return registrationInitiatedEvent
-// }
-
 func InitiateAndCompleteERC20ValidatorRegistration(
 	ctx context.Context,
 	signatureAggregator *SignatureAggregator,
@@ -1520,7 +1450,7 @@ func ForceInitiateEndAuctionValidation(
 ) *types.Receipt {
 	opts, err := bind.NewKeyedTransactorWithChainID(senderKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
-	tx, err := islotAuctionManager.InitiateRemoveInitialValidator(
+	tx, err := islotAuctionManager.InitiateValidatorRemoval(
 		opts,
 		validationID,
 	)
@@ -1532,20 +1462,20 @@ func CompleteEndAuctionValidation(
 	ctx context.Context,
 	senderKey *ecdsa.PrivateKey,
 	l1 interfaces.L1TestInfo,
-	AuctionAddress common.Address,
+	auctionAddress common.Address,
 	registrationSignedMessage *avalancheWarp.Message,
 ) *types.Receipt {
 	abi, err := islotauctionmanager.ISlotAuctionManagerMetaData.GetAbi()
 	Expect(err).Should(BeNil())
 
-	callData, err := abi.Pack("completeRemoveInitialValidator", uint32(0))
+	callData, err := abi.Pack("completeValidatorRemoval", uint32(0))
 	Expect(err).Should(BeNil())
 	return CallWarpReceiver(
 		ctx,
 		callData,
 		senderKey,
 		l1,
-		AuctionAddress,
+		auctionAddress,
 		registrationSignedMessage.Bytes(),
 	)
 }
@@ -2255,12 +2185,12 @@ func AdvanceProposerVM(
 	}
 }
 
-func CreateAndFundNewAddress(
+func CreateAndFundNewAddressWithERC20(
 	ctx context.Context,
 	l1Info interfaces.L1TestInfo,
 	fundedKey *ecdsa.PrivateKey,
 	exampleERC20 *exampleerc20.ExampleERC20,
-	ERC20Funds *big.Int,
+	erc20Funds *big.Int,
 ) (*ecdsa.PrivateKey, common.Address) {
 	senderOpts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1Info.EVMChainID)
 	Expect(err).Should(BeNil())
@@ -2268,15 +2198,23 @@ func CreateAndFundNewAddress(
 	Expect(err).Should(BeNil())
 	newAddress := crypto.PubkeyToAddress(newPrivateKey.PublicKey)
 
-	// I know this works I just dont know if its common practice, instead of making a new
-	// function to also fund erc20 tokens I decided to lump it into one and if ERC20 funds
-	// are wanted than to put in an erc20 object, otherwise just pass in nil and itll forget
-	// about it
-	if exampleERC20 != nil {
-		tx, err := exampleERC20.Transfer(senderOpts, newAddress, ERC20Funds)
-		Expect(err).Should(BeNil())
-		WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
-	}
+	tx, err := exampleERC20.Transfer(senderOpts, newAddress, erc20Funds)
+	Expect(err).Should(BeNil())
+	WaitForTransactionSuccess(ctx, l1Info, tx.Hash())
+
+	SendNativeTransfer(ctx, l1Info, fundedKey, newAddress, big.NewInt(1000000000000000000))
+
+	return newPrivateKey, newAddress
+}
+
+func CreateAndFundNewAddress(
+	ctx context.Context,
+	l1Info interfaces.L1TestInfo,
+	fundedKey *ecdsa.PrivateKey,
+) (*ecdsa.PrivateKey, common.Address) {
+	newPrivateKey, err := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
+	Expect(err).Should(BeNil())
+	newAddress := crypto.PubkeyToAddress(newPrivateKey.PublicKey)
 
 	SendNativeTransfer(ctx, l1Info, fundedKey, newAddress, big.NewInt(1000000000000000000))
 

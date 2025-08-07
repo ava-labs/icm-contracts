@@ -28,11 +28,12 @@ contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAu
         }
     }
 
+    // solhint-disable ordering
+
     /**
      * @notice Initialize the native token slot auction manager
      * @param settings Initial settings for the slot auction validator manager
      */
-    // solhint-disable ordering
     function initialize(
         SlotAuctionManagerSettings calldata settings
     ) external initializer {
@@ -49,6 +50,9 @@ contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAu
     // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
     function __NativeTokenStakingManager_init_unchained() internal onlyInitializing {}
 
+    /**
+     * @notice See {INativeTokenSlotAuctionManager-placeBid}
+     */
     function placeBid(
         bytes memory nodeID,
         bytes memory blsPublicKey,

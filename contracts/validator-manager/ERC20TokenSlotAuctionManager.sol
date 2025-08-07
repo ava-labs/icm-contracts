@@ -54,8 +54,8 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
 
     /**
      * @notice Initialize the ERC20 token slot auction manager
-     * @param settings Initial settings for the slot auction validator manager
      * @param token The ERC20 token to be bid
+     * @param settings Initial settings for the slot auction validator manager
      */
     function initialize(
         IERC20Mintable token,

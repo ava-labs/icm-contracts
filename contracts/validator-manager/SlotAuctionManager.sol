@@ -73,9 +73,9 @@ abstract contract SlotAuctionManager is
         /// @notice The current second price for the lowest slot winner, is 0 if no second price
         Heap.Uint256Heap _bids;
     }
+
     // solhint-enable private-vars-leading-underscore
     // keccak256(abi.encode(uint256(keccak256("avalanche-icm.storage.SlotAuctionManager")) - 1)) & ~bytes32(uint256(0xff));
-
     bytes32 public constant SLOT_AUCTION_MANAGER_STORAGE_LOCATION =
         0x6494e1e6ac2d5f44a06b929c1549cec0c499347f244a852c37aef6b6707be600;
 
@@ -90,7 +90,6 @@ abstract contract SlotAuctionManager is
     error ValidatorTimeLimitNotPassed(uint256 validationTimeLimit);
     error ValidatorWeightTooHigh(uint64 validatorWeight);
     error NoOpenValidatorSlots();
-    error MoreActiveValidatorsThanTotalSlots(uint16 totalValidatorSlots, uint16 activeValidators);
     error AuctionInCooldown(uint256 auctionCooldownEndtime);
     error ZeroWeight();
     error InvalidMinValidatorDuration(uint256 minimumValidationDuration);
@@ -202,11 +201,12 @@ abstract contract SlotAuctionManager is
     function endAuction() external nonReentrant AuctionOn {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
-        $._auctionState = AuctionState.AuctionFinalizing;
         if (block.timestamp < $._auctionEndTime) {
             revert AuctionEndTimeNotReached($._auctionEndTime);
         }
+
+        $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
+        $._auctionState = AuctionState.AuctionFinalizing;
 
         while (Heap.length($._bids) > 0) {
             uint256 currentBid = Heap.pop($._bids);
@@ -254,28 +254,13 @@ abstract contract SlotAuctionManager is
     ) external {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
 
-        // if validationID doesnt exist then endtime will be 0, however it wont be logged in the Validator Manager either so this should be ok
-        if ($._validatorsByValidationID[validationID].endTime > block.timestamp) {
-            revert ValidatorTimeLimitNotPassed($._validatorsByValidationID[validationID].endTime);
+        // Removes validator if current block timestamp is after endTime, also works with initialValidators that
+        // Were not registered using the SAVM since their validationID will not be logged making the time 0
+        if ($._validatorsByValidationID[validationID].endTime < block.timestamp) {
+            $._manager.initiateValidatorRemoval(validationID);
+            return;
         }
-        $._manager.initiateValidatorRemoval(validationID);
-    }
-
-    // working on removing this, along with making the contract upgradeable, removing it right now makes the e2e tests fail
-    function initiateRemoveInitialValidator(
-        bytes32 validationID
-    ) external {
-        SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
-
-        $._manager.initiateValidatorRemoval(validationID);
-    }
-
-    function completeRemoveInitialValidator(
-        uint32 messageIndex
-    ) external {
-        SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
-
-        $._manager.completeValidatorRemoval(messageIndex);
+        revert ValidatorTimeLimitNotPassed($._validatorsByValidationID[validationID].endTime);
     }
 
     function completeValidatorRegistration(
@@ -291,7 +276,10 @@ abstract contract SlotAuctionManager is
     ) external returns (bytes32) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         bytes32 validationID = $._manager.completeValidatorRemoval(messageIndex);
-        --$._occupiedValidatorSlots;
+        // Checks to see if initialValidator, if not, decrement occupiedValidatorSlots
+        if ($._validatorsByValidationID[validationID].endTime != 0) {
+            --$._occupiedValidatorSlots;
+        }
         delete $._validatorsByValidationID[validationID];
         return validationID;
     }
@@ -303,12 +291,6 @@ abstract contract SlotAuctionManager is
 
         _validateSettings(auctionSettings);
 
-        // Make sure validator slots are not below occupied slots
-        if (auctionSettings.totalValidatorSlots < $._occupiedValidatorSlots) {
-            revert MoreActiveValidatorsThanTotalSlots(
-                auctionSettings.totalValidatorSlots, $._occupiedValidatorSlots
-            );
-        }
         $._totalValidatorSlots = auctionSettings.totalValidatorSlots;
         $._minAuctionDuration = auctionSettings.minAuctionDuration;
         $._minValidatorDuration = auctionSettings.minValidatorDuration;
@@ -423,11 +405,11 @@ abstract contract SlotAuctionManager is
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         return $._auctionCooldownDuration;
     }
+
     /**
      * @notice Locks tokens in this contract.
      * @param value Number of tokens to lock.
      */
-
     function _lock(
         uint256 value
     ) internal virtual returns (uint256);

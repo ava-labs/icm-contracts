@@ -54,17 +54,17 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		false,
 	)
 
-	validatorManagerProxy, SlotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
-	ERC20TokenSlotAuctionAddress := SlotAuctionManagerProxy.Address
+	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
+	erc20TokenSlotAuctionAddress := slotAuctionManagerProxy.Address
 
-	ERC20TokenSlotAuctionManager, err := erc20tokenslotauctionmanager.NewERC20TokenSlotAuctionManager(
-		ERC20TokenSlotAuctionAddress,
+	erc20TokenSlotAuctionManager, err := erc20tokenslotauctionmanager.NewERC20TokenSlotAuctionManager(
+		erc20TokenSlotAuctionAddress,
 		l1AInfo.RPCClient,
 	)
 
 	Expect(err).Should(BeNil())
 
-	exampleERC20Address, err := ERC20TokenSlotAuctionManager.Erc20(&bind.CallOpts{})
+	exampleERC20Address, err := erc20TokenSlotAuctionManager.Erc20(&bind.CallOpts{})
 	Expect(err).Should(BeNil())
 
 	exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
@@ -80,11 +80,11 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	defer signatureAggregator.Shutdown()
 
 	log.Println("Creating extra accounts with balances")
-	Account1PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(1000))
-	Account2PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(500))
+	account1PrivKey, _ := utils.CreateAndFundNewAddressWithERC20(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(1000))
+	account2PrivKey, _ := utils.CreateAndFundNewAddressWithERC20(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(500))
 
 	iSlotAuctionManager, err := islotauctionmanager.NewISlotAuctionManager(
-		SlotAuctionManagerProxy.Address,
+		slotAuctionManagerProxy.Address,
 		l1AInfo.RPCClient,
 	)
 	Expect(err).Should(BeNil())
@@ -96,7 +96,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[0],
 		0,
@@ -112,7 +112,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[1],
 		1,
@@ -128,7 +128,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[2],
 		2,
@@ -146,33 +146,33 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 
 	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account1PrivKey,
+		account1PrivKey,
 		l1AInfo,
 		big.NewInt(50),
 		exampleERC20,
 		nodes[0],
-		ERC20TokenSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
 	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account2PrivKey,
+		account2PrivKey,
 		l1AInfo,
 		big.NewInt(10),
 		exampleERC20,
 		nodes[1],
-		ERC20TokenSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
 	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account2PrivKey,
+		account2PrivKey,
 		l1AInfo,
 		big.NewInt(20),
 		exampleERC20,
 		nodes[2],
-		ERC20TokenSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
 
 	utils.EndAuctionAndCompleteValidatorRegistration(
@@ -182,7 +182,7 @@ func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 		l1AInfo,
 		pChainInfo,
 		iSlotAuctionManager,
-		ERC20TokenSlotAuctionAddress,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		network.GetPChainWallet(),
 		network.GetNetworkID(),

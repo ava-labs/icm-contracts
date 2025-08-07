@@ -56,8 +56,7 @@ struct SlotAuctionManagerSettings {
 }
 
 /**
- * @dev Struct for auction settings, is a part of SlotAuctionManagerSettings but due
- * to the nature of being able to change auction settings a separate struct is provided
+ * @dev Struct for mutable auction settings.
  */
 struct AuctionSettings {
     uint16 totalValidatorSlots;
@@ -116,8 +115,8 @@ interface ISlotAuctionManager {
     );
 
     /**
-     * @notice Begins a new auction, callable by anyone, will automatically auction the maximum
-     * amount of validator slots with default auction settings
+     * @notice Begins a new auction. Callable by anyone. This will automatically auction the maximum
+     * number of validator slots with default auction settings
      */
     function initiateAuction() external;
 
@@ -133,14 +132,6 @@ interface ISlotAuctionManager {
 
     function initiateValidatorRemoval(
         bytes32 validationID
-    ) external;
-
-    function initiateRemoveInitialValidator(
-        bytes32 validationID
-    ) external;
-
-    function completeRemoveInitialValidator(
-        uint32 messageIndex
     ) external;
 
     function completeValidatorRegistration(
