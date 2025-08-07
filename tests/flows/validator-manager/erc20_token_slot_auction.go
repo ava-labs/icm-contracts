@@ -8,7 +8,9 @@ import (
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/utils/units"
 	exampleerc20 "github.com/ava-labs/icm-contracts/abi-bindings/go/mocks/ExampleERC20"
-	slotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/SlotAuctionManager"
+	erc20tokenslotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/ERC20TokenSlotAuctionManager"
+	islotauctionmanager "github.com/ava-labs/icm-contracts/abi-bindings/go/validator-manager/interfaces/ISlotAuctionManager"
+
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 
 	localnetwork "github.com/ava-labs/icm-contracts/tests/network"
@@ -32,7 +34,7 @@ import (
  * - Deliver the Warp message to the L1
  * - Verify that the validator is delisted from the auction contract
 */
-func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
+func ERC20TokenSlotAuctionManager(network *localnetwork.LocalNetwork) {
 	// Get the L1s info
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
@@ -40,25 +42,29 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	ctx := context.Background()
 	pChainInfo := utils.GetPChainInfo(cChainInfo)
 
+	balance := 100 * units.Avax
 	nodes, initialValidationIDs := network.ConvertSubnet(
 		ctx,
 		l1AInfo,
-		utils.SlotAuctionManager,
-		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		utils.ERC20TokenSlotAuctionManager,
+		[]uint64{units.Schmeckle, units.Schmeckle, units.Schmeckle,
+			units.Schmeckle, units.Schmeckle, 2000 * units.Schmeckle}, // Choose weights to avoid validator churn limits
+		[]uint64{balance, balance, balance, balance, balance, balance},
 		fundedKey,
 		false,
 	)
 
 	validatorManagerProxy, slotAuctionManagerProxy := network.GetValidatorManager(l1AInfo.SubnetID)
-	slotAuctionAddress := slotAuctionManagerProxy.Address
+	erc20TokenSlotAuctionAddress := slotAuctionManagerProxy.Address
 
-	slotAuctionManager, err := slotauctionmanager.NewSlotAuctionManager(
-		slotAuctionAddress,
+	erc20TokenSlotAuctionManager, err := erc20tokenslotauctionmanager.NewERC20TokenSlotAuctionManager(
+		erc20TokenSlotAuctionAddress,
 		l1AInfo.RPCClient,
 	)
+
 	Expect(err).Should(BeNil())
 
-	exampleERC20Address, err := slotAuctionManager.TOKENCONTRACT(&bind.CallOpts{})
+	exampleERC20Address, err := erc20TokenSlotAuctionManager.Erc20(&bind.CallOpts{})
 	Expect(err).Should(BeNil())
 
 	exampleERC20, err := exampleerc20.NewExampleERC20(exampleERC20Address, l1AInfo.RPCClient)
@@ -74,18 +80,23 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 	defer signatureAggregator.Shutdown()
 
 	log.Println("Creating extra accounts with balances")
+	account1PrivKey, _ := utils.CreateAndFundNewAddressWithERC20(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(1000))
+	account2PrivKey, _ := utils.CreateAndFundNewAddressWithERC20(ctx, l1AInfo, fundedKey, exampleERC20, big.NewInt(500))
 
-	Account1PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, exampleERC20, fundedKey, big.NewInt(1000))
-	Account2PrivKey, _ := utils.CreateAndFundNewAddress(ctx, l1AInfo, exampleERC20, fundedKey, big.NewInt(500))
+	iSlotAuctionManager, err := islotauctionmanager.NewISlotAuctionManager(
+		slotAuctionManagerProxy.Address,
+		l1AInfo.RPCClient,
+	)
+	Expect(err).Should(BeNil())
 
-	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+	utils.InitiateAndCompleteEndInitialAuctionValidation(
 		ctx,
 		signatureAggregator,
 		fundedKey,
 		l1AInfo,
 		pChainInfo,
-		slotAuctionManager,
-		slotAuctionAddress,
+		iSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[0],
 		0,
@@ -94,14 +105,14 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		network.GetNetworkID(),
 	)
 
-	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+	utils.InitiateAndCompleteEndInitialAuctionValidation(
 		ctx,
 		signatureAggregator,
 		fundedKey,
 		l1AInfo,
 		pChainInfo,
-		slotAuctionManager,
-		slotAuctionAddress,
+		iSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[1],
 		1,
@@ -110,14 +121,14 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		network.GetNetworkID(),
 	)
 
-	utils.InitiateAndCompleteEndInitialProofOfPurchaseValidation(
+	utils.InitiateAndCompleteEndInitialAuctionValidation(
 		ctx,
 		signatureAggregator,
 		fundedKey,
 		l1AInfo,
 		pChainInfo,
-		slotAuctionManager,
-		slotAuctionAddress,
+		iSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
 		initialValidationIDs[2],
 		2,
@@ -130,65 +141,51 @@ func ValidatorSlotAuction(network *localnetwork.LocalNetwork) {
 		ctx,
 		l1AInfo,
 		fundedKey,
-		2,
-		units.Schmeckle,
-		big.NewInt(0),
-		big.NewInt(31556926),
-		big.NewInt(10),
-		slotAuctionManager,
+		iSlotAuctionManager,
 	)
 
-	utils.PlaceBidOnAuction(
+	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account1PrivKey,
+		account1PrivKey,
 		l1AInfo,
 		big.NewInt(50),
 		exampleERC20,
 		nodes[0],
-		slotAuctionManager,
-		slotAuctionAddress,
-		validatorManagerProxy.Address,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
-
-	utils.PlaceBidOnAuction(
+	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account2PrivKey,
+		account2PrivKey,
 		l1AInfo,
 		big.NewInt(10),
 		exampleERC20,
 		nodes[1],
-		slotAuctionManager,
-		slotAuctionAddress,
-		validatorManagerProxy.Address,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
-
-	utils.PlaceBidOnAuction(
+	utils.PlaceBidOnERC20TokenAuction(
 		ctx,
-		Account2PrivKey,
+		account2PrivKey,
 		l1AInfo,
 		big.NewInt(20),
 		exampleERC20,
 		nodes[2],
-		slotAuctionManager,
-		slotAuctionAddress,
-		validatorManagerProxy.Address,
+		erc20TokenSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 	)
 
-	utils.EndAuction(
+	utils.EndAuctionAndCompleteValidatorRegistration(
 		ctx,
 		signatureAggregator,
 		fundedKey,
 		l1AInfo,
 		pChainInfo,
-		slotAuctionManager,
-		slotAuctionAddress,
+		iSlotAuctionManager,
+		erc20TokenSlotAuctionAddress,
 		validatorManagerProxy.Address,
-		exampleERC20,
 		network.GetPChainWallet(),
 		network.GetNetworkID(),
 		nodes,
 	)
-
-	// OwnerOpts, _ := bind.NewKeyedTransactorWithChainID(fundedKey, l1AInfo.EVMChainID)
-
 }

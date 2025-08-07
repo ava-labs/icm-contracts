@@ -472,6 +472,10 @@ contract ValidatorManager is IValidatorManager, Initializable, OwnableUpgradeabl
         return _getValidatorManagerStorage()._subnetID;
     }
 
+    function getMaximumChurnPercentage() public view returns (uint8) {
+        return _getValidatorManagerStorage()._maximumChurnPercentage;
+    }
+
     /**
      * @notice Returns the current churn tracker and its configuration
      * @return The churn period duration in seconds

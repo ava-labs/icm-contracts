@@ -8,32 +8,51 @@ pragma solidity 0.8.25;
 import {PChainOwner} from "./ACP99Manager.sol";
 import {SlotAuctionManager} from "./SlotAuctionManager.sol";
 import {INativeTokenSlotAuctionManager} from "./interfaces/INativeTokenSlotAuctionManager.sol";
-import {INativeMinter} from
-    "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/INativeMinter.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 import {Address} from "@openzeppelin/contracts@5.0.2/utils/Address.sol";
-import {Initializable} from
-    "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
-import {AuctionState} from "./interfaces/ISlotAuctionManager.sol";
-import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
-
+import {SlotAuctionManagerSettings} from "./interfaces/ISlotAuctionManager.sol";
 
 /**
- * @dev Implementation of the {INativeTokenStakingManager} interface.
+ * @dev Implementation of the {INativeTokenSlotAuctionManager} interface.
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
  */
-contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager{
+contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAuctionManager {
     using Address for address payable;
 
-    // INativeMinter public constant NATIVE_MINTER =
-    //     INativeMinter(0x0200000000000000000000000000000000000001);
-
-    constructor(address vmAddress) {
-        VALIDATOR_MANAGER = IValidatorManager(vmAddress);
-        auctionState = AuctionState.NoAuction;
+    constructor(
+        ICMInitializable init
+    ) {
+        if (init == ICMInitializable.Disallowed) {
+            _disableInitializers();
+        }
     }
 
+    // solhint-disable ordering
+
+    /**
+     * @notice Initialize the native token slot auction manager
+     * @param settings Initial settings for the slot auction validator manager
+     */
+    function initialize(
+        SlotAuctionManagerSettings calldata settings
+    ) external initializer {
+        __NativeTokenSlotAuctionManager_init(settings);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function __NativeTokenSlotAuctionManager_init(
+        SlotAuctionManagerSettings calldata settings
+    ) internal onlyInitializing {
+        __SlotAuctionManager_init(settings);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase, no-empty-blocks
+    function __NativeTokenStakingManager_init_unchained() internal onlyInitializing {}
+
+    /**
+     * @notice See {INativeTokenSlotAuctionManager-placeBid}
+     */
     function placeBid(
         bytes memory nodeID,
         bytes memory blsPublicKey,
@@ -55,10 +74,7 @@ contract NativeTokenSlotAuctionManager is SlotAuctionManager, INativeTokenSlotAu
     /**
      * @notice See {SlotAuctionManager-_unlock}
      */
-    function _unlock(
-        address to, 
-        uint256 value
-    ) internal virtual override {
+    function _unlock(address to, uint256 value) internal virtual override {
         payable(to).sendValue(value);
     }
 }

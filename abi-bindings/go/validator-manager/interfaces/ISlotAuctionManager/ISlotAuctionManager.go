@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"strings"
 
+	ethereum "github.com/ava-labs/libevm"
+	"github.com/ava-labs/libevm/common"
+	"github.com/ava-labs/libevm/core/types"
+	"github.com/ava-labs/libevm/event"
 	"github.com/ava-labs/subnet-evm/accounts/abi"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
-	"github.com/ava-labs/subnet-evm/core/types"
-	"github.com/ava-labs/subnet-evm/interfaces"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +21,7 @@ var (
 	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
-	_ = interfaces.NotFound
+	_ = ethereum.NotFound
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -31,7 +31,7 @@ var (
 
 // ISlotAuctionManagerMetaData contains all meta data concerning the ISlotAuctionManager contract.
 var ISlotAuctionManagerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"MinBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"validatorslots\",\"type\":\"uint16\"},{\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"},{\"internalType\":\"uint256\",\"name\":\"minAuctionDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateRemoveInitialValidator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"BidEvicted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"ownerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"validatorEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"weight\",\"type\":\"uint64\"}],\"name\":\"InitiatedAuctionValidatorRegistration\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint16\",\"name\":\"validatorSlots\",\"type\":\"uint16\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"validatorWeight\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minValidatorDuration\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"auctionEndTime\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"minimumBid\",\"type\":\"uint256\"}],\"name\":\"NewValidatorAuction\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"bid\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"bytes\",\"name\":\"nodeID\",\"type\":\"bytes\"}],\"name\":\"SuccessfulBidPlaced\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRegistration\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"messageIndex\",\"type\":\"uint32\"}],\"name\":\"completeValidatorRemoval\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"endAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAuctionCooldownDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getAuctioningValidatorWeight\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinAuctionDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinValidatorDuration\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getMinimumBid\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOpenValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTotalValidatorSlots\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"initiateAuction\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"validationID\",\"type\":\"bytes32\"}],\"name\":\"initiateValidatorRemoval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"minBidRequired\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // ISlotAuctionManagerABI is the input ABI used to generate the binding from.
@@ -180,46 +180,221 @@ func (_ISlotAuctionManager *ISlotAuctionManagerTransactorRaw) Transact(opts *bin
 	return _ISlotAuctionManager.Contract.contract.Transact(opts, method, params...)
 }
 
-// MinBidRequired is a paid mutator transaction binding the contract method 0x913ed0b1.
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
 //
-// Solidity: function MinBidRequired() returns(uint256)
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) MinBidRequired(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _ISlotAuctionManager.contract.Transact(opts, "MinBidRequired")
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetAuctionCooldownDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getAuctionCooldownDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
-// MinBidRequired is a paid mutator transaction binding the contract method 0x913ed0b1.
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
 //
-// Solidity: function MinBidRequired() returns(uint256)
-func (_ISlotAuctionManager *ISlotAuctionManagerSession) MinBidRequired() (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.MinBidRequired(&_ISlotAuctionManager.TransactOpts)
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetAuctionCooldownDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetAuctionCooldownDuration(&_ISlotAuctionManager.CallOpts)
 }
 
-// MinBidRequired is a paid mutator transaction binding the contract method 0x913ed0b1.
+// GetAuctionCooldownDuration is a free data retrieval call binding the contract method 0xf714b6aa.
 //
-// Solidity: function MinBidRequired() returns(uint256)
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) MinBidRequired() (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.MinBidRequired(&_ISlotAuctionManager.TransactOpts)
+// Solidity: function getAuctionCooldownDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetAuctionCooldownDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetAuctionCooldownDuration(&_ISlotAuctionManager.CallOpts)
 }
 
-// CompleteRemoveInitialValidator is a paid mutator transaction binding the contract method 0x05af8256.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function completeRemoveInitialValidator(uint32 messageIndex) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) CompleteRemoveInitialValidator(opts *bind.TransactOpts, messageIndex uint32) (*types.Transaction, error) {
-	return _ISlotAuctionManager.contract.Transact(opts, "completeRemoveInitialValidator", messageIndex)
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetAuctioningValidatorWeight(opts *bind.CallOpts) (uint64, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getAuctioningValidatorWeight")
+
+	if err != nil {
+		return *new(uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint64)).(*uint64)
+
+	return out0, err
+
 }
 
-// CompleteRemoveInitialValidator is a paid mutator transaction binding the contract method 0x05af8256.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function completeRemoveInitialValidator(uint32 messageIndex) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerSession) CompleteRemoveInitialValidator(messageIndex uint32) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.CompleteRemoveInitialValidator(&_ISlotAuctionManager.TransactOpts, messageIndex)
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetAuctioningValidatorWeight() (uint64, error) {
+	return _ISlotAuctionManager.Contract.GetAuctioningValidatorWeight(&_ISlotAuctionManager.CallOpts)
 }
 
-// CompleteRemoveInitialValidator is a paid mutator transaction binding the contract method 0x05af8256.
+// GetAuctioningValidatorWeight is a free data retrieval call binding the contract method 0x671ef477.
 //
-// Solidity: function completeRemoveInitialValidator(uint32 messageIndex) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) CompleteRemoveInitialValidator(messageIndex uint32) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.CompleteRemoveInitialValidator(&_ISlotAuctionManager.TransactOpts, messageIndex)
+// Solidity: function getAuctioningValidatorWeight() view returns(uint64)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetAuctioningValidatorWeight() (uint64, error) {
+	return _ISlotAuctionManager.Contract.GetAuctioningValidatorWeight(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinAuctionDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinAuctionDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinAuctionDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinAuctionDuration is a free data retrieval call binding the contract method 0x9940d4c6.
+//
+// Solidity: function getMinAuctionDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinAuctionDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinAuctionDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinValidatorDuration(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinValidatorDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinValidatorDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinValidatorDuration is a free data retrieval call binding the contract method 0x01f6cec8.
+//
+// Solidity: function getMinValidatorDuration() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinValidatorDuration() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinValidatorDuration(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetMinimumBid(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getMinimumBid")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetMinimumBid() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinimumBid(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetMinimumBid is a free data retrieval call binding the contract method 0xc5b63600.
+//
+// Solidity: function getMinimumBid() view returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetMinimumBid() (*big.Int, error) {
+	return _ISlotAuctionManager.Contract.GetMinimumBid(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetOpenValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getOpenValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetOpenValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetOpenValidatorSlots is a free data retrieval call binding the contract method 0x78eb9c10.
+//
+// Solidity: function getOpenValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetOpenValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetOpenValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCaller) GetTotalValidatorSlots(opts *bind.CallOpts) (uint16, error) {
+	var out []interface{}
+	err := _ISlotAuctionManager.contract.Call(opts, &out, "getTotalValidatorSlots")
+
+	if err != nil {
+		return *new(uint16), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint16)).(*uint16)
+
+	return out0, err
+
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetTotalValidatorSlots(&_ISlotAuctionManager.CallOpts)
+}
+
+// GetTotalValidatorSlots is a free data retrieval call binding the contract method 0x31b6822e.
+//
+// Solidity: function getTotalValidatorSlots() view returns(uint16)
+func (_ISlotAuctionManager *ISlotAuctionManagerCallerSession) GetTotalValidatorSlots() (uint16, error) {
+	return _ISlotAuctionManager.Contract.GetTotalValidatorSlots(&_ISlotAuctionManager.CallOpts)
 }
 
 // CompleteValidatorRegistration is a paid mutator transaction binding the contract method 0xa3a65e48.
@@ -285,46 +460,25 @@ func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) EndAuction() (
 	return _ISlotAuctionManager.Contract.EndAuction(&_ISlotAuctionManager.TransactOpts)
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) InitiateAuction(opts *bind.TransactOpts, validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _ISlotAuctionManager.contract.Transact(opts, "initiateAuction", validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
+// Solidity: function initiateAuction() returns()
+func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) InitiateAuction(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ISlotAuctionManager.contract.Transact(opts, "initiateAuction")
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerSession) InitiateAuction(validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.InitiateAuction(&_ISlotAuctionManager.TransactOpts, validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
+// Solidity: function initiateAuction() returns()
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) InitiateAuction() (*types.Transaction, error) {
+	return _ISlotAuctionManager.Contract.InitiateAuction(&_ISlotAuctionManager.TransactOpts)
 }
 
-// InitiateAuction is a paid mutator transaction binding the contract method 0x7a7df932.
+// InitiateAuction is a paid mutator transaction binding the contract method 0x5561f9df.
 //
-// Solidity: function initiateAuction(uint16 validatorslots, uint64 weight, uint256 minAuctionDuration, uint256 minValidatorDuration, uint256 minimumBid) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) InitiateAuction(validatorslots uint16, weight uint64, minAuctionDuration *big.Int, minValidatorDuration *big.Int, minimumBid *big.Int) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.InitiateAuction(&_ISlotAuctionManager.TransactOpts, validatorslots, weight, minAuctionDuration, minValidatorDuration, minimumBid)
-}
-
-// InitiateRemoveInitialValidator is a paid mutator transaction binding the contract method 0xa476f675.
-//
-// Solidity: function initiateRemoveInitialValidator(bytes32 validationID) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) InitiateRemoveInitialValidator(opts *bind.TransactOpts, validationID [32]byte) (*types.Transaction, error) {
-	return _ISlotAuctionManager.contract.Transact(opts, "initiateRemoveInitialValidator", validationID)
-}
-
-// InitiateRemoveInitialValidator is a paid mutator transaction binding the contract method 0xa476f675.
-//
-// Solidity: function initiateRemoveInitialValidator(bytes32 validationID) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerSession) InitiateRemoveInitialValidator(validationID [32]byte) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.InitiateRemoveInitialValidator(&_ISlotAuctionManager.TransactOpts, validationID)
-}
-
-// InitiateRemoveInitialValidator is a paid mutator transaction binding the contract method 0xa476f675.
-//
-// Solidity: function initiateRemoveInitialValidator(bytes32 validationID) returns()
-func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) InitiateRemoveInitialValidator(validationID [32]byte) (*types.Transaction, error) {
-	return _ISlotAuctionManager.Contract.InitiateRemoveInitialValidator(&_ISlotAuctionManager.TransactOpts, validationID)
+// Solidity: function initiateAuction() returns()
+func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) InitiateAuction() (*types.Transaction, error) {
+	return _ISlotAuctionManager.Contract.InitiateAuction(&_ISlotAuctionManager.TransactOpts)
 }
 
 // InitiateValidatorRemoval is a paid mutator transaction binding the contract method 0xb6e6a2ca.
@@ -348,6 +502,27 @@ func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) InitiateValida
 	return _ISlotAuctionManager.Contract.InitiateValidatorRemoval(&_ISlotAuctionManager.TransactOpts, validationID)
 }
 
+// MinBidRequired is a paid mutator transaction binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerTransactor) MinBidRequired(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ISlotAuctionManager.contract.Transact(opts, "minBidRequired")
+}
+
+// MinBidRequired is a paid mutator transaction binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerSession) MinBidRequired() (*types.Transaction, error) {
+	return _ISlotAuctionManager.Contract.MinBidRequired(&_ISlotAuctionManager.TransactOpts)
+}
+
+// MinBidRequired is a paid mutator transaction binding the contract method 0xf1c7b8d2.
+//
+// Solidity: function minBidRequired() returns(uint256)
+func (_ISlotAuctionManager *ISlotAuctionManagerTransactorSession) MinBidRequired() (*types.Transaction, error) {
+	return _ISlotAuctionManager.Contract.MinBidRequired(&_ISlotAuctionManager.TransactOpts)
+}
+
 // ISlotAuctionManagerBidEvictedIterator is returned from FilterBidEvicted and is used to iterate over the raw logs and unpacked data for BidEvicted events raised by the ISlotAuctionManager contract.
 type ISlotAuctionManagerBidEvictedIterator struct {
 	Event *ISlotAuctionManagerBidEvicted // Event containing the contract specifics and raw log
@@ -355,10 +530,10 @@ type ISlotAuctionManagerBidEvictedIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -508,10 +683,10 @@ type ISlotAuctionManagerInitiatedAuctionValidatorRegistrationIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -663,10 +838,10 @@ type ISlotAuctionManagerNewValidatorAuctionIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -801,10 +976,10 @@ type ISlotAuctionManagerSuccessfulBidPlacedIterator struct {
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
 
-	logs chan types.Log          // Log channel receiving the found contract events
-	sub  interfaces.Subscription // Subscription for errors, completion and termination
-	done bool                    // Whether the subscription completed delivering logs
-	fail error                   // Occurred error to stop iteration
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there

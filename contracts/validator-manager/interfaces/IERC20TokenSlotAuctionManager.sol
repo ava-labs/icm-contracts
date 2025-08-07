@@ -5,14 +5,11 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager} from "../interfaces/IValidatorManager.sol";
-
 import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.sol";
-
 import {IERC20Mintable} from "./IERC20Mintable.sol";
+import {ISlotAuctionManager} from "./ISlotAuctionManager.sol";
 
-interface IERC20TokenSlotAuctionManager {
-
+interface IERC20TokenSlotAuctionManager is ISlotAuctionManager {
     /**
      * @notice Places a bid in the currently running auction
      * @param bid The amount of tokens to bid.
@@ -21,7 +18,7 @@ interface IERC20TokenSlotAuctionManager {
      * @param remainingBalanceOwner The remaining balance owner of the validator.
      * @param disableOwner The disable owner of the validator.
      */
-    function placeBid (
+    function placeBid(
         uint256 bid,
         bytes memory nodeID,
         bytes memory blsPublicKey,
