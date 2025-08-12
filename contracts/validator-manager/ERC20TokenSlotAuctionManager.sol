@@ -119,6 +119,6 @@ contract ERC20TokenSlotAuctionManager is SlotAuctionManager, IERC20TokenSlotAuct
      */
     function _unlock(address to, uint256 value) internal virtual override {
         ERC20TokenSlotAuctionManagerStorage storage $ = _getERC20SlotAuctionManagerStorage();
-        $._token.safeTransfer(to, value);
+        $._token.safeIncreaseAllowance(to, value);
     }
 }
