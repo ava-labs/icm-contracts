@@ -52,6 +52,7 @@ struct ValidatorInfo {
 struct ValidatorVoucher {
     address addr;
     uint256 endTime;
+    uint256 registrationEndTime;
     bytes nodeID;
     bytes blsPublicKey;
     uint64 weight;

@@ -98,7 +98,7 @@ abstract contract SlotAuctionManager is
     error InvalidMinValidatorDuration(uint256 minimumValidationDuration);
     error ZeroAddress();
     error ZeroMinBid();
-    error VaidatorTimePeriodOver(uint256 endTime, uint256 currentTime, bytes nodeID); 
+    error VaidatorRegistrationTimePeriodOver(uint256 endTime, uint256 currentTime, bytes nodeID); 
 
     // solhint-disable ordering
 
@@ -237,6 +237,7 @@ abstract contract SlotAuctionManager is
                 $._vouchers[node] = ValidatorVoucher({
                     addr: bidInfo.addr,
                     endTime: $._minValidatorDuration + $._auctionEndTime,
+                    registrationEndTime: $._auctionCooldownEndtime,
                     nodeID: bidInfo.nodeID,
                     blsPublicKey: bidInfo.blsPublicKey,
                     weight: $._auctioningValidatorWeight,
@@ -287,9 +288,10 @@ abstract contract SlotAuctionManager is
     ) external returns (bytes32){
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         ValidatorVoucher memory voucher = $._vouchers[nodeID];
+        delete $._vouchers[nodeID];
 
-        if (block.timestamp > voucher.endTime) {
-            revert VaidatorTimePeriodOver(voucher.endTime, block.timestamp, voucher.nodeID);
+        if (block.timestamp > voucher.registrationEndTime) {
+            revert VaidatorRegistrationTimePeriodOver(voucher.registrationEndTime, block.timestamp, voucher.nodeID);
         }
         ++$._occupiedValidatorSlots;
         bytes32 validationID = $._manager.initiateValidatorRegistration(
@@ -316,7 +318,6 @@ abstract contract SlotAuctionManager is
             weight: voucher.weight
         });
 
-        delete $._vouchers[nodeID];
         return validationID;
     }
 
