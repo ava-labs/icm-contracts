@@ -5,7 +5,7 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
+import {IValidatorManager, ValidatorChurnPeriod} from "./interfaces/IValidatorManager.sol";
 import {ValidatorMessages} from "./ValidatorMessages.sol";
 import {
     InitialValidator,
@@ -25,15 +25,6 @@ import {Initializable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 
-/**
- * @dev Describes the current churn period
- */
-struct ValidatorChurnPeriod {
-    uint256 startTime;
-    uint64 initialWeight;
-    uint64 totalWeight;
-    uint64 churnAmount;
-}
 
 /**
  * @notice Validator Manager settings, used to initialize the Validator Manager

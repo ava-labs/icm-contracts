@@ -5,7 +5,7 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager} from "./interfaces/IValidatorManager.sol";
+import {IValidatorManager, ValidatorChurnPeriod} from "./interfaces/IValidatorManager.sol";
 import {PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {
     ISlotAuctionManager,
@@ -13,7 +13,8 @@ import {
     ValidatorInfo,
     AuctionState,
     SlotAuctionManagerSettings,
-    AuctionSettings
+    AuctionSettings,
+    ValidatorVoucher
 } from "./interfaces/ISlotAuctionManager.sol";
 import {Heap} from "@openzeppelin/contracts@5.0.2/utils/structs/Heap.sol";
 import {ReentrancyGuardUpgradeable} from
@@ -70,6 +71,8 @@ abstract contract SlotAuctionManager is
         mapping(bytes32 validationID => ValidatorInfo) _validatorsByValidationID;
         /// @notice Maps bid amount to a struct containing the bidders info
         mapping(uint256 bid => ValidatorBid) _bidderInfo;
+        /// @notice Maps nodeID to struct ValidatorVoucher
+        mapping(bytes nodeID => ValidatorVoucher) _vouchers;
         /// @notice The current second price for the lowest slot winner, is 0 if no second price
         Heap.Uint256Heap _bids;
     }
@@ -95,6 +98,7 @@ abstract contract SlotAuctionManager is
     error InvalidMinValidatorDuration(uint256 minimumValidationDuration);
     error ZeroAddress();
     error ZeroMinBid();
+    error VaidatorTimePeriodOver(uint256 endTime, uint256 currentTime, bytes nodeID); 
 
     // solhint-disable ordering
 
@@ -175,10 +179,12 @@ abstract contract SlotAuctionManager is
         if ($._occupiedValidatorSlots == $._totalValidatorSlots) {
             revert NoOpenValidatorSlots();
         }
-        // Gets maximum amount of validators that are able to be auctioned off without triggering churn, making sure its not more
-        // than the current amount of available slots
+        // Gets maximum amount of validators that are able to be auctioned off without triggering churn.
+        // There is still the possibility churn is triggered due to the ending of an auction potentially happening
+        // in a different churn period.
+        ( , uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod)= $._manager.getChurnTracker();
         uint64 maxValidatorSlotsBeforeChurn = (
-            $._manager.getMaximumChurnPercentage() * $._manager.l1TotalWeight()
+            (maxChurnPercentage / 2) * churnPeriod.totalWeight
         ) / ($._auctioningValidatorWeight * 100);
 
         if (maxValidatorSlotsBeforeChurn == 0) {
@@ -205,9 +211,19 @@ abstract contract SlotAuctionManager is
             revert AuctionEndTimeNotReached($._auctionEndTime);
         }
 
-        $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
         $._auctionState = AuctionState.AuctionFinalizing;
 
+        // Checks to see if the current amount of validators to be registerd will trigger churn. If so,
+        // will end the auction by distributing vouchers, which allows anyone to register the nodeID
+        // as a validator between the end of the auction and the validators end time.
+        bool safeMode = false;
+        ( , uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod)= $._manager.getChurnTracker();
+        if (maxChurnPercentage * churnPeriod.initialWeight < 
+            (churnPeriod.churnAmount + (Heap.length($._bids) * $._auctioningValidatorWeight)) * 100) {
+                safeMode = true;
+            }
+
+        $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
         while (Heap.length($._bids) > 0) {
             uint256 currentBid = Heap.pop($._bids);
             ValidatorBid memory bidInfo = $._bidderInfo[currentBid];
@@ -217,36 +233,90 @@ abstract contract SlotAuctionManager is
             if (currentBid - $._secondPrice != 0) {
                 _unlock(bidInfo.addr, currentBid - $._secondPrice);
             }
-            ++$._occupiedValidatorSlots;
-            bytes32 validationID = $._manager.initiateValidatorRegistration(
-                bidInfo.nodeID,
-                bidInfo.blsPublicKey,
-                bidInfo.remainingBalanceOwner,
-                bidInfo.disableOwner,
-                $._auctioningValidatorWeight
-            );
-            emit InitiatedAuctionValidatorRegistration(
-                validationID,
-                bidInfo.addr,
-                $._minValidatorDuration + $._auctionEndTime,
-                $._auctioningValidatorWeight
-            );
-
-            $._validatorsByValidationID[validationID] = ValidatorInfo({
-                addr: bidInfo.addr,
-                endTime: $._minValidatorDuration + $._auctionEndTime,
-                nodeID: bidInfo.nodeID,
-                blsPublicKey: bidInfo.blsPublicKey,
-                validationID: validationID,
-                weight: $._auctioningValidatorWeight
-            });
-
+            if (safeMode) {
+                $._vouchers[node] = ValidatorVoucher({
+                    addr: bidInfo.addr,
+                    endTime: $._minValidatorDuration + $._auctionEndTime,
+                    nodeID: bidInfo.nodeID,
+                    blsPublicKey: bidInfo.blsPublicKey,
+                    weight: $._auctioningValidatorWeight,
+                    remainingBalanceOwner: bidInfo.remainingBalanceOwner,
+                    disableOwner: bidInfo.disableOwner            
+                });
+                emit AuctionVoucherCreated(
+                    bidInfo.nodeID, 
+                    bidInfo.addr, 
+                    $._minValidatorDuration + $._auctionEndTime, 
+                    $._auctioningValidatorWeight
+                );
+            }
+            else {
+                ++$._occupiedValidatorSlots;
+                bytes32 validationID = $._manager.initiateValidatorRegistration(
+                    bidInfo.nodeID,
+                    bidInfo.blsPublicKey,
+                    bidInfo.remainingBalanceOwner,
+                    bidInfo.disableOwner,
+                    $._auctioningValidatorWeight
+                );
+                emit InitiatedAuctionValidatorRegistration(
+                    validationID,
+                    bidInfo.addr,
+                    $._minValidatorDuration + $._auctionEndTime,
+                    $._auctioningValidatorWeight
+                );
+                $._validatorsByValidationID[validationID] = ValidatorInfo({
+                    addr: bidInfo.addr,
+                    endTime: $._minValidatorDuration + $._auctionEndTime,
+                    nodeID: bidInfo.nodeID,
+                    blsPublicKey: bidInfo.blsPublicKey,
+                    validationID: validationID,
+                    weight: $._auctioningValidatorWeight
+                });
+            }
             $._secondPrice = currentBid;
         }
 
         $._auctionEndTime = 0;
         $._auctioningValidatorSlots = 0;
         $._auctionState = AuctionState.NoAuction;
+    }
+
+    function initiateValidatorRegistration (
+        bytes memory nodeID
+    ) external returns (bytes32){
+        SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
+        ValidatorVoucher memory voucher = $._vouchers[nodeID];
+
+        if (block.timestamp > voucher.endTime) {
+            revert VaidatorTimePeriodOver(voucher.endTime, block.timestamp, voucher.nodeID);
+        }
+
+        bytes32 validationID = $._manager.initiateValidatorRegistration(
+            voucher.nodeID, 
+            voucher.blsPublicKey, 
+            voucher.remainingBalanceOwner, 
+            voucher.disableOwner, 
+            voucher.weight
+        );
+
+        emit InitiatedAuctionVoucherValidatorRegistration(
+            validationID,
+            voucher.addr,
+            voucher.endTime,
+            voucher.weight
+        );
+
+        $._validatorsByValidationID[validationID] = ValidatorInfo({
+            addr: voucher.addr,
+            endTime: voucher.endTime,
+            nodeID: voucher.nodeID,
+            blsPublicKey: voucher.blsPublicKey,
+            validationID: validationID,
+            weight: voucher.weight
+        });
+
+        return validationID;
     }
 
     function initiateValidatorRemoval(

@@ -8,6 +8,16 @@ pragma solidity 0.8.25;
 import {PChainOwner, ValidatorStatus, IACP99Manager} from "./IACP99Manager.sol";
 
 /**
+ * @dev Describes the current churn period
+ */
+struct ValidatorChurnPeriod {
+    uint256 startTime;
+    uint64 initialWeight;
+    uint64 totalWeight;
+    uint64 churnAmount;
+}
+
+/**
  * @dev Validator Manager interface that provides additional functionality on top of {IACP99Manager}
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
@@ -87,5 +97,5 @@ interface IValidatorManager is IACP99Manager {
 
     function getChurnPeriodSeconds() external view returns (uint64);
 
-    function getMaximumChurnPercentage() external view returns (uint8);
+    function getChurnTracker() external view returns (uint64, uint8, ValidatorChurnPeriod memory);
 }

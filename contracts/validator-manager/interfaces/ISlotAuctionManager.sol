@@ -47,6 +47,19 @@ struct ValidatorInfo {
 }
 
 /**
+ * @dev Proof of winning an auction. Allows nodeID to be registered as a validator 
+ */
+struct ValidatorVoucher {
+    address addr;
+    uint256 endTime;
+    bytes nodeID;
+    bytes blsPublicKey;
+    uint64 weight;
+    PChainOwner remainingBalanceOwner;
+    PChainOwner disableOwner;
+}
+
+/**
  * @dev Initialization struct for slot auction manager
  */
 struct SlotAuctionManagerSettings {
@@ -102,12 +115,38 @@ interface ISlotAuctionManager {
     event BidEvicted(uint256 indexed bid, bytes indexed nodeID);
 
     /**
-     * @notice Event emitted when a validator is registered.
+     * @notice Event emitted when a validator is registered by auction.
      * @param validationID The validationID of the new validator.
      * @param ownerAddress The address of the owner of the nodeID.
      * @param validatorEndTime The end time of the validator.
      */
     event InitiatedAuctionValidatorRegistration(
+        bytes32 indexed validationID,
+        address indexed ownerAddress,
+        uint256 validatorEndTime,
+        uint64 weight
+    );
+
+    /**
+     * @notice Event emitted when a validator voucher is created.
+     * @param nodeID The nodeID of the pre registered validator.
+     * @param ownerAddress The address of the owner of the nodeID.
+     * @param validatorEndTime The end time of the validator.
+     */
+    event AuctionVoucherCreated(
+        bytes indexed nodeID,
+        address indexed ownerAddress,
+        uint256 validatorEndTime,
+        uint64 weight
+    );
+
+    /**
+     * @notice Event emitted when a validator is registered by voucher.
+     * @param validationID The validationID of the new validator.
+     * @param ownerAddress The address of the owner of the nodeID.
+     * @param validatorEndTime The end time of the validator.
+     */
+    event InitiatedAuctionVoucherValidatorRegistration(
         bytes32 indexed validationID,
         address indexed ownerAddress,
         uint256 validatorEndTime,
@@ -129,6 +168,10 @@ interface ISlotAuctionManager {
      * @notice returns the minimum bid required to enter auction
      */
     function minBidRequired() external returns (uint256);
+
+    function initiateValidatorRegistration (
+        bytes memory nodeID
+    ) external returns (bytes32);
 
     function initiateValidatorRemoval(
         bytes32 validationID
@@ -155,7 +198,4 @@ interface ISlotAuctionManager {
     function getOpenValidatorSlots() external view returns (uint16);
 
     function getAuctionCooldownDuration() external view returns (uint256);
-    // function getValidatorInfoByNodeID(
-    //     bytes memory nodeID
-    // ) external returns (ValidatorInfo memory);
 }
