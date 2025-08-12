@@ -291,7 +291,7 @@ abstract contract SlotAuctionManager is
         if (block.timestamp > voucher.endTime) {
             revert VaidatorTimePeriodOver(voucher.endTime, block.timestamp, voucher.nodeID);
         }
-
+        ++$._occupiedValidatorSlots;
         bytes32 validationID = $._manager.initiateValidatorRegistration(
             voucher.nodeID, 
             voucher.blsPublicKey, 
@@ -316,6 +316,7 @@ abstract contract SlotAuctionManager is
             weight: voucher.weight
         });
 
+        delete $._vouchers[nodeID];
         return validationID;
     }
 
