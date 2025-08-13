@@ -5,15 +5,15 @@
 
 pragma solidity 0.8.25;
 
-import {PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
-import {IValidatorManager, ValidatorManager} from "../ValidatorManager.sol";
+import {PChainOwner, ConversionData} from "../../interfaces/IACP99Manager.sol";
+import {IValidatorManager, ValidatorManager} from "../../ValidatorManager.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
-import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
+import {ValidatorMessages} from "../../ValidatorMessages.sol";
+import {ICMInitializable} from "../../../utilities/ICMInitializable.sol";
 import {ERC20TokenSlotAuctionManager} from "../ERC20TokenSlotAuctionManager.sol";
 import {SlotAuctionManagerSettings} from "../interfaces/ISlotAuctionManager.sol";
 import {ExampleERC20} from "@mocks/ExampleERC20.sol";
-import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
+import {IERC20Mintable} from "../../interfaces/IERC20Mintable.sol";
 import {SlotAuctionManagerTest} from "./SlotAuctionManagerTests.t.sol";
 
 contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
@@ -32,6 +32,7 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         bytes32 conversionID = sha256(ValidatorMessages.packConversionData(conversion));
         _mockInitializeValidatorSet(conversionID);
         validatorManager.initializeValidatorSet(conversion, 0);
+        _inititalValidatorUpdateChurnTracker();
     }
 
     function testInsufficientBalance() public {

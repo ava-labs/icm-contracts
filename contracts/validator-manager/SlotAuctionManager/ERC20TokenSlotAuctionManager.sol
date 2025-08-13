@@ -5,8 +5,8 @@
 
 pragma solidity 0.8.25;
 
-import {PChainOwner} from "./ACP99Manager.sol";
-import {IERC20Mintable} from "./interfaces/IERC20Mintable.sol";
+import {PChainOwner} from "../interfaces/IACP99Manager.sol";
+import {IERC20Mintable} from "../interfaces/IERC20Mintable.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 import {SlotAuctionManager} from "./SlotAuctionManager.sol";
 import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";

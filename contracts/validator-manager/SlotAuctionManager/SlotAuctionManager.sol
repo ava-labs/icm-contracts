@@ -5,8 +5,8 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager, ValidatorChurnPeriod} from "./interfaces/IValidatorManager.sol";
-import {PChainOwner} from "./interfaces/IACP99Manager.sol";
+import {IValidatorManager, ValidatorChurnPeriod} from "../interfaces/IValidatorManager.sol";
+import {PChainOwner} from "../interfaces/IACP99Manager.sol";
 import {
     ISlotAuctionManager,
     ValidatorBid,
@@ -218,7 +218,12 @@ abstract contract SlotAuctionManager is
         // as a validator between the end of the auction and the validators end time.
         bool safeMode = false;
         ( , uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod)= $._manager.getChurnTracker();
-        if (maxChurnPercentage * churnPeriod.initialWeight < 
+        uint64 initialWeight = churnPeriod.initialWeight;
+        // Makes sure initial weight isn't 0, which causes auction to always give vouchers
+        if (churnPeriod.churnAmount == 0) {
+            initialWeight = churnPeriod.totalWeight;
+        }
+        if (maxChurnPercentage * initialWeight < 
             (churnPeriod.churnAmount + (Heap.length($._bids) * $._auctioningValidatorWeight)) * 100) {
                 safeMode = true;
             }
@@ -229,14 +234,15 @@ abstract contract SlotAuctionManager is
             ValidatorBid memory bidInfo = $._bidderInfo[currentBid];
             delete $._bidderInfo[currentBid];
             delete $._nodeIsQualified[bidInfo.nodeID];
+            uint256 validatorEndTime = $._minValidatorDuration + $._auctionEndTime;
             // sends back extra tokens due to second price
             if (currentBid - $._secondPrice != 0) {
                 _unlock(bidInfo.addr, currentBid - $._secondPrice);
             }
             if (safeMode) {
-                $._vouchers[node] = ValidatorVoucher({
+                $._vouchers[bidInfo.nodeID] = ValidatorVoucher({
                     addr: bidInfo.addr,
-                    endTime: $._minValidatorDuration + $._auctionEndTime,
+                    endTime: validatorEndTime,
                     registrationEndTime: $._auctionCooldownEndtime,
                     nodeID: bidInfo.nodeID,
                     blsPublicKey: bidInfo.blsPublicKey,
@@ -247,37 +253,23 @@ abstract contract SlotAuctionManager is
                 emit AuctionVoucherCreated(
                     bidInfo.nodeID, 
                     bidInfo.addr, 
-                    $._minValidatorDuration + $._auctionEndTime, 
+                    validatorEndTime, 
                     $._auctioningValidatorWeight
                 );
             }
             else {
-                ++$._occupiedValidatorSlots;
-                bytes32 validationID = $._manager.initiateValidatorRegistration(
-                    bidInfo.nodeID,
-                    bidInfo.blsPublicKey,
-                    bidInfo.remainingBalanceOwner,
-                    bidInfo.disableOwner,
-                    $._auctioningValidatorWeight
-                );
-                emit InitiatedAuctionValidatorRegistration(
-                    validationID,
-                    bidInfo.addr,
-                    $._minValidatorDuration + $._auctionEndTime,
-                    $._auctioningValidatorWeight
-                );
-                $._validatorsByValidationID[validationID] = ValidatorInfo({
+                bytes32 validationID = _initiateValidatorRegistration({
                     addr: bidInfo.addr,
-                    endTime: $._minValidatorDuration + $._auctionEndTime,
                     nodeID: bidInfo.nodeID,
+                    endTime: validatorEndTime,
                     blsPublicKey: bidInfo.blsPublicKey,
-                    validationID: validationID,
+                    remainingBalanceOwner: bidInfo.remainingBalanceOwner,
+                    disableOwner: bidInfo.disableOwner,
                     weight: $._auctioningValidatorWeight
                 });
             }
             $._secondPrice = currentBid;
         }
-
         $._auctionEndTime = 0;
         $._auctioningValidatorSlots = 0;
         $._auctionState = AuctionState.NoAuction;
@@ -293,31 +285,53 @@ abstract contract SlotAuctionManager is
         if (block.timestamp > voucher.registrationEndTime) {
             revert VaidatorRegistrationTimePeriodOver(voucher.registrationEndTime, block.timestamp, voucher.nodeID);
         }
+
+        bytes32 validationID = _initiateValidatorRegistration({
+            addr: voucher.addr, 
+            nodeID: voucher.nodeID, 
+            endTime: voucher.endTime, 
+            blsPublicKey: voucher.blsPublicKey, 
+            remainingBalanceOwner: voucher.remainingBalanceOwner, 
+            disableOwner: voucher.disableOwner, 
+            weight: voucher.weight
+        });
+        return validationID;
+    }
+
+    function _initiateValidatorRegistration (
+        address addr,
+        bytes memory nodeID,
+        uint256 endTime,
+        bytes memory blsPublicKey,
+        PChainOwner memory remainingBalanceOwner,
+        PChainOwner memory disableOwner,
+        uint64 weight
+    ) internal returns (bytes32) {
+        SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
+
         ++$._occupiedValidatorSlots;
         bytes32 validationID = $._manager.initiateValidatorRegistration(
-            voucher.nodeID, 
-            voucher.blsPublicKey, 
-            voucher.remainingBalanceOwner, 
-            voucher.disableOwner, 
-            voucher.weight
-        );
-
-        emit InitiatedAuctionVoucherValidatorRegistration(
-            validationID,
-            voucher.addr,
-            voucher.endTime,
-            voucher.weight
+            nodeID,
+            blsPublicKey,
+            remainingBalanceOwner,
+            disableOwner,
+            weight
         );
 
         $._validatorsByValidationID[validationID] = ValidatorInfo({
-            addr: voucher.addr,
-            endTime: voucher.endTime,
-            nodeID: voucher.nodeID,
-            blsPublicKey: voucher.blsPublicKey,
+            addr: addr,
+            endTime: endTime,
+            nodeID: nodeID,
+            blsPublicKey: blsPublicKey,
             validationID: validationID,
-            weight: voucher.weight
+            weight: weight
         });
-
+        emit InitiatedAuctionValidatorRegistration(
+            validationID,
+            addr,
+            endTime,
+            $._auctioningValidatorWeight
+        );
         return validationID;
     }
 

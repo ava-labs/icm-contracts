@@ -5,7 +5,7 @@
 
 pragma solidity 0.8.25;
 
-import {IValidatorManager} from "../interfaces/IValidatorManager.sol";
+import {IValidatorManager} from "../../interfaces/IValidatorManager.sol";
 import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.sol"; //not sure why it doesnt like relative path
 
 /**
@@ -116,7 +116,7 @@ interface ISlotAuctionManager {
     event BidEvicted(uint256 indexed bid, bytes indexed nodeID);
 
     /**
-     * @notice Event emitted when a validator is registered by auction.
+     * @notice Event emitted when a validator is registered.
      * @param validationID The validationID of the new validator.
      * @param ownerAddress The address of the owner of the nodeID.
      * @param validatorEndTime The end time of the validator.
@@ -136,19 +136,6 @@ interface ISlotAuctionManager {
      */
     event AuctionVoucherCreated(
         bytes indexed nodeID,
-        address indexed ownerAddress,
-        uint256 validatorEndTime,
-        uint64 weight
-    );
-
-    /**
-     * @notice Event emitted when a validator is registered by voucher.
-     * @param validationID The validationID of the new validator.
-     * @param ownerAddress The address of the owner of the nodeID.
-     * @param validatorEndTime The end time of the validator.
-     */
-    event InitiatedAuctionVoucherValidatorRegistration(
-        bytes32 indexed validationID,
         address indexed ownerAddress,
         uint256 validatorEndTime,
         uint64 weight

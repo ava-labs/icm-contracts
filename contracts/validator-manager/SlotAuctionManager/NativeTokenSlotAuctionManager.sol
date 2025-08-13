@@ -5,7 +5,7 @@
 
 pragma solidity 0.8.25;
 
-import {PChainOwner} from "./ACP99Manager.sol";
+import {PChainOwner} from "../interfaces/IACP99Manager.sol";
 import {SlotAuctionManager} from "./SlotAuctionManager.sol";
 import {INativeTokenSlotAuctionManager} from "./interfaces/INativeTokenSlotAuctionManager.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";

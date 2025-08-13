@@ -6,7 +6,7 @@
 pragma solidity 0.8.25;
 
 import {PChainOwner} from "contracts/validator-manager/interfaces/IACP99Manager.sol";
-import {IERC20Mintable} from "./IERC20Mintable.sol";
+import {IERC20Mintable} from "../../interfaces/IERC20Mintable.sol";
 import {ISlotAuctionManager} from "./ISlotAuctionManager.sol";
 
 interface IERC20TokenSlotAuctionManager is ISlotAuctionManager {

@@ -5,10 +5,10 @@
 
 pragma solidity 0.8.25;
 
-import {PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
-import {IValidatorManager, ValidatorManager} from "../ValidatorManager.sol";
-import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
+import {PChainOwner, ConversionData} from "../../interfaces/IACP99Manager.sol";
+import {IValidatorManager, ValidatorManager} from "../../ValidatorManager.sol";
+import {ValidatorMessages} from "../../ValidatorMessages.sol";
+import {ICMInitializable} from "../../../utilities/ICMInitializable.sol";
 import {NativeTokenSlotAuctionManager} from "../NativeTokenSlotAuctionManager.sol";
 import {SlotAuctionManagerSettings} from "../interfaces/ISlotAuctionManager.sol";
 import {SlotAuctionManagerTest} from "./SlotAuctionManagerTests.t.sol";
