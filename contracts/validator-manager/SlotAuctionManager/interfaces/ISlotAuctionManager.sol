@@ -47,7 +47,7 @@ struct ValidatorInfo {
 }
 
 /**
- * @dev Proof of winning an auction. Allows nodeID to be registered as a validator 
+ * @dev Proof of winning an auction. Allows nodeID to be registered as a validator
  */
 struct ValidatorVoucher {
     address addr;
@@ -135,10 +135,7 @@ interface ISlotAuctionManager {
      * @param validatorEndTime The end time of the validator.
      */
     event AuctionVoucherCreated(
-        bytes indexed nodeID,
-        address indexed ownerAddress,
-        uint256 validatorEndTime,
-        uint64 weight
+        bytes indexed nodeID, address indexed ownerAddress, uint256 validatorEndTime, uint64 weight
     );
 
     /**
@@ -157,7 +154,7 @@ interface ISlotAuctionManager {
      */
     function minBidRequired() external returns (uint256);
 
-    function initiateValidatorRegistration (
+    function initiateValidatorRegistration(
         bytes memory nodeID
     ) external returns (bytes32);
 

@@ -42,8 +42,6 @@ abstract contract SlotAuctionManagerTest is ValidatorManagerFunctionality {
         0x2143214321432143214321432143214321432143,
         0x1432143214321432143214321432143214321432
     ];
-    bytes public constant DEFAULT_CHURN_UPDATE_NODEID = 
-        bytes(hex"5634563456345634563456345634563456345634");
     bytes[4] public DEFAULT_BIDDING_VALIDATOR_NODEIDS = [
         bytes(hex"4123412341234123412341234123412341234123"),
         bytes(hex"2345234523452345234523452345234523452345"),
@@ -74,10 +72,7 @@ abstract contract SlotAuctionManagerTest is ValidatorManagerFunctionality {
     );
 
     event AuctionVoucherCreated(
-        bytes indexed nodeID,
-        address indexed ownerAddress,
-        uint256 validatorEndTime,
-        uint64 weight
+        bytes indexed nodeID, address indexed ownerAddress, uint256 validatorEndTime, uint64 weight
     );
 
     function setUp() public virtual override {
@@ -577,8 +572,6 @@ abstract contract SlotAuctionManagerTest is ValidatorManagerFunctionality {
         );
     }
 
-    
-    
     function _setUp() internal virtual;
 
     function _beforeBid(uint256 amount, address spender) internal virtual;

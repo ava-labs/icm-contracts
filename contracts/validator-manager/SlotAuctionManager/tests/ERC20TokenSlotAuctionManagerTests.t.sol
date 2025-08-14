@@ -32,7 +32,6 @@ contract ERC20TokenSlotAuctionManagerTest is SlotAuctionManagerTest {
         bytes32 conversionID = sha256(ValidatorMessages.packConversionData(conversion));
         _mockInitializeValidatorSet(conversionID);
         validatorManager.initializeValidatorSet(conversion, 0);
-        _inititalValidatorUpdateChurnTracker();
     }
 
     function testInsufficientBalance() public {

@@ -98,7 +98,7 @@ abstract contract SlotAuctionManager is
     error InvalidMinValidatorDuration(uint256 minimumValidationDuration);
     error ZeroAddress();
     error ZeroMinBid();
-    error VaidatorRegistrationTimePeriodOver(uint256 endTime, uint256 currentTime, bytes nodeID); 
+    error VaidatorRegistrationTimePeriodOver(uint256 endTime, uint256 currentTime, bytes nodeID);
 
     // solhint-disable ordering
 
@@ -182,10 +182,10 @@ abstract contract SlotAuctionManager is
         // Gets maximum amount of validators that are able to be auctioned off without triggering churn.
         // There is still the possibility churn is triggered due to the ending of an auction potentially happening
         // in a different churn period.
-        ( , uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod)= $._manager.getChurnTracker();
-        uint64 maxValidatorSlotsBeforeChurn = (
-            (maxChurnPercentage / 2) * churnPeriod.totalWeight
-        ) / ($._auctioningValidatorWeight * 100);
+        (, uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod) =
+            $._manager.getChurnTracker();
+        uint64 maxValidatorSlotsBeforeChurn = ((maxChurnPercentage / 2) * churnPeriod.totalWeight)
+            / ($._auctioningValidatorWeight * 100);
 
         if (maxValidatorSlotsBeforeChurn == 0) {
             revert ValidatorWeightTooHigh($._auctioningValidatorWeight);
@@ -217,16 +217,20 @@ abstract contract SlotAuctionManager is
         // will end the auction by distributing vouchers, which allows anyone to register the nodeID
         // as a validator between the end of the auction and the validators end time.
         bool safeMode = false;
-        ( , uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod)= $._manager.getChurnTracker();
+        (, uint8 maxChurnPercentage, ValidatorChurnPeriod memory churnPeriod) =
+            $._manager.getChurnTracker();
         uint64 initialWeight = churnPeriod.initialWeight;
         // Makes sure initial weight isn't 0, which causes auction to always give vouchers
         if (churnPeriod.churnAmount == 0) {
             initialWeight = churnPeriod.totalWeight;
         }
-        if (maxChurnPercentage * initialWeight < 
-            (churnPeriod.churnAmount + (Heap.length($._bids) * $._auctioningValidatorWeight)) * 100) {
-                safeMode = true;
-            }
+        if (
+            maxChurnPercentage * initialWeight
+                < (churnPeriod.churnAmount + (Heap.length($._bids) * $._auctioningValidatorWeight))
+                    * 100
+        ) {
+            safeMode = true;
+        }
 
         $._auctionCooldownEndtime = block.timestamp + $._auctionCooldownDuration;
         while (Heap.length($._bids) > 0) {
@@ -248,17 +252,13 @@ abstract contract SlotAuctionManager is
                     blsPublicKey: bidInfo.blsPublicKey,
                     weight: $._auctioningValidatorWeight,
                     remainingBalanceOwner: bidInfo.remainingBalanceOwner,
-                    disableOwner: bidInfo.disableOwner            
+                    disableOwner: bidInfo.disableOwner
                 });
                 emit AuctionVoucherCreated(
-                    bidInfo.nodeID, 
-                    bidInfo.addr, 
-                    validatorEndTime, 
-                    $._auctioningValidatorWeight
+                    bidInfo.nodeID, bidInfo.addr, validatorEndTime, $._auctioningValidatorWeight
                 );
-            }
-            else {
-                bytes32 validationID = _initiateValidatorRegistration({
+            } else {
+                _initiateValidatorRegistration({
                     addr: bidInfo.addr,
                     nodeID: bidInfo.nodeID,
                     endTime: validatorEndTime,
@@ -275,30 +275,32 @@ abstract contract SlotAuctionManager is
         $._auctionState = AuctionState.NoAuction;
     }
 
-    function initiateValidatorRegistration (
+    function initiateValidatorRegistration(
         bytes memory nodeID
-    ) external returns (bytes32){
+    ) external returns (bytes32) {
         SlotAuctionManagerStorage storage $ = _getSlotAuctionManagerStorage();
         ValidatorVoucher memory voucher = $._vouchers[nodeID];
         delete $._vouchers[nodeID];
 
         if (block.timestamp > voucher.registrationEndTime) {
-            revert VaidatorRegistrationTimePeriodOver(voucher.registrationEndTime, block.timestamp, voucher.nodeID);
+            revert VaidatorRegistrationTimePeriodOver(
+                voucher.registrationEndTime, block.timestamp, voucher.nodeID
+            );
         }
 
         bytes32 validationID = _initiateValidatorRegistration({
-            addr: voucher.addr, 
-            nodeID: voucher.nodeID, 
-            endTime: voucher.endTime, 
-            blsPublicKey: voucher.blsPublicKey, 
-            remainingBalanceOwner: voucher.remainingBalanceOwner, 
-            disableOwner: voucher.disableOwner, 
+            addr: voucher.addr,
+            nodeID: voucher.nodeID,
+            endTime: voucher.endTime,
+            blsPublicKey: voucher.blsPublicKey,
+            remainingBalanceOwner: voucher.remainingBalanceOwner,
+            disableOwner: voucher.disableOwner,
             weight: voucher.weight
         });
         return validationID;
     }
 
-    function _initiateValidatorRegistration (
+    function _initiateValidatorRegistration(
         address addr,
         bytes memory nodeID,
         uint256 endTime,
@@ -311,11 +313,7 @@ abstract contract SlotAuctionManager is
 
         ++$._occupiedValidatorSlots;
         bytes32 validationID = $._manager.initiateValidatorRegistration(
-            nodeID,
-            blsPublicKey,
-            remainingBalanceOwner,
-            disableOwner,
-            weight
+            nodeID, blsPublicKey, remainingBalanceOwner, disableOwner, weight
         );
 
         $._validatorsByValidationID[validationID] = ValidatorInfo({
@@ -327,10 +325,7 @@ abstract contract SlotAuctionManager is
             weight: weight
         });
         emit InitiatedAuctionValidatorRegistration(
-            validationID,
-            addr,
-            endTime,
-            $._auctioningValidatorWeight
+            validationID, addr, endTime, $._auctioningValidatorWeight
         );
         return validationID;
     }

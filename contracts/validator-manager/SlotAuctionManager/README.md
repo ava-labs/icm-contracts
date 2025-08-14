@@ -45,3 +45,8 @@ No rewards will be given for winning an auction, the only way validators should 
 
 # Important notes
 The SAVM could be the only validator manager on an L1, but it is highly recommended against it. The possibility of an L1 takeover, especially on smaller ones, is too high, since it is not possible to detect who owns what nodeIDs. Therefore it is recommended to run the SAVM alongside a separate validator manager, specifically staking which will allow plenty of other validators to validate the L1.
+
+# Things to fix/Implement
+Currently the SAVM does not support pipelining auctions, this is where the auction will end before the slots are open, in preparation for the old slots to be removed. The current implementation of the SAVM has that in mind.
+
+There is currently no incentive for a validator to remove themselves, while it is possible for someone else to remove the validator after their time period is over, it is a better idea to make the owners remove themselves if possible.

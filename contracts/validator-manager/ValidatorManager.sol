@@ -25,7 +25,6 @@ import {Initializable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
 import {ICMInitializable} from "@utilities/ICMInitializable.sol";
 
-
 /**
  * @notice Validator Manager settings, used to initialize the Validator Manager
  * @param The subnetID is the ID of the L1 that the Validator Manager is managing
