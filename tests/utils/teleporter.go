@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/ava-labs/avalanchego/ids"
+	"github.com/ava-labs/avalanchego/vms/evm/predicate"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
 	validatorsetsig "github.com/ava-labs/icm-contracts/abi-bindings/go/governance/ValidatorSetSig"
@@ -28,7 +29,6 @@ import (
 	"github.com/ava-labs/libevm/log"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-	predicateutils "github.com/ava-labs/subnet-evm/predicate"
 	"github.com/ava-labs/subnet-evm/rpc"
 	. "github.com/onsi/gomega"
 )
@@ -701,7 +701,7 @@ func CreateReceiveCrossChainMessageTransaction(
 	gasLimit, err := gasUtils.CalculateReceiveMessageGasLimit(
 		numSigners,
 		requiredGasLimit,
-		len(signedMessage.Bytes()),
+		len(predicate.New(signedMessage.Bytes())),
 		len(signedMessage.Payload),
 		len(teleporterMessage.Receipts),
 	)
@@ -712,19 +712,22 @@ func CreateReceiveCrossChainMessageTransaction(
 
 	gasFeeCap, gasTipCap, nonce := CalculateTxParams(ctx, l1Info, PrivateKeyToAddress(senderKey))
 
-	destinationTx := predicateutils.NewPredicateTx(
-		l1Info.EVMChainID,
-		nonce,
-		&teleporterContractAddress,
-		gasLimit,
-		gasFeeCap,
-		gasTipCap,
-		big.NewInt(0),
-		callData,
-		types.AccessList{},
-		warp.ContractAddress,
-		signedMessage.Bytes(),
-	)
+	destinationTx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   l1Info.EVMChainID,
+		Nonce:     nonce,
+		To:        &teleporterContractAddress,
+		Gas:       gasLimit,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Value:     common.Big0,
+		Data:      callData,
+		AccessList: types.AccessList{
+			{
+				Address:     warp.ContractAddress,
+				StorageKeys: predicate.New(signedMessage.Bytes()),
+			},
+		},
+	})
 
 	return SignTransaction(destinationTx, senderKey, l1Info.EVMChainID)
 }
@@ -746,19 +749,22 @@ func CreateAddProtocolVersionTransaction(
 
 	gasFeeCap, gasTipCap, nonce := CalculateTxParams(ctx, l1Info, PrivateKeyToAddress(senderKey))
 
-	destinationTx := predicateutils.NewPredicateTx(
-		l1Info.EVMChainID,
-		nonce,
-		&teleporterRegistryAddress,
-		500_000,
-		gasFeeCap,
-		gasTipCap,
-		big.NewInt(0),
-		callData,
-		types.AccessList{},
-		warp.ContractAddress,
-		signedMessage.Bytes(),
-	)
+	destinationTx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   l1Info.EVMChainID,
+		Nonce:     nonce,
+		To:        &teleporterRegistryAddress,
+		Gas:       500_000,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Value:     common.Big0,
+		Data:      callData,
+		AccessList: types.AccessList{
+			{
+				Address:     warp.ContractAddress,
+				StorageKeys: predicate.New(signedMessage.Bytes()),
+			},
+		},
+	})
 
 	return SignTransaction(destinationTx, senderKey, l1Info.EVMChainID)
 }
@@ -777,19 +783,22 @@ func CreateExecuteCallPredicateTransaction(
 
 	gasFeeCap, gasTipCap, nonce := CalculateTxParams(ctx, l1Info, PrivateKeyToAddress(senderKey))
 
-	destinationTx := predicateutils.NewPredicateTx(
-		l1Info.EVMChainID,
-		nonce,
-		&validatorSetSigAddress,
-		500_000,
-		gasFeeCap,
-		gasTipCap,
-		big.NewInt(0),
-		callData,
-		types.AccessList{},
-		warp.ContractAddress,
-		signedMessage.Bytes(),
-	)
+	destinationTx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   l1Info.EVMChainID,
+		Nonce:     nonce,
+		To:        &validatorSetSigAddress,
+		Gas:       500_000,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Value:     common.Big0,
+		Data:      callData,
+		AccessList: types.AccessList{
+			{
+				Address:     warp.ContractAddress,
+				StorageKeys: predicate.New(signedMessage.Bytes()),
+			},
+		},
+	})
 	return SignTransaction(destinationTx, senderKey, l1Info.EVMChainID)
 }
 

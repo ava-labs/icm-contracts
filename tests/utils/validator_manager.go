@@ -15,6 +15,7 @@ import (
 	"github.com/ava-labs/avalanchego/proto/pb/platformvm"
 	"github.com/ava-labs/avalanchego/utils/crypto/bls"
 	"github.com/ava-labs/avalanchego/utils/units"
+	"github.com/ava-labs/avalanchego/vms/evm/predicate"
 	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	warpMessage "github.com/ava-labs/avalanchego/vms/platformvm/warp/message"
 	warpPayload "github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
@@ -34,7 +35,6 @@ import (
 	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
-	predicateutils "github.com/ava-labs/subnet-evm/predicate"
 	subnetEvmUtils "github.com/ava-labs/subnet-evm/tests/utils"
 	"github.com/ava-labs/subnet-evm/warp/messages"
 	"google.golang.org/protobuf/proto"
@@ -534,19 +534,24 @@ func CallWarpReceiver(
 	signedMessageBytes []byte,
 ) *types.Receipt {
 	gasFeeCap, gasTipCap, nonce := CalculateTxParams(ctx, l1, PrivateKeyToAddress(senderKey))
-	registrationTx := predicateutils.NewPredicateTx(
-		l1.EVMChainID,
-		nonce,
-		&contract,
-		2_000_000,
-		gasFeeCap,
-		gasTipCap,
-		big.NewInt(0),
-		callData,
-		types.AccessList{},
-		warp.ContractAddress,
-		signedMessageBytes,
-	)
+
+	registrationTx := types.NewTx(&types.DynamicFeeTx{
+		ChainID:   l1.EVMChainID,
+		Nonce:     nonce,
+		To:        &contract,
+		Gas:       2_000_000,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Value:     common.Big0,
+		Data:      callData,
+		AccessList: types.AccessList{
+			{
+				Address:     warp.ContractAddress,
+				StorageKeys: predicate.New(signedMessageBytes),
+			},
+		},
+	})
+
 	signedRegistrationTx := SignTransaction(registrationTx, senderKey, l1.EVMChainID)
 	return SendTransactionAndWaitForSuccess(ctx, l1, signedRegistrationTx)
 }

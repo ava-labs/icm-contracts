@@ -32,7 +32,7 @@ const (
 func CalculateReceiveMessageGasLimit(
 	numSigners int,
 	executionRequiredGasLimit *big.Int,
-	warpMessageSize int,
+	numPredicateChunks int,
 	teleporterMessageSize int,
 	teleporterReceiptsCount int,
 ) (uint64, error) {
@@ -44,7 +44,7 @@ func CalculateReceiveMessageGasLimit(
 		executionRequiredGasLimit.Uint64(),
 		// The variable gas on message bytes is accounted for both when used in predicate verification
 		// and also when used in `getVerifiedWarpMessage`
-		uint64(warpMessageSize) * warp.GasCostPerWarpMessageBytes * 2,
+		uint64(numPredicateChunks) * warp.GasCostPerWarpMessageChunk * 2,
 		// Take into the variable gas cost for decoding the Teleporter message
 		// and marking the receipts as received.
 		uint64(teleporterMessageSize) * DecodeMessageGasCostPerByte,
