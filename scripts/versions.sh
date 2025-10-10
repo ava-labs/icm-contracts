@@ -34,9 +34,10 @@ function extract_commit() {
 ICM_SERVICES_VERSION=${ICM_SERVICES_VERSION:-'e4905d8434ba7ca7500e9b2fbbbe59164d8e2abb'}
 
 # Don't export them as they're used in the context of other calls
-AVALANCHEGO_VERSION=${AVALANCHEGO_VERSION:-$(extract_commit "$(getDepVersion github.com/ava-labs/avalanchego)")}
-SUBNET_EVM_VERSION=${SUBNET_EVM_VERSION:-$(extract_commit "$(getDepVersion github.com/ava-labs/subnet-evm)")}
-
+# AVALANCHEGO_VERSION=${AVALANCHEGO_VERSION:-$(extract_commit "$(getDepVersion github.com/ava-labs/avalanchego)")}
+AVALANCHEGO_VERSION=${AVALANCHEGO_VERSION:-'7fd85c437985a57731a271c28ea5ed3d25c089e6'}
+# SUBNET_EVM_VERSION=${SUBNET_EVM_VERSION:-$(extract_commit "$(getDepVersion github.com/ava-labs/subnet-evm)")}
+SUBNET_EVM_VERSION=${SUBNET_EVM_VERSION:-'d3bb8a5868c5ebbee8876840e9bd6eb5636adf8a'}
 
 # Set golangci-lint version
 GOLANGCI_LINT_VERSION=${GOLANGCI_LINT_VERSION:-'v1.64.5'}
