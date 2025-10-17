@@ -16,10 +16,7 @@ import {
 } from "./interfaces/IStakingManager.sol";
 import {Validator, ValidatorStatus, PChainOwner} from "./interfaces/IACP99Manager.sol";
 import {IRewardCalculator} from "./interfaces/IRewardCalculator.sol";
-import {
-    IWarpMessenger,
-    WarpMessage
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {IWarpMessenger, WarpMessage} from "@subnet-evm/IWarpMessenger.sol";
 import {ReentrancyGuardUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/utils/ReentrancyGuardUpgradeable.sol";
 import {ContextUpgradeable} from

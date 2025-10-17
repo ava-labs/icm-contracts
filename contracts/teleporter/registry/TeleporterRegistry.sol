@@ -6,10 +6,7 @@
 pragma solidity 0.8.25;
 
 import {ITeleporterMessenger} from "@teleporter/ITeleporterMessenger.sol";
-import {
-    IWarpMessenger,
-    WarpMessage
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {IWarpMessenger, WarpMessage} from "@subnet-evm/IWarpMessenger.sol";
 
 // Registry entry that represents a mapping between protocolAddress and Teleporter version.
 struct ProtocolRegistryEntry {

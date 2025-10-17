@@ -12,8 +12,7 @@ import {TokenRemote} from "../TokenRemote/TokenRemote.sol";
 import {NativeTokenRemoteUpgradeable} from "../TokenRemote/NativeTokenRemoteUpgradeable.sol";
 import {NativeTokenRemote} from "../TokenRemote/NativeTokenRemote.sol";
 import {TokenRemoteSettings} from "../TokenRemote/interfaces/ITokenRemote.sol";
-import {INativeMinter} from
-    "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/INativeMinter.sol";
+import {INativeMinter} from "@subnet-evm/INativeMinter.sol";
 import {
     ITeleporterMessenger,
     TeleporterMessageInput,

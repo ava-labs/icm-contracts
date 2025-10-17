@@ -15,10 +15,7 @@ import {
     ValidatorStatus
 } from "./interfaces/IACP99Manager.sol";
 import {ACP99Manager} from "./ACP99Manager.sol";
-import {
-    IWarpMessenger,
-    WarpMessage
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {IWarpMessenger, WarpMessage} from "@subnet-evm/IWarpMessenger.sol";
 import {OwnableUpgradeable} from
     "@openzeppelin/contracts-upgradeable@5.0.2/access/OwnableUpgradeable.sol";
 import {Initializable} from

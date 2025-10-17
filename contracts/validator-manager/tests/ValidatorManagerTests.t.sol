@@ -10,10 +10,7 @@ import {
     IValidatorManager, ValidatorManager, ValidatorManagerSettings
 } from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {
-    WarpMessage,
-    IWarpMessenger
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
 import {
     IACP99Manager,
     ConversionData,
@@ -403,7 +400,7 @@ abstract contract ValidatorManagerTest is Test {
 
     function testCumulativeChurnRegistration() public {
         uint64 churnThreshold =
-            uint64(DEFAULT_STARTING_TOTAL_WEIGHT) * DEFAULT_MAXIMUM_CHURN_PERCENTAGE / 100;
+            (uint64(DEFAULT_STARTING_TOTAL_WEIGHT) * DEFAULT_MAXIMUM_CHURN_PERCENTAGE) / 100;
         _beforeSend(_weightToValue(churnThreshold), address(this));
 
         // First registration should succeed
@@ -446,7 +443,7 @@ abstract contract ValidatorManagerTest is Test {
         });
 
         uint64 churnThreshold =
-            uint64(DEFAULT_STARTING_TOTAL_WEIGHT) * DEFAULT_MAXIMUM_CHURN_PERCENTAGE / 100;
+            (uint64(DEFAULT_STARTING_TOTAL_WEIGHT) * DEFAULT_MAXIMUM_CHURN_PERCENTAGE) / 100;
         _beforeSend(_weightToValue(churnThreshold), address(this));
 
         vm.warp(block.timestamp + 1 days + 1);

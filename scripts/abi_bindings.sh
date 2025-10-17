@@ -184,10 +184,6 @@ contract_names=($PROXY_LIST)
 cd $ICM_CONTRACTS_PATH/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/transparent
 generate_bindings "${contract_names[@]}"
 
-contract_names=($SUBNET_EVM_LIST)
-cd $ICM_CONTRACTS_PATH/lib/subnet-evm/contracts/contracts/interfaces
-generate_bindings "${contract_names[@]}"
-
 contract_names=($ACCESS_LIST)
 cd $ICM_CONTRACTS_PATH/lib/openzeppelin-contracts-upgradeable/contracts/access
 generate_bindings "${contract_names[@]}"

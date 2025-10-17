@@ -7,10 +7,7 @@ pragma solidity 0.8.25;
 
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
-import {
-    WarpMessage,
-    IWarpMessenger
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
 import {
     TeleporterMessageReceipt,
     TeleporterMessageInput,
@@ -369,9 +366,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         // Clear the failed message hash from state prior to retrying its execution to redundantly prevent
         // reentrance attacks (on top of the nonReentrant guard).
         emit MessageExecuted(messageID, sourceBlockchainID);
-        delete receivedFailedMessageHashes[
-            messageID
-        ];
+        delete receivedFailedMessageHashes[messageID];
 
         // Re-encode the payload by ABI encoding a call to the {receiveTeleporterMessage} function
         // defined by the {ITeleporterReceiver} interface.

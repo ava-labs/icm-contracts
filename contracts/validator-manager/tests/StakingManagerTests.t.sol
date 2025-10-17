@@ -11,10 +11,7 @@ import {StakingManager} from "../StakingManager.sol";
 import {DelegatorStatus, StakingManagerSettings} from "../interfaces/IStakingManager.sol";
 import {IValidatorManager, ValidatorManager, ValidatorStatus} from "../ValidatorManager.sol";
 import {ValidatorMessages} from "../ValidatorMessages.sol";
-import {
-    WarpMessage,
-    IWarpMessenger
-} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
 import {PChainOwner} from "../ACP99Manager.sol";
 
 abstract contract StakingManagerTest is ValidatorManagerTest {
@@ -725,7 +722,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
             uptimeSeconds: DEFAULT_COMPLETION_TIMESTAMP - DEFAULT_REGISTRATION_TIMESTAMP
         });
 
-        uint256 expectedDelegationFee = expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS / 10000;
+        uint256 expectedDelegationFee = (expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS) / 10000;
 
         vm.expectEmit(true, true, true, true, address(stakingManager));
         emit ValidatorRewardClaimed(validationID, address(this), expectedDelegationFee);
@@ -757,7 +754,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
             uptimeSeconds: DEFAULT_COMPLETION_TIMESTAMP - DEFAULT_REGISTRATION_TIMESTAMP
         });
 
-        uint256 expectedDelegationFee = expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS / 10000;
+        uint256 expectedDelegationFee = (expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS) / 10000;
 
         // Change the reward recipient to a different address
         address newRewardRecipient = address(43);
@@ -1188,7 +1185,7 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
             uptimeSeconds: DEFAULT_COMPLETION_TIMESTAMP - DEFAULT_REGISTRATION_TIMESTAMP
         });
 
-        uint256 expectedValidatorFees = expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS / 10000;
+        uint256 expectedValidatorFees = (expectedTotalReward * DEFAULT_DELEGATION_FEE_BIPS) / 10000;
         uint256 expectedDelegatorReward = expectedTotalReward - expectedValidatorFees;
 
         // completeDelegatorRegistration should fall through to _completeDelegatorRemoval and refund the stake
@@ -2701,6 +2698,6 @@ abstract contract StakingManagerTest is ValidatorManagerTest {
         uint256 totalReward,
         uint64 delegationFeeBips
     ) internal pure returns (uint256) {
-        return totalReward * delegationFeeBips / 10000;
+        return (totalReward * delegationFeeBips) / 10000;
     }
 }

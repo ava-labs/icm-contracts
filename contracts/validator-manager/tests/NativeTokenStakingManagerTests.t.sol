@@ -11,8 +11,7 @@ import {NativeTokenStakingManager} from "../NativeTokenStakingManager.sol";
 import {StakingManager, StakingManagerSettings} from "../StakingManager.sol";
 import {ExampleRewardCalculator} from "../ExampleRewardCalculator.sol";
 import {ICMInitializable} from "../../utilities/ICMInitializable.sol";
-import {INativeMinter} from
-    "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/INativeMinter.sol";
+import {INativeMinter} from "@subnet-evm/INativeMinter.sol";
 import {ValidatorManagerTest} from "./ValidatorManagerTests.t.sol";
 import {Initializable} from "@openzeppelin/contracts@5.0.2/proxy/utils/Initializable.sol";
 import {IACP99Manager, PChainOwner, ConversionData} from "../interfaces/IACP99Manager.sol";
