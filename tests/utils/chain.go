@@ -438,8 +438,13 @@ func GetPChainInfo(cChainInfo interfaces.L1TestInfo) interfaces.L1TestInfo {
 	pChainBlockchainID, err := info.NewClient(cChainInfo.NodeURIs[0]).GetBlockchainID(context.Background(), "P")
 	Expect(err).Should(BeNil())
 	return interfaces.L1TestInfo{
-		BlockchainID: pChainBlockchainID,
-		SubnetID:     ids.Empty,
+		BlockchainID:                 pChainBlockchainID,
+		SubnetID:                     cChainInfo.SubnetID,
+		NodeURIs:                     cChainInfo.NodeURIs,
+		WSClient:                     cChainInfo.WSClient,
+		RPCClient:                    cChainInfo.RPCClient,
+		EVMChainID:                   cChainInfo.EVMChainID,
+		RequirePrimaryNetworkSigners: cChainInfo.RequirePrimaryNetworkSigners,
 	}
 }
 
@@ -638,6 +643,7 @@ func GetSignedMessage(
 		justification,
 		signingSubnetID,
 		warp.WarpDefaultQuorumNumerator,
+		destination,
 	)
 	Expect(err).Should(BeNil())
 

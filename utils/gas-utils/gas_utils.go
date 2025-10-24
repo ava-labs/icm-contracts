@@ -17,7 +17,7 @@ import (
 const (
 	MarkMessageReceiptGasCost   uint64 = 2500
 	DecodeMessageGasCostPerByte uint64 = 35
-	TeleporterOverheadGasCost   uint64 = 250_000
+	TeleporterOverheadGasCost   uint64 = 1000_000
 
 	BaseFeeFactor        = 2
 	MaxPriorityFeePerGas = 2500000000 // 2.5 gwei

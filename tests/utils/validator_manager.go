@@ -322,6 +322,7 @@ func InitializeValidatorSet(
 	}
 	l1ConversionID, err := warpMessage.SubnetToL1ConversionID(l1ConversionData)
 	Expect(err).Should(BeNil())
+
 	l1ConversionSignedMessage := ConstructL1ConversionMessage(
 		l1ConversionID,
 		l1Info,
@@ -846,6 +847,7 @@ func ConstructUptimeProofMessage(
 		nil,
 		l1.SubnetID,
 		67,
+		l1,
 	)
 	Expect(err).Should(BeNil())
 	return uptimeProofSignedMessage
@@ -1147,6 +1149,7 @@ func InitiateAndCompleteEndInitialPoSValidation(
 		nil,
 		l1Info.SubnetID,
 		67,
+		l1Info,
 	)
 	Expect(err).Should(BeNil())
 
@@ -1156,7 +1159,7 @@ func InitiateAndCompleteEndInitialPoSValidation(
 	AdvanceProposerVM(ctx, l1Info, fundedKey, 5)
 
 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-	log.Println("Completing initial validator removal")
+	log.Println("Completing initial validator removal POS")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessageForInitialValidator(
 		validationID,
 		index,
@@ -1246,6 +1249,7 @@ func InitiateAndCompleteEndPoSValidation(
 		nil,
 		l1Info.SubnetID,
 		67,
+		l1Info,
 	)
 	Expect(err).Should(BeNil())
 
@@ -1327,6 +1331,7 @@ func InitiateAndCompleteEndInitialPoAValidation(
 		nil,
 		l1Info.SubnetID,
 		67,
+		l1Info,
 	)
 	Expect(err).Should(BeNil())
 
@@ -1336,7 +1341,7 @@ func InitiateAndCompleteEndInitialPoAValidation(
 	AdvanceProposerVM(ctx, l1Info, ownerKey, 5)
 
 	// Construct a L1ValidatorRegistrationMessage Warp message from the P-Chain
-	log.Println("Completing initial validator removal")
+	log.Println("Completing initial validator removal POA")
 	registrationSignedMessage := ConstructL1ValidatorRegistrationMessageForInitialValidator(
 		validationID,
 		index,
@@ -1474,6 +1479,7 @@ func ConstructL1ValidatorRegistrationMessageForInitialValidator(
 		justificationBytes,
 		l1.SubnetID,
 		67,
+		l1,
 	)
 	Expect(err).Should(BeNil())
 
@@ -1524,6 +1530,7 @@ func ConstructL1ValidatorRegistrationMessage(
 		justificationBytes,
 		l1.SubnetID,
 		67,
+		l1,
 	)
 	Expect(err).Should(BeNil())
 
@@ -1555,6 +1562,7 @@ func ConstructL1ValidatorWeightMessage(
 		nil,
 		l1.SubnetID,
 		67,
+		l1,
 	)
 	Expect(err).Should(BeNil())
 	return updateSignedMessage
@@ -1586,6 +1594,7 @@ func ConstructL1ConversionMessage(
 		l1.SubnetID[:],
 		l1.SubnetID,
 		67,
+		l1,
 	)
 	Expect(err).Should(BeNil())
 	return l1ConversionSignedMessage
