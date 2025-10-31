@@ -3,9 +3,9 @@ module github.com/ava-labs/icm-contracts
 go 1.24.9
 
 require (
-	github.com/ava-labs/avalanchego v1.14.0-fuji
+	github.com/ava-labs/avalanchego v1.14.0-fuji-rc.0
 	github.com/ava-labs/libevm v1.13.15-0.20251002164226-35926db4d661
-	github.com/ava-labs/subnet-evm v0.8.0-fuji
+	github.com/ava-labs/subnet-evm v0.8.0-fuji-rc.2
 	github.com/onsi/ginkgo/v2 v2.25.3
 	github.com/onsi/gomega v1.38.2
 	github.com/pkg/errors v0.9.1
