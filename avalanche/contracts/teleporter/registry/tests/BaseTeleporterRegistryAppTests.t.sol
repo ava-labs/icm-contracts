@@ -122,7 +122,7 @@ abstract contract BaseTeleporterRegistryAppTest is TeleporterRegistryTest {
         app.receiveTeleporterMessage(DEFAULT_SOURCE_BLOCKCHAIN_ID, DEFAULT_ORIGIN_ADDRESS, "");
 
         // Now add new protocol version to registry and update the app's min version
-        address newTeleporterAddress = address(new TeleporterMessenger());
+        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
 
         _updateMinTeleporterVersionSuccess(app, teleporterRegistry.latestVersion());

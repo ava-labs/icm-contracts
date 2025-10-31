@@ -6,9 +6,14 @@
 pragma solidity 0.8.25;
 
 import {TeleporterMessenger} from "../TeleporterMessenger.sol";
+import {IWarpMessenger} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {Test} from "@forge-std/Test.sol";
 
-contract CheckIsAllowedRelayerTest is TeleporterMessenger, Test {
+contract CheckIsAllowedRelayerTest is
+    TeleporterMessenger(0x0200000000000000000000000000000000000005),
+    Test
+{
+
     function testIsSpecifiedAllowedRelayer() public pure {
         address relayerAddress = 0x6288dAdf62B57dd9A4ddcd02F88A98d0eb6c2598;
         address[] memory allowedRelayers = new address[](3);

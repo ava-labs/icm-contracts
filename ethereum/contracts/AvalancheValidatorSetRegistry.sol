@@ -12,6 +12,7 @@ import {ICMMessage, AddressedCall} from "./utils/ICM.sol";
 import {ICM} from "./utils/ICM.sol";
 import {BLST} from "./utils/BLST.sol";
 import {ByteComparator} from "./utils/ByteComparator.sol";
+import {IVerifyICMMessage} from "./interfaces/IVerifyWarpMessage.sol";
 
 /**
  * @title AvalancheValidatorSetRegistry
@@ -19,7 +20,10 @@ import {ByteComparator} from "./utils/ByteComparator.sol";
  * @dev This contract allows registration and updates of validator sets for Avalanche blockchains.
  * Updates are authenticated through signed ICM messages from the current validator set.
  */
-contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
+contract AvalancheValidatorSetRegistry is
+    IAvalancheValidatorSetRegistry,
+    IVerifyICMMessage
+{
     uint32 public immutable avalancheNetworkID;
     uint256 public nextValidatorSetID = 0;
 
@@ -78,6 +82,22 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
     ) private view returns (ValidatorSet memory) {
         require(validatorSetID < nextValidatorSetID, "Validator set does not exist");
         return _validatorSets[validatorSetID];
+    }
+
+    /**
+     * @notice Get the current (latest) validator set
+     */
+    function getCurrentValidatorSet() public view returns (ValidatorSet memory) {
+        require(0 < nextValidatorSetID, "No validator sets exist");
+        return _validatorSets[nextValidatorSetID - 1];
+    }
+
+    /**
+     * @notice Get the ID of the current (latest) validator set
+     */
+    function getCurrentValidatorSetID() public view returns (uint256) {
+        require(0 < nextValidatorSetID, "No validator sets exist");
+        return nextValidatorSetID - 1;
     }
 
     /**
@@ -204,11 +224,23 @@ contract AvalancheValidatorSetRegistry is IAvalancheValidatorSetRegistry {
      * @param message The ICM message to verify
      * @return True if the message is valid, false otherwise
      */
-    function verifyICMMessage(
+    function verifyICMMessageWithID(
         uint256 validatorSetID,
         ICMMessage calldata message
     ) external view returns (bool) {
         ValidatorSet memory validatorSet = _getValidatorSet(validatorSetID);
+        return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+    }
+
+    /**
+     * @notice Verify the signatures of an ICM message against the latest validator set.
+     * @param message The ICM message to be verified
+     * @return True if the message is valid, false otherwise
+     */
+    function verifyICMMessage(
+        ICMMessage calldata message
+    ) external view returns (bool) {
+        ValidatorSet memory validatorSet = getCurrentValidatorSet();
         return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
     }
 }

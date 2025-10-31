@@ -31,7 +31,7 @@ contract TeleporterRegistryTest is Test {
         teleporterRegistry = new TeleporterRegistry(new ProtocolRegistryEntry[](0));
         assertEq(0, teleporterRegistry.latestVersion());
 
-        teleporterAddress = address(new TeleporterMessenger());
+        teleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
     }
 
     function testAddProtocolVersionBasic() public {

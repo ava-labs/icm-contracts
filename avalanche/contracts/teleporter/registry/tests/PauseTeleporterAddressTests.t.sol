@@ -59,7 +59,7 @@ abstract contract PauseTeleporterAddressTest is BaseTeleporterRegistryAppTest {
         // Check that a Teleporter address can be paused before it is registered with the registry
 
         // Create a new Teleporter address that is not registered with the registry
-        address newTeleporterAddress = address(new TeleporterMessenger());
+        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
 
         // Pause the new Teleporter address before it is registered
         _pauseTeleporterAddressSuccess(app, newTeleporterAddress);

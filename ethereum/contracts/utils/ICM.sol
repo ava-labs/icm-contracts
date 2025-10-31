@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
+import {WarpMessage} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
 import {BLST} from "./BLST.sol";
 import {ByteSlicer} from "./ByteSlicer.sol";
@@ -81,7 +82,7 @@ library ICM {
 
     function parseICMMessage(
         bytes memory data
-    ) internal pure returns (ICMMessage memory) {
+    ) public pure returns (ICMMessage memory) {
         // Validate the codec ID is 0
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -135,7 +136,6 @@ library ICM {
 
         // Parse the source address length
         uint32 sourceAddressLength = uint32(bytes4(ByteSlicer.slice(data, 6, 4)));
-
         // Parse the source address
         bytes memory sourceAddress = ByteSlicer.slice(data, 10, sourceAddressLength);
 
@@ -218,5 +218,28 @@ library ICM {
             revert("Invalid signature");
         }
         return result;
+    }
+
+    /**
+     * @notice Convert the unsigned part of an ICM message to Warp message. This should
+     * be called after an ICM message has been verified.
+     * @dev This function should only be called when communicating with an external
+     * chain. If used during internal interop, the teleport contracts will reject the
+     * `originSenderAddress`.
+     *
+     * This function loosely reproduces the logic of the handleMessage method used in the
+     * Warp precompile.
+     * @param message The unsigned part of an ICM message
+     * @return A Warp message
+     */
+    function handleMessage(ICMUnsignedMessage memory message) public pure returns (WarpMessage memory) {
+        AddressedCall memory addressedCall = parseAddressedCall(message.payload);
+        return WarpMessage({
+            sourceChainID: message.avalancheSourceBlockchainID,
+            // N.B. This prevents this function from being used for internal interop calls
+            // to teleporter
+            originSenderAddress: address(0),
+            payload: addressedCall.payload
+        });
     }
 }

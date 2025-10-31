@@ -74,7 +74,7 @@ interface IAvalancheValidatorSetRegistry {
      * @param message The ICM message to verify
      * @return True if the message is valid, false otherwise
      */
-    function verifyICMMessage(
+    function verifyICMMessageWithID(
         uint256 validatorSetID,
         ICMMessage calldata message
     ) external view returns (bool);

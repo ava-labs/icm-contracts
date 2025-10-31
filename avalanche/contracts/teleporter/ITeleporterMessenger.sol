@@ -161,6 +161,12 @@ interface ITeleporterMessenger {
     function receiveCrossChainMessage(uint32 messageIndex, address relayerRewardAddress) external;
 
     /**
+     * @notice Receives an inter-chain message, and marks the `relayerRewardAddress` for fee reward for a successful delivery.
+     *
+     */
+    function receiveInterChainMessage(bytes calldata messagePayload, address relayerRewardAddress) external;
+
+    /**
      * @notice Retries the execution of a previously delivered message by verifying the payload matches
      * the hash of the payload originally delivered, and calling the destination address again.
      *
