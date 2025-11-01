@@ -437,10 +437,10 @@ func BigIntMul(v1 *big.Int, v2 *big.Int) *big.Int {
 func GetPChainInfo(cChainInfo interfaces.L1TestInfo) interfaces.L1TestInfo {
 	pChainBlockchainID, err := info.NewClient(cChainInfo.NodeURIs[0]).GetBlockchainID(context.Background(), "P")
 	Expect(err).Should(BeNil())
-	return interfaces.L1TestInfo{
-		BlockchainID: pChainBlockchainID,
-		SubnetID:     ids.Empty,
-	}
+
+	pchainInfo := cChainInfo
+	pchainInfo.BlockchainID = pChainBlockchainID
+	return pchainInfo
 }
 
 type ChainConfigMap map[string]string
@@ -638,6 +638,7 @@ func GetSignedMessage(
 		justification,
 		signingSubnetID,
 		warp.WarpDefaultQuorumNumerator,
+		destination,
 	)
 	Expect(err).Should(BeNil())
 

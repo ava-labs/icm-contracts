@@ -42,6 +42,8 @@ func TestGovernance(t *testing.T) {
 
 // Define the before and after suite functions.
 var _ = ginkgo.BeforeSuite(func() {
+	log.SetDefault(log.NewLogger(log.NewTerminalHandler(os.Stdout, false)))
+
 	// Create the local network instance
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()

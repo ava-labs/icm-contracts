@@ -10,7 +10,7 @@ ICM_CONTRACTS_PATH=$(
 )
 
 function printHelp() {
-    echo "Usage: ./scripts/e2e_test.sh [--component component]"
+    echo "Usage: ./scripts/e2e_test.sh [--components component]"
     echo ""
     printUsage
 }
@@ -25,6 +25,8 @@ Arguments:
                                                   If the directory does not exist or is empty, it will be used as the root network directory for a new network.
                                                   If the directory exists and is non-empty, the network will be reused.
                                                   If not set, a new network will be created at the default root network directory.
+    --epoch-duration duration                      Set the epoch duration for Granite testing
+    --activate-granite                            Activate Granite upgrade for testing
 Options:
     --help                                        Print this help message
 EOF
@@ -35,9 +37,9 @@ components=
 reuse_network_dir=
 root_dir=
 network_dir=
-activate_granite=false
 reuse_network=false
-
+epoch_duration=
+activate_granite=
 while [ $# -gt 0 ]; do
     case "$1" in
         --components)  
@@ -52,6 +54,13 @@ while [ $# -gt 0 ]; do
                 reuse_network_dir=$2
             else 
                 echo "Invalid network directory $2" && printHelp && exit 1
+            fi 
+            shift;;
+        --epoch-duration)
+            if [[ $2 != --* ]]; then
+                epoch_duration=$2
+            else 
+                echo "Invalid epoch duration $2" && printHelp && exit 1
             fi 
             shift;;
         --help) 
@@ -86,6 +95,11 @@ if [ -n "$reuse_network_dir" ]; then
         mkdir -p "$reuse_network_dir"
         root_dir=$reuse_network_dir
     fi
+fi
+
+if [ -n "$epoch_duration" ]; then
+    export GRANITE_EPOCH_DURATION=$epoch_duration
+    echo "GRANITE_EPOCH_DURATION: $GRANITE_EPOCH_DURATION"
 fi
 
 source "$ICM_CONTRACTS_PATH"/scripts/constants.sh
@@ -130,9 +144,9 @@ for component in $(echo $components | tr ',' ' '); do
     echo "Running e2e tests for $component"
 
     RUN_E2E=true SIG_AGG_PATH=$ICM_SERVICES_BUILD_PATH/signature-aggregator ./tests/suites/$component/$component.test \
+    --activate-granite=${activate_granite:-"false"} \
     --root-network-dir=${root_dir} \
     --reuse-network=${reuse_network} \
-    --activate-granite=${activate_granite} \
     --network-dir=${network_dir} \
     --ginkgo.vv \
     --ginkgo.label-filter=${GINKGO_LABEL_FILTER:-""} \

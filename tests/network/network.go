@@ -59,6 +59,12 @@ type LocalNetwork struct {
 	validatorManagerSpecializations map[ids.ID]ProxyAddress
 	logger                          logging.Logger
 	deployedL1Specs                 map[string]L1Spec
+	graniteEpochDuration            time.Duration
+	graniteActivated                bool
+}
+
+func (n *LocalNetwork) IsGraniteActivated() bool {
+	return n.graniteActivated
 }
 
 const (
@@ -216,7 +222,16 @@ func NewLocalNetwork(
 	upgrades := upgrade.Default
 	if flagVars.ActivateGranite() {
 		upgrades.GraniteTime = upgrade.InitiallyActiveTime
-		upgrades.GraniteEpochDuration = 4 * time.Second
+		graniteEpochDuration := 4 * time.Second
+		if envDuration := os.Getenv("GRANITE_EPOCH_DURATION"); envDuration != "" {
+			if parsed, err := time.ParseDuration(envDuration); err == nil {
+				graniteEpochDuration = parsed
+				goLog.Printf("Using Granite epoch duration from environment: %v", graniteEpochDuration)
+			} else {
+				goLog.Printf("Invalid GRANITE_EPOCH_DURATION '%s', using default: %v", envDuration, graniteEpochDuration)
+			}
+		}
+		upgrades.GraniteEpochDuration = graniteEpochDuration
 	} else {
 		upgrades.GraniteTime = upgrade.UnscheduledActivationTime
 	}
@@ -258,6 +273,8 @@ func NewLocalNetwork(
 		validatorManagerSpecializations: make(map[ids.ID]ProxyAddress),
 		logger:                          logger,
 		deployedL1Specs:                 deployedL1Specs,
+		graniteEpochDuration:            upgrades.GraniteEpochDuration,
+		graniteActivated:                flagVars.ActivateGranite(),
 	}
 
 	return localNetwork
@@ -372,11 +389,16 @@ func (n *LocalNetwork) ConvertSubnet(
 
 	l1 = n.AddSubnetValidators(tmpnetNodes, l1, true)
 
-	utils.PChainProposerVMWorkaround(pChainWallet)
-	utils.AdvanceProposerVM(ctx, l1, senderKey, 5)
+	if n.graniteActivated {
+		// Wait for P-Chain to finalize and propagate transactions
+		utils.AdvanceProposerVM(ctx, l1, senderKey, 5)
+		goLog.Println("Waiting for Granite epoch to complete for ", n.graniteEpochDuration)
+		time.Sleep(n.graniteEpochDuration)
+	}
 
 	aggregator := n.GetSignatureAggregator()
 	defer aggregator.Shutdown()
+
 	validationIDs := utils.InitializeValidatorSet(
 		ctx,
 		senderKey,
