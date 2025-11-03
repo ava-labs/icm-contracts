@@ -545,7 +545,7 @@ func CallWarpReceiver(
 		Value:     common.Big0,
 		Data:      callData,
 		AccessList: types.AccessList{
-			{
+			types.AccessTuple{
 				Address:     warp.ContractAddress,
 				StorageKeys: predicate.New(signedMessageBytes),
 			},

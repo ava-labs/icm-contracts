@@ -721,7 +721,7 @@ func CreateReceiveCrossChainMessageTransaction(
 		Value:     common.Big0,
 		Data:      callData,
 		AccessList: types.AccessList{
-			{
+			types.AccessTuple{
 				Address:     warp.ContractAddress,
 				StorageKeys: predicate.New(signedMessage.Bytes()),
 			},
@@ -758,7 +758,7 @@ func CreateAddProtocolVersionTransaction(
 		Value:     common.Big0,
 		Data:      callData,
 		AccessList: types.AccessList{
-			{
+			types.AccessTuple{
 				Address:     warp.ContractAddress,
 				StorageKeys: predicate.New(signedMessage.Bytes()),
 			},
@@ -792,7 +792,7 @@ func CreateExecuteCallPredicateTransaction(
 		Value:     common.Big0,
 		Data:      callData,
 		AccessList: types.AccessList{
-			{
+			types.AccessTuple{
 				Address:     warp.ContractAddress,
 				StorageKeys: predicate.New(signedMessage.Bytes()),
 			},
