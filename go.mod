@@ -6,7 +6,7 @@ require (
 	github.com/ava-labs/avalanchego v1.14.0-fuji
 	github.com/ava-labs/libevm v1.13.15-0.20251002164226-35926db4d661
 	github.com/ava-labs/subnet-evm v0.8.0-fuji
-	github.com/onsi/ginkgo/v2 v2.25.3
+	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
 	github.com/pkg/errors v0.9.1
 	github.com/segmentio/encoding v0.5.3
@@ -146,7 +146,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
-	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
