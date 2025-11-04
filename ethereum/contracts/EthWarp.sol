@@ -37,12 +37,12 @@ contract EthWarp is IWarpExt {
     function getVerifiedMessageFromPayload(
         bytes calldata payload
     ) external view returns (WarpMessage memory warpMessage) {
-        ICMMessage memory icmMessage = abi.decode(payload, (ICMMessage));
+        ICMMessage memory icmMessage = ICM.parseICMMessage(payload);
         require(
             isChainRegistered(icmMessage.unsignedMessage.avalancheSourceBlockchainID),
             "Cannot receive a Warp message from a chain whose validator set is unknown"
         );
-        bool isValid = IVerifyICMMessage(_registeredChains[warpMessage.sourceChainID])
+        bool isValid = IVerifyICMMessage(_registeredChains[icmMessage.unsignedMessage.avalancheSourceBlockchainID])
             .verifyICMMessage(icmMessage);
         require(isValid, "Received an invalid ICM message");
         warpMessage = ICM.handleMessage(icmMessage.unsignedMessage);
@@ -53,17 +53,17 @@ contract EthWarp is IWarpExt {
         revert("Sending Warp messages from Ethereum is not currently supported");
     }
 
-    function getVerifiedWarpMessage(uint32 index) external view returns (WarpMessage calldata message, bool valid) {
+    function getVerifiedWarpMessage(uint32 index) external pure returns (WarpMessage calldata, bool) {
         revert("This method cannot be called on Ethereum, use `getMessageFromPayload` instead");
     }
 
     function getVerifiedWarpBlockHash(
         uint32 index
-    ) external view returns (WarpBlockHash calldata warpBlockHash, bool valid) {
+    ) external pure returns (WarpBlockHash calldata, bool) {
         revert("This method cannot be called on Ethereum");
     }
 
-    function getBlockchainID() external view returns (bytes32 chainID) {
+    function getBlockchainID() external view returns (bytes32) {
         return blockchainID;
     }
 

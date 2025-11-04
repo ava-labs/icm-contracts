@@ -82,4 +82,33 @@ contract BLSTUtilsTest is Test {
         bool valid = BLST.verifyAggregateSignature(pks, sig, message);
         assertTrue(valid);
     }
+
+    function testCreateAndVerifySignature() public  {
+        bytes memory message = "Hello Ethereum, it's Avalanche.";
+        uint256 secretKey = 273952;
+        bytes memory pk = BLST.getPublicKeyFromSecret(secretKey);
+        bytes memory sig = BLST.createSignature(secretKey, message);
+        bool valid = BLST.verifySignature(pk, sig, message);
+        assertTrue(valid);
+        // check that everything works the same when making an aggregate signature with a single secret key
+        uint256[] memory secretKeys = new uint256[](1);
+        secretKeys[0] = secretKey;
+        bytes memory sig_aggregate = BLST.createAggregateSignature(secretKeys, message);
+        assertEq(sig, sig_aggregate);
+        bool valid_aggregate = BLST.verifySignature(pk, sig_aggregate, message);
+        assertTrue(valid);
+    }
+
+    function testCreateAndVerifyAggregateSignature() public  {
+        bytes memory message = "Hello Ethereum, it's Avalanche.";
+        uint256[] memory secretKeys = new uint256[](2);
+        secretKeys[0] = 273952;
+        secretKeys[1] = 93293485;
+        bytes[] memory pks = new bytes[](2);
+        pks[0] = BLST.getPublicKeyFromSecret(secretKeys[0]);
+        pks[1] = BLST.getPublicKeyFromSecret(secretKeys[1]);
+        bytes memory sig = BLST.createAggregateSignature(secretKeys, message);
+        bool valid = BLST.verifyAggregateSignature(pks, sig, message);
+        assertTrue(valid);
+    }
 }

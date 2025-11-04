@@ -68,6 +68,39 @@ library ValidatorSets {
         return (validators, totalWeight);
     }
 
+    function serializeValidators(
+        Validator[] memory validators
+    ) public pure returns (bytes memory) {
+        bytes memory serialized = new bytes(
+            2 + 4 + validators.length * (96 + 8)
+        );
+        // the codec
+        serialized[0] = 0x00;
+        serialized[1] = 0x00;
+        //encode the number of validators
+        bytes4 numValidators = bytes4(uint32(validators.length));
+        for (uint256 i = 0; i < 4; i++) {
+            serialized[2 + i] = numValidators[i];
+        }
+        // encode the validators
+        uint256 offset = 6;
+        for (uint256 i = 0; i < validators.length; i++) {
+            // encode the 96-bytes uncompressed BLS public key
+            bytes memory uncompressedBlsPublicKey = BLST.getUncompressedBlsPublicKey(validators[i].blsPublicKey);
+            for(uint256 j = 0; j < 96; j++ ) {
+                serialized[j + offset] = uncompressedBlsPublicKey[j];
+            }
+            offset += 96;
+            // encode the validator weight
+            bytes8 weight = bytes8(validators[i].weight);
+            for(uint256 j = 0; j < 8; j++ ) {
+                serialized[j + offset] = weight[j];
+            }
+            offset += 8;
+        }
+        return serialized;
+    }
+
     function parseValidatorSetStatePayload(
         bytes memory data
     ) internal pure returns (ValidatorSetStatePayload memory) {
@@ -96,5 +129,51 @@ library ValidatorSets {
             pChainTimestamp: pChainTimestamp,
             validatorSetHash: validatorSetHash
         });
+    }
+
+    function serializeValidatorSetStatePayload(
+        ValidatorSetStatePayload memory payload
+    ) public pure returns (bytes memory) {
+        bytes memory serialized = new bytes(
+            // codec
+            2
+            // payload type ID
+            + 4
+            // Avalanche block chain ID
+            + 32
+            // the P-chain height
+            + 8
+            // the P-chain timestamp
+            + 8
+            // hash of validator set
+            + 32
+        );
+        // encode the codec
+        serialized[0] = 0x00;
+        serialized[1] = 0x00;
+        // the payload type ID
+        serialized[2] = 0x00;
+        serialized[3] = 0x00;
+        serialized[4] = 0x00;
+        serialized[5] = 0x04;
+        // encode avalancheBlockchainID
+        for (uint256 i = 0; i < 32; i++) {
+            serialized[6 + i] = payload.avalancheBlockchainID[i];
+        }
+        // encode the P-chain block height
+        bytes8 pChainHeight = bytes8(payload.pChainHeight);
+        for (uint256 i = 0; i < 8; i++) {
+            serialized[38 + i] = pChainHeight[i];
+        }
+        // encode the P-chain timestamp
+        bytes8 pChainTimestamp = bytes8(payload.pChainTimestamp);
+        for (uint256 i = 0; i < 8; i++) {
+            serialized[46 + i] = pChainTimestamp[i];
+        }
+        // encode the validator set hash
+        for (uint256 i = 0; i < 32; i++) {
+            serialized[54 + i] = payload.validatorSetHash[i];
+        }
+        return serialized;
     }
 }

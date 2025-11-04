@@ -5,6 +5,7 @@ import {WarpMessage} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfa
 import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
 import {BLST} from "./BLST.sol";
 import {ByteSlicer} from "./ByteSlicer.sol";
+import {console} from "forge-std/console.sol";
 
 struct ICMSignature {
     bytes signers;
@@ -83,19 +84,8 @@ library ICM {
     function parseICMMessage(
         bytes memory data
     ) public pure returns (ICMMessage memory) {
-        // Validate the codec ID is 0
-        require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
-
-        // Parse the avalancheNetworkID
-        uint32 avalancheNetworkID = uint32(bytes4(ByteSlicer.slice(data, 2, 4)));
-
-        // Parse the avalancheSourceBlockchainID
-        bytes32 avalancheSourceBlockchainID = abi.decode(ByteSlicer.slice(data, 6, 32), (bytes32));
-
-        // Parse the payload
-        uint32 payloadLength = uint32(bytes4(ByteSlicer.slice(data, 38, 4)));
-        bytes memory payload = ByteSlicer.slice(data, 42, payloadLength);
-
+        ICMUnsignedMessage memory unsignedMessage = parseICMUnsignedMessage(data);
+        uint32 payloadLength = uint32(unsignedMessage.payload.length);
         // Parse the unsigned message bytes
         bytes memory unsignedMessageBytes = ByteSlicer.slice(data, 0, 42 + payloadLength);
 
@@ -114,26 +104,125 @@ library ICM {
         bytes memory signature = ByteSlicer.slice(data, 50 + payloadLength + bitSetLength, 192);
 
         return ICMMessage({
-            unsignedMessage: ICMUnsignedMessage({
-                avalancheNetworkID: avalancheNetworkID,
-                avalancheSourceBlockchainID: avalancheSourceBlockchainID,
-                payload: payload
-            }),
+            unsignedMessage: unsignedMessage,
             unsignedMessageBytes: unsignedMessageBytes,
             signature: ICMSignature({signers: bitSet, signature: signature})
         });
     }
 
+    function parseICMUnsignedMessage(
+        bytes memory data
+    ) public pure returns (ICMUnsignedMessage memory) {
+        // Validate the codec ID is 0
+        require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
+
+        // Parse the avalancheNetworkID
+        uint32 avalancheNetworkID = uint32(bytes4(ByteSlicer.slice(data, 2, 4)));
+
+        // Parse the avalancheSourceBlockchainID
+        bytes32 avalancheSourceBlockchainID = abi.decode(ByteSlicer.slice(data, 6, 32), (bytes32));
+
+        // Parse the payload
+        uint32 payloadLength = uint32(bytes4(ByteSlicer.slice(data, 38, 4)));
+        bytes memory payload = ByteSlicer.slice(data, 42, payloadLength);
+        return ICMUnsignedMessage({
+            avalancheNetworkID: avalancheNetworkID,
+            avalancheSourceBlockchainID: avalancheSourceBlockchainID,
+            payload: payload
+        });
+    }
+
+    /**
+     * @notice Serialize an ICM unsigned message to bytes.
+     */
+    function serializeICMUnsignedMessage(
+        ICMUnsignedMessage memory message
+    ) public pure returns (bytes memory) {
+        bytes memory serialized = new bytes(
+            // the codec
+            2
+            // the avalancheNetworkID
+            + 4
+            // the avalancheSourceBlockchainID
+            + 32
+            // the payload length
+            + 4
+            // the message payload
+            + message.payload.length
+        );
+        // the codec
+        serialized[0] = 0x00;
+        serialized[1] = 0x00;
+        // encode the avalancheNetworkID
+        bytes4 avalancheNetworkID = bytes4(message.avalancheNetworkID);
+        for (uint256 i = 0; i < 4; i++) {
+            serialized[2 + i] = avalancheNetworkID[i];
+        }
+        // encode the avalancheSourceBlockchainID
+        for (uint256 i = 0; i < 32; i++) {
+            serialized[6 + i] = message.avalancheSourceBlockchainID[i];
+        }
+        // encode the payload length
+        bytes4 payloadLength = bytes4(uint32(message.payload.length));
+        for (uint256 i = 0; i < 4; i++) {
+            serialized[38 + i] = payloadLength[i];
+        }
+        // encode the payload
+        for (uint256 i = 0; i < message.payload.length; i++) {
+            serialized[42 + i] = message.payload[i];
+        }
+
+        return serialized;
+    }
+
+    /**
+     * @notice Serialize an ICM message to bytes
+     */
+    function serializeICMMessage(
+        ICMMessage memory message
+    ) public pure returns (bytes memory) {
+
+        bytes memory data = new bytes(
+            // unsigned message length
+            message.unsignedMessageBytes.length
+            + 4
+            // to encode the length of the serialize bitset
+            + 4
+            // the length of the serialized bitset
+            + message.signature.signers.length
+            // the signature
+            + message.signature.signature.length
+        );
+        uint256 cursor = 0;
+        // add the unsigned message bytes
+        (data, cursor) = ByteSlicer.extendFromSlice(data, message.unsignedMessageBytes, cursor);
+
+        (data, cursor) =  ByteSlicer.extendFromSlice(data, new bytes(4), cursor);
+
+        // add the length of the signers (as a bitset)
+        bytes4 bitsetLength = bytes4(uint32(message.signature.signers.length));
+        for (uint256 i = 0; i < 4; i++) {
+            data[cursor + i] = bitsetLength[i];
+        }
+        cursor += 4;
+
+        // add the signers bitset
+        (data, cursor) = ByteSlicer.extendFromSlice(data, message.signature.signers, cursor);
+        // add the signature bytes
+        (data, cursor) = ByteSlicer.extendFromSlice(data, message.signature.signature, cursor);
+
+        return data;
+    }
+
     function parseAddressedCall(
         bytes memory data
-    ) internal pure returns (AddressedCall memory) {
+    ) public pure returns (AddressedCall memory) {
         // Validate the codec ID is 0.
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
         // Parse the payload type ID, and confirm it is 1 for AddressedCall
         uint32 payloadTypeID = uint32(bytes4(ByteSlicer.slice(data, 2, 4)));
         require(payloadTypeID == 1, "Invalid payload type ID");
-
         // Parse the source address length
         uint32 sourceAddressLength = uint32(bytes4(ByteSlicer.slice(data, 6, 4)));
         // Parse the source address
@@ -146,6 +235,53 @@ library ICM {
         bytes memory payload = ByteSlicer.slice(data, 14 + sourceAddressLength, payloadLength);
 
         return AddressedCall({sourceAddress: sourceAddress, payload: payload});
+    }
+
+    function serializeAddressedCall(
+        AddressedCall memory addressedCall
+    ) internal pure returns (bytes memory) {
+        bytes memory serialized = new bytes(
+            // codec bytes
+            2
+            // payload type ID
+            + 4
+            // length of the source address
+            + 4
+            // the source address
+            + addressedCall.sourceAddress.length
+            // length of the payload
+            + 4
+            // the payload
+            + addressedCall.payload.length
+        );
+        // encode the codec
+        serialized[0] = 0x00;
+        serialized[1] = 0x00;
+        // encode the payload type ID
+        serialized[2] = 0x00;
+        serialized[3] = 0x00;
+        serialized[4] = 0x00;
+        serialized[5] = 0x01;
+        // encode the source address length
+        bytes4 sourceAddrLength = bytes4(uint32(addressedCall.sourceAddress.length));
+        for (uint256 i = 0; i < 4; i++) {
+            serialized[6 + i] = sourceAddrLength[i];
+        }
+        // encode the the source address
+        for (uint256 i = 0; i < addressedCall.sourceAddress.length; i++) {
+            serialized[10 + i] = addressedCall.sourceAddress[i];
+        }
+        // encode the payload length
+        bytes4 payloadLength = bytes4(uint32(addressedCall.payload.length));
+        for (uint256 i = 0; i < 4; i++) {
+            serialized[10 + addressedCall.sourceAddress.length + i] = payloadLength[i];
+        }
+        // encode the payload
+        for (uint256 i = 0; i < addressedCall.payload.length; i++) {
+            serialized[14 + addressedCall.sourceAddress.length + i] = addressedCall.payload[i];
+        }
+
+        return serialized;
     }
 
     function filterValidators(

@@ -15,23 +15,33 @@ library BLST {
 
     address constant BLS12381_G1_ADD_PRECOMPILE =
         address(0x000000000000000000000000000000000000000b);
+    address constant BLS12381_G1_MSM_PRECOMPILE =
+        address(0x000000000000000000000000000000000000000C);
     address constant BLS12381_G2_ADD_PRECOMPILE =
         address(0x000000000000000000000000000000000000000d);
+    address constant BLS12381_G2_MSM_PRECOMPILE =
+        address(0x000000000000000000000000000000000000000E);
     address constant BLS12381_PAIRING_CHECK_PRECOMPILE =
         address(0x000000000000000000000000000000000000000F);
     address constant BLS12381_MAP_FP2_G2_PRECOMPILE =
         address(0x0000000000000000000000000000000000000011);
 
+    bytes constant BLS_G1_GENERATOR =
+        hex"0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb0000000000000000000000000000000008b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1";
     bytes constant BLS_G1_NEG_GENERATOR =
         hex"0000000000000000000000000000000017f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb00000000000000000000000000000000114d1d6855d545a8aa7d76c8cf2e21f267816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca";
-
+    bytes constant BLS_G2_GENERATOR =
+        hex"00000000000000000000000000000000024aa2b2f08f0a91260805272dc51051c6e47ad4fa403b02b4510b647ae3d1770bac0326a805bbefd48056c8c121bdb80000000000000000000000000000000013e02b6052719f607dacd3a088274f65596bd0d09920b61ab5da61bbdc7f5049334cf11213945d57e5ac7d055d042b7e000000000000000000000000000000000ce5d527727d6e118cc9cdc6da2e351aadfd9baa8cbdd3a76d429a695160d12c923ac9cc3baca289e193548608b82801000000000000000000000000000000000606c4a02ea734cc32acd2b02bc28b99cb3e287e85a763af267492ab572e99ab3f370d275cec1da1aaa9075ff05f79be";
     bytes constant BLS12381G2_SIG_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
     bytes constant BLS12381G2_POP_DST = "BLS_POP_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
 
     /**
-     * @notice Formats a 96-byte uncompressed BLS public key into the 128-byte format expected by the BLS12381_G1_ADD_PRECOMPILE.
-     * @param publicKey The 96-byte uncompressed BLS public key, as produced by the BLST library's P1Affine.Serialize() function.
-     * @return The 128-byte serialized public key. Its X and Y coordinates are left-padded to be 64 bytes each, for a total of 128 bytes.
+     * @notice Formats a 96-byte uncompressed BLS public key into the 128-byte format expected by the
+     * BLS12381_G1_ADD_PRECOMPILE.
+     * @param publicKey The 96-byte uncompressed BLS public key, as produced by the BLST library's
+     * P1Affine.Serialize() function.
+     * @return The 128-byte serialized public key. Its X and Y coordinates are left-padded to be 64 bytes each, for a
+     * total of 128 bytes.
      */
     function formatUncompressedBLSPublicKey(
         bytes memory publicKey
@@ -53,9 +63,62 @@ library BLST {
     }
 
     /**
-     * @notice Formats a 192-byte uncompressed BLS signature into the 256-byte format expected by the BLS12381_PAIRING_CHECK_PRECOMPILE.
+     * @notice Turns the 128-byte format expected by the BLS12381_G1_ADD_PRECOMPILE into
+     * a 96-byte uncompressed BLS public key
+     * @param publicKey The the 128-byte padded format.
+     * @return The 96-byte uncompressed BLS public key.
+     */
+    function getUncompressedBlsPublicKey(
+        bytes memory publicKey
+    ) internal pure returns (bytes memory) {
+        require(publicKey.length == 128, "Invalid input public key length");
+        bytes memory res = new bytes(96);
+
+        // Copy the X coordinate.
+        for (uint256 i = 0; i < 48; ++i) {
+            res[i] = publicKey[16 + i];
+        }
+
+        // Copy the Y coordinate.
+        for (uint256 i = 0; i < 48; ++i) {
+            res[48 + i] = publicKey[i + 80];
+        }
+
+        return res;
+    }
+
+    /**
+     * @notice Given a secret key, get the public counterpart
+     * @dev According to the EIP-2537 spec, this method can fail as it may not land on the curve or
+     * is not in the correct subgroup
+     * @param secretKey is a 256 bit scalar.
+     * @return The 128-byte serialized public key. Its X and Y coordinates are left-padded to be 64 bytes each,
+     * for a total of 128 bytes.
+     */
+    function getPublicKeyFromSecret(
+        uint256 secretKey
+    ) internal view returns (bytes memory) {
+        bytes memory input = new bytes(160);
+        for (uint i = 0; i < 128; i++) {
+            input[i] = BLS_G1_GENERATOR[i];
+        }
+        bytes32 sk = bytes32(secretKey);
+        for (uint j = 0; j < 32; j++) {
+            input[128 + j] = sk[j];
+        }
+
+        (bool success, bytes memory result) =
+            BLS12381_G1_MSM_PRECOMPILE.staticcall(abi.encodePacked(input));
+        require(success, "Failed to perform scalar multiplication over G1");
+        return result;
+    }
+
+    /**
+     * @notice Formats a 192-byte uncompressed BLS signature into the 256-byte format expected by the
+     * BLS12381_PAIRING_CHECK_PRECOMPILE.
      * @param signature The 192-byte uncompressed BLS signature. Must have the format [x.c1, x.c0, y.c1, y.c0].
-     * @return The 256-byte formatted signature. Has the format [16 pad + x.c0, 16 pad + x.c1, 16 pad +  y.c0, 16 pad + y.c1].
+     * @return The 256-byte formatted signature. Has the format
+     * [16 pad + x.c0, 16 pad + x.c1, 16 pad +  y.c0, 16 pad + y.c1].
      */
     function formatUncompressedBLSTSignature(
         bytes memory signature
@@ -87,6 +150,42 @@ library BLST {
     }
 
     /**
+     * @notice Formats the the 256-byte format expected by the  BLS12381_PAIRING_CHECK_PRECOMPILE into the
+     * 192-byte uncompressed BLS signature.
+     * @param signature The 256-byte BLS signature. Must have the format
+     * [16 pad + x.c0, 16 pad + x.c1, 16 pad +  y.c0, 16 pad + y.c1].
+     * @return The 192-byte uncompressed signature. Has the format [x.c1, x.c0, y.c1, y.c0]
+     */
+    function getUncompressedBLSTSignature(
+        bytes memory signature
+    ) internal pure returns (bytes memory) {
+        require(signature.length == 256, "Invalid input signature length");
+        bytes memory res = new bytes(192);
+
+        // COPY X0
+        for (uint256 i = 0; i < 48; i++) {
+            res[i + 48] = signature[16 + i];
+        }
+
+        // COPY X1
+        for (uint256 i = 0; i < 48; i++) {
+            res[i] = signature[80 + i];
+        }
+
+        // COPY Y0
+        for (uint256 i = 0; i < 48; i++) {
+            res[i + 144] = signature[144 + i];
+        }
+
+        // COPY Y1
+        for (uint256 i = 0; i < 48; i++) {
+            res[i + 96] = signature[208 + i];
+        }
+
+        return res;
+    }
+
+    /**
      * @notice Aggregates a list of public keys.
      * @param publicKeys The public keys to aggregate. Each public key must be in uncompressed, and its X and Y coordinates must be
      * left-padded to be 64 bytes each, for a total of 128 bytes.
@@ -102,6 +201,60 @@ library BLST {
             aggregatedPublicKey = addG1(aggregatedPublicKey, publicKeys[i]);
         }
         return aggregatedPublicKey;
+    }
+
+    /**
+     * @notice Create a signature over a message with a secret key.
+     * @dev According to the EIP-2537 spec, G2 MSM method can fail as it may not land on the curve or
+     * is not in the correct subgroup
+     * @param secretKey is a 256 bit scalar.
+     * @param message the message to be signed.
+     * @return The 192-byte uncompressed BLS signature
+     */
+    function createSignature(
+        uint256 secretKey,
+        bytes memory message
+    ) internal view returns (bytes memory) {
+        return getUncompressedBLSTSignature(_createSignatureRaw(secretKey, message));
+    }
+
+    /**
+     * @notice Create an aggregate signature over a message with a list of secret keys.
+     * @dev According to the EIP-2537 spec, this method can fail as it may not land on the curve or
+     * is not in the correct subgroup
+     * @param secretKeys a vector 256 bit scalars.
+     * @param message the message to be signed.
+     * @return The 192-byte uncompressed aggregated BLS signature
+     */
+    function createAggregateSignature(
+        uint256[] memory secretKeys,
+        bytes memory message
+    ) internal view returns (bytes memory) {
+        bytes memory sig = new bytes(256);
+        for (uint256 i = 0; i < secretKeys.length; i++) {
+            sig = addG2(sig, _createSignatureRaw(secretKeys[i], message));
+        }
+        return getUncompressedBLSTSignature(sig);
+    }
+
+    function _createSignatureRaw(
+        uint256 secretKey,
+        bytes memory message
+    ) private view returns (bytes memory) {
+        bytes memory messageG2 = hashToG2(message, BLS12381G2_SIG_DST);
+        bytes memory input = new bytes(288);
+        for (uint i = 0; i < 256; i++) {
+            input[i] = messageG2[i];
+        }
+        bytes32 sk = bytes32(secretKey);
+        for (uint j = 0; j < 32;  j++) {
+            input[256 + j] = sk[j];
+        }
+
+        (bool success, bytes memory result) =
+            BLS12381_G2_MSM_PRECOMPILE.staticcall(abi.encodePacked(input));
+        require(success, "Failed to perform scalar multiplication over G2");
+        return result;
     }
 
     /**
