@@ -8,8 +8,7 @@ pragma solidity 0.8.25;
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
 import {
-    WarpMessage,
-    IWarpMessenger
+    WarpMessage
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {
     TeleporterMessageReceipt,
@@ -281,9 +280,8 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         bytes calldata messagePayload,
         address relayerRewardAddress
     ) external receiverNonReentrant {
-        (WarpMessage memory warpMessage, bool success) =
+        WarpMessage memory warpMessage =
             WARP_MESSENGER.getVerifiedMessageFromPayload(messagePayload);
-        require(success, "TeleporterMessenger: invalid warp message");
         _processWarpMessage(warpMessage, relayerRewardAddress);
     }
 

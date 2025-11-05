@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
+import {ValidatorSet} from "../utils/ValidatorSets.sol";
 import {ICMMessage} from "../utils/ICM.sol";
 
 /**

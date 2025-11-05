@@ -6,7 +6,6 @@
 pragma solidity 0.8.25;
 
 import {TeleporterMessenger} from "../TeleporterMessenger.sol";
-import {IWarpMessenger} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {Test} from "@forge-std/Test.sol";
 
 contract CheckIsAllowedRelayerTest is

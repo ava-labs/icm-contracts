@@ -34,7 +34,7 @@ contract EthWarpTest is Test {
      * is specifically not implemented for the Ethereum Warp messenger
      */
     function testGetVerifiedWarpMessageReverts() public {
-        vm.expectRevert("This method cannot be called on Ethereum, use `getMessageFromPayload` instead");
+        vm.expectRevert("This method can't be called on Ethereum, use `getMessageFromPayload` instead");
         warp.getVerifiedWarpMessage(0);
     }
 

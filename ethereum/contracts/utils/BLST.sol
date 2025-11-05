@@ -99,11 +99,11 @@ library BLST {
         uint256 secretKey
     ) internal view returns (bytes memory) {
         bytes memory input = new bytes(160);
-        for (uint i = 0; i < 128; i++) {
+        for (uint256 i = 0; i < 128; i++) {
             input[i] = BLS_G1_GENERATOR[i];
         }
         bytes32 sk = bytes32(secretKey);
-        for (uint j = 0; j < 32; j++) {
+        for (uint256 j = 0; j < 32; j++) {
             input[128 + j] = sk[j];
         }
 
@@ -243,11 +243,11 @@ library BLST {
     ) private view returns (bytes memory) {
         bytes memory messageG2 = hashToG2(message, BLS12381G2_SIG_DST);
         bytes memory input = new bytes(288);
-        for (uint i = 0; i < 256; i++) {
+        for (uint256 i = 0; i < 256; i++) {
             input[i] = messageG2[i];
         }
         bytes32 sk = bytes32(secretKey);
-        for (uint j = 0; j < 32;  j++) {
+        for (uint256 j = 0; j < 32;  j++) {
             input[256 + j] = sk[j];
         }
 

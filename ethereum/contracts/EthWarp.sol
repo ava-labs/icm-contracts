@@ -7,8 +7,7 @@ pragma solidity ^0.8.25;
 
 import {
     WarpMessage,
-    WarpBlockHash,
-    IWarpMessenger
+    WarpBlockHash
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {IWarpExt} from "@avalabs/avalanche-contracts/teleporter/IWarpExt.sol";
 import {ICM, ICMMessage} from "./utils/ICM.sol";
@@ -30,7 +29,7 @@ contract EthWarp is IWarpExt {
      */
     mapping(bytes32 avaBlockchainId => address verifyWarpMessage) internal _registeredChains;
 
-    constructor (uint blockChainId) {
+    constructor (uint256 blockChainId) {
         blockChainId = blockChainId;
     }
 
@@ -49,12 +48,12 @@ contract EthWarp is IWarpExt {
         return warpMessage;
     }
 
-    function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageID) {
+    function sendWarpMessage(bytes calldata payload) external returns (bytes32) {
         revert("Sending Warp messages from Ethereum is not currently supported");
     }
 
     function getVerifiedWarpMessage(uint32 index) external pure returns (WarpMessage calldata, bool) {
-        revert("This method cannot be called on Ethereum, use `getMessageFromPayload` instead");
+        revert("This method can't be called on Ethereum, use `getMessageFromPayload` instead");
     }
 
     function getVerifiedWarpBlockHash(

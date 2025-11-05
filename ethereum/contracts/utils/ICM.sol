@@ -5,7 +5,6 @@ import {WarpMessage} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfa
 import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
 import {BLST} from "./BLST.sol";
 import {ByteSlicer} from "./ByteSlicer.sol";
-import {console} from "forge-std/console.sol";
 
 struct ICMSignature {
     bytes signers;

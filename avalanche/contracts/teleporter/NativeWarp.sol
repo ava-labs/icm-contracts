@@ -25,12 +25,12 @@ contract WarpNative is IWarpExt {
         revert("Todo");
     }
 
-    function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageID) {
-        return WARP_MESSENGER.sendWarpMessage(payload);
-    }
-
     function getVerifiedWarpMessage(uint32 index) external view returns (WarpMessage memory message, bool valid) {
         return WARP_MESSENGER.getVerifiedWarpMessage(index);
+    }
+
+    function sendWarpMessage(bytes calldata payload) external returns (bytes32 messageID) {
+        return WARP_MESSENGER.sendWarpMessage(payload);
     }
 
     function getVerifiedWarpBlockHash(

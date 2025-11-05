@@ -10,8 +10,6 @@ import {
 } from "./utils/ValidatorSets.sol";
 import {ICMMessage, AddressedCall} from "./utils/ICM.sol";
 import {ICM} from "./utils/ICM.sol";
-import {BLST} from "./utils/BLST.sol";
-import {ByteComparator} from "./utils/ByteComparator.sol";
 import {IVerifyICMMessage} from "./interfaces/IVerifyWarpMessage.sol";
 
 /**
@@ -34,54 +32,6 @@ contract AvalancheValidatorSetRegistry is
         uint32 _avalancheNetworkID
     ) {
         avalancheNetworkID = _avalancheNetworkID;
-    }
-
-    /**
-     * @notice Parses and validates validator set data from an ICM message
-     * @dev This is a helper function that consolidates common validation logic
-     * @param message The ICM message containing the validator set data
-     * @param validatorBytes The serialized validator set
-     * @return validatorSetStatePayload The parsed validator set state payload
-     * @return validators The parsed validators array
-     * @return totalWeight The total weight of all validators
-     */
-    function _parseAndValidateValidatorSetData(
-        ICMMessage calldata message,
-        bytes memory validatorBytes
-    )
-        private
-        pure
-        returns (
-            ValidatorSetStatePayload memory validatorSetStatePayload,
-            Validator[] memory validators,
-            uint64 totalWeight
-        )
-    {
-        // Parse the addressed call and validate that the source address is empty.
-        AddressedCall memory addressedCall = ICM.parseAddressedCall(message.unsignedMessage.payload);
-        require(addressedCall.sourceAddress.length == 0, "Source address must be empty");
-
-        // Parse the validator set state payload.
-        validatorSetStatePayload =
-            ValidatorSets.parseValidatorSetStatePayload(addressedCall.payload);
-
-        // Check that the validator set hash matches the hash of the serialized validator set.
-        require(
-            validatorSetStatePayload.validatorSetHash == sha256(validatorBytes),
-            "Validator set hash mismatch"
-        );
-
-        // Parse the validators.
-        (validators, totalWeight) = ValidatorSets.parseValidators(validatorBytes);
-        require(validators.length > 0, "Validator set cannot be empty");
-        require(totalWeight > 0, "Total weight must be greater than 0");
-    }
-
-    function _getValidatorSet(
-        uint256 validatorSetID
-    ) private view returns (ValidatorSet memory) {
-        require(validatorSetID < nextValidatorSetID, "Validator set does not exist");
-        return _validatorSets[validatorSetID];
     }
 
     /**
@@ -242,5 +192,52 @@ contract AvalancheValidatorSetRegistry is
     ) external view returns (bool) {
         ValidatorSet memory validatorSet = getCurrentValidatorSet();
         return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+    }
+    function _getValidatorSet(
+        uint256 validatorSetID
+    ) private view returns (ValidatorSet memory) {
+        require(validatorSetID < nextValidatorSetID, "Validator set does not exist");
+        return _validatorSets[validatorSetID];
+    }
+
+    /**
+     * @notice Parses and validates validator set data from an ICM message
+     * @dev This is a helper function that consolidates common validation logic
+     * @param message The ICM message containing the validator set data
+     * @param validatorBytes The serialized validator set
+     * @return validatorSetStatePayload The parsed validator set state payload
+     * @return validators The parsed validators array
+     * @return totalWeight The total weight of all validators
+     */
+    function _parseAndValidateValidatorSetData(
+        ICMMessage calldata message,
+        bytes memory validatorBytes
+    )
+    private
+    pure
+    returns (
+        ValidatorSetStatePayload memory validatorSetStatePayload,
+        Validator[] memory validators,
+        uint64 totalWeight
+    )
+    {
+        // Parse the addressed call and validate that the source address is empty.
+        AddressedCall memory addressedCall = ICM.parseAddressedCall(message.unsignedMessage.payload);
+        require(addressedCall.sourceAddress.length == 0, "Source address must be empty");
+
+        // Parse the validator set state payload.
+        validatorSetStatePayload =
+                            ValidatorSets.parseValidatorSetStatePayload(addressedCall.payload);
+
+        // Check that the validator set hash matches the hash of the serialized validator set.
+        require(
+            validatorSetStatePayload.validatorSetHash == sha256(validatorBytes),
+            "Validator set hash mismatch"
+        );
+
+        // Parse the validators.
+        (validators, totalWeight) = ValidatorSets.parseValidators(validatorBytes);
+        require(validators.length > 0, "Validator set cannot be empty");
+        require(totalWeight > 0, "Total weight must be greater than 0");
     }
 }
