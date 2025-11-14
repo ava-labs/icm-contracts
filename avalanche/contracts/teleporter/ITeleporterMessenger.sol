@@ -217,14 +217,6 @@ interface ITeleporterMessenger {
         address[] calldata allowedRelayerAddresses
     ) external returns (bytes32); /**
 
-     * @notice Sends the receipts for the given `messageIDs`.
-     *
-     * @dev Sends the specified message receipts in a new message (with an empty payload) back to the source chain.
-     * This is intended for use in sending receipts that have not been sent in a timely manner by the standard
-     * receipt delivery mechanism.
-     * @return The message ID of the newly sent message.
-     */
-
     /**
      * @notice Sends any fee amount rewards for the given fee asset out to the caller.
      */

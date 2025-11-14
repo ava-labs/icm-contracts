@@ -81,7 +81,7 @@ func EthereumICMVerification(
 		pChainClient,
 		signatureAggregator,
 	)
-	log.Info("registered warp with source id", "id", l1Info.EVMChainID)
+
 	// Register the EthWarp contract and register the above ValidatorSetRegistry with it
 	ethWarpAddress, ethWarpContract := utils.DeployEthWarp(
 		ctx,
