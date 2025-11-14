@@ -35,7 +35,7 @@ abstract contract GetTeleporterMessengerTest is BaseTeleporterRegistryAppTest {
 
         // Add a new version of Teleporter, and make sure we can get
         // the new Teleporter successfully.
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
         ITeleporterMessenger messenger = app.getTeleporterMessenger();
         assertEq(address(messenger), newTeleporterAddress);
@@ -46,7 +46,7 @@ abstract contract GetTeleporterMessengerTest is BaseTeleporterRegistryAppTest {
     }
 
     function testPauseNonLatestTeleporter() public {
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
 
         // Pause a non-latest version of Teleporter

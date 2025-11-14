@@ -2,26 +2,14 @@
 pragma solidity ^0.8.30;
 
 import {WarpMessage} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {
+    ICMMessage,
+    ICMUnsignedMessage,
+    ICMSignature
+} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
 import {Validator, ValidatorSet} from "../utils/ValidatorSets.sol";
 import {BLST} from "./BLST.sol";
 import {ByteSlicer} from "./ByteSlicer.sol";
-
-struct ICMSignature {
-    bytes signers;
-    bytes signature;
-}
-
-struct ICMUnsignedMessage {
-    uint32 avalancheNetworkID;
-    bytes32 avalancheSourceBlockchainID;
-    bytes payload;
-}
-
-struct ICMMessage {
-    ICMUnsignedMessage unsignedMessage;
-    bytes unsignedMessageBytes;
-    ICMSignature signature;
-}
 
 struct AddressedCall {
     bytes sourceAddress;
@@ -82,7 +70,7 @@ library ICM {
 
     function parseICMMessage(
         bytes memory data
-    ) public pure returns (ICMMessage memory) {
+    ) internal pure returns (ICMMessage memory) {
         ICMUnsignedMessage memory unsignedMessage = parseICMUnsignedMessage(data);
         uint32 payloadLength = uint32(unsignedMessage.payload.length);
         // Parse the unsigned message bytes
@@ -111,7 +99,7 @@ library ICM {
 
     function parseICMUnsignedMessage(
         bytes memory data
-    ) public pure returns (ICMUnsignedMessage memory) {
+    ) internal pure returns (ICMUnsignedMessage memory) {
         // Validate the codec ID is 0
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -136,7 +124,7 @@ library ICM {
      */
     function serializeICMUnsignedMessage(
         ICMUnsignedMessage memory message
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         bytes memory serialized = new bytes(
             // the codec
             2
@@ -179,7 +167,7 @@ library ICM {
      */
     function serializeICMMessage(
         ICMMessage memory message
-    ) public pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
 
         bytes memory data = new bytes(
             // unsigned message length
@@ -215,7 +203,7 @@ library ICM {
 
     function parseAddressedCall(
         bytes memory data
-    ) public pure returns (AddressedCall memory) {
+    ) internal pure returns (AddressedCall memory) {
         // Validate the codec ID is 0.
         require(data[0] == 0 && data[1] == 0, "Invalid codec ID");
 
@@ -323,6 +311,7 @@ library ICM {
     function verifyICMMessage(
         ICMMessage memory message,
         uint32 avalancheNetworkID,
+        bytes32 avalancheBlockChainID,
         ValidatorSet memory validatorSet
     ) internal view returns (bool) {
         if (message.unsignedMessage.avalancheNetworkID != avalancheNetworkID) {
@@ -337,6 +326,13 @@ library ICM {
         // ) {
         //     revert("Invalid avalanche source blockchain ID");
         // }
+
+
+         if (
+            avalancheBlockChainID != validatorSet.avalancheBlockchainID
+         ) {
+             revert("Invalid avalanche source blockchain ID");
+         }
 
         bool[] memory signers = bytesToBoolArray(message.signature.signers);
         (bytes memory aggregatePublicKey, uint64 aggregateWeight) =
@@ -367,10 +363,10 @@ library ICM {
      * @param message The unsigned part of an ICM message
      * @return A Warp message
      */
-    function handleMessage(ICMUnsignedMessage memory message) public pure returns (WarpMessage memory) {
+    function handleMessage(ICMUnsignedMessage memory message, bytes32 sourceChainID ) internal pure returns (WarpMessage memory) {
         AddressedCall memory addressedCall = parseAddressedCall(message.payload);
         return WarpMessage({
-            sourceChainID: message.avalancheSourceBlockchainID,
+            sourceChainID: sourceChainID,
             // N.B. This prevents this function from being used for internal interop calls
             // to teleporter
             originSenderAddress: address(0),

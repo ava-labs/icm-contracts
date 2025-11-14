@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/avalanchego/utils/crypto/bls"
 	"github.com/ava-labs/avalanchego/vms/platformvm"
 	"github.com/ava-labs/avalanchego/vms/platformvm/api"
 	"github.com/ava-labs/avalanchego/vms/platformvm/block"
@@ -32,11 +31,12 @@ func DeployAvalancheValidatorSetRegistry(
 	chainID *big.Int,
 	client ethclient.Client,
 	avalancheNetworkID uint32,
+	avalancheBlockChainID ids.ID,
 ) (common.Address, *avalanchevalidatorsetregistry.AvalancheValidatorSetRegistry) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, chainID)
 	Expect(err).Should(BeNil())
 
-	address, tx, validatorSetRegistry, err := avalanchevalidatorsetregistry.DeployAvalancheValidatorSetRegistry(opts, client, avalancheNetworkID)
+	address, tx, validatorSetRegistry, err := avalanchevalidatorsetregistry.DeployAvalancheValidatorSetRegistry(opts, client, avalancheNetworkID, avalancheBlockChainID)
 	Expect(err).Should(BeNil())
 
 	WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())
@@ -110,51 +110,19 @@ func RegisterAvalancheValidatorSet(
 	unsignedMessage, err := warp.NewUnsignedMessage(avalancheNetworkID, avalanchePChainBlockchainID, addressCallPayload.Bytes())
 	Expect(err).Should(BeNil())
 
-	// Generate the signature of the unsigned message using the signature aggregator.
-	log.Info("Generating signature of unsigned message", "networkID", avalancheNetworkID, "pChainBlockchainID", avalanchePChainBlockchainID, "subnetID", avalancheSubnetID, "weightThreshold", 70)
-	signedMessage, err := signatureAggregator.CreateSignedMessage(unsignedMessage, nil, avalancheSubnetID, 70)
-	Expect(err).Should(BeNil())
-	bitSetSignature, ok := signedMessage.Signature.(*warp.BitSetSignature)
-	Expect(ok).Should(BeTrue())
-
-	// Parse the BLS signature
-	blsSignature, err := bls.SignatureFromBytes(bitSetSignature.Signature[:])
-	Expect(err).Should(BeNil())
-
-	// Serialize the BLS signature
-	blsSignatureBytes := blsSignature.Serialize()
-
-	// Create the ICM message struct
-	icmMessage := avalanchevalidatorsetregistry.ICMMessage{
-		UnsignedMessage: avalanchevalidatorsetregistry.ICMUnsignedMessage{
-			AvalancheNetworkID:          avalancheNetworkID,
-			AvalancheSourceBlockchainID: avalanchePChainBlockchainID,
-			Payload:                     addressCallPayload.Bytes(),
-		},
-		UnsignedMessageBytes: unsignedMessage.Bytes(),
-		Signature: avalanchevalidatorsetregistry.ICMSignature{
-			Signers:   bitSetSignature.Signers,
-			Signature: blsSignatureBytes,
-		},
-	}
-
-	// Debug logging before sending transaction
-	log.Info("DEBUG: ICM Message Details",
-		"avalancheNetworkID", avalancheNetworkID,
-		"avalancheSourceBlockchainID", hex.EncodeToString(avalanchePChainBlockchainID[:]),
-		"avalancheL1BlockchainID", hex.EncodeToString(avalancheL1BlockchainID[:]),
-		"payloadLength", len(addressCallPayload.Bytes()),
-		"payload", hex.EncodeToString(addressCallPayload.Bytes()),
-		"unsignedMessageLength", len(unsignedMessage.Bytes()),
-		"unsignedMessage", hex.EncodeToString(unsignedMessage.Bytes()),
-		"signersLength", len(bitSetSignature.Signers),
-		"signers", hex.EncodeToString(bitSetSignature.Signers),
-		"signatureLength", len(bitSetSignature.Signature[:]),
-		"signature", hex.EncodeToString(bitSetSignature.Signature[:]),
+	// create the ICM message suitable for Ethereum
+	icmMessage := PrepareICMMessageForEthereum(
+		avalancheNetworkID,
+		avalanchePChainBlockchainID,
+		avalancheSubnetID,
+		avalanchePChainBlockchainID,
+		signatureAggregator,
+		unsignedMessage,
+	)
+	log.Info("DEBUG: Validator Set Details:",
 		"validatorsBytesLength", len(validatorsBytes),
 		"validatorsBytes", hex.EncodeToString(validatorsBytes),
 	)
-
 	// Try to encode the transaction data to see what would be sent
 	registryABI, abiErr := abi.JSON(strings.NewReader(avalanchevalidatorsetregistry.AvalancheValidatorSetRegistryABI))
 	if abiErr == nil {
@@ -227,7 +195,7 @@ func RegisterAvalancheValidatorSet(
 	}
 
 	// Register the validator set in the registry.
-	tx, err := validatorSetRegistry.RegisterValidatorSet(opts, icmMessage, validatorsBytes)
+	tx, err := validatorSetRegistry.RegisterValidatorSet(opts, into(icmMessage), validatorsBytes)
 	if err != nil {
 		log.Error("Failed to register validator set", "error", err)
 		log.Info("Register validator set transaction failed", "error", err)

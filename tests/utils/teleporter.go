@@ -23,6 +23,7 @@ import (
 	"github.com/ava-labs/libevm/crypto"
 	"github.com/ava-labs/libevm/log"
 	"github.com/ava-labs/subnet-evm/accounts/abi/bind"
+	"github.com/ava-labs/subnet-evm/ethclient"
 	"github.com/ava-labs/subnet-evm/precompile/contracts/warp"
 	predicateutils "github.com/ava-labs/subnet-evm/predicate"
 	"github.com/ava-labs/subnet-evm/rpc"
@@ -82,6 +83,14 @@ func (t TeleporterTestInfo) SetTeleporter(address common.Address, l1 interfaces.
 	info.TeleporterMessenger = teleporterMessenger
 }
 
+func (t TeleporterTestInfo) Initialize(l1 interfaces.L1TestInfo, fundedKey *ecdsa.PrivateKey, warpContractAddress common.Address) {
+	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := t.TeleporterMessenger(l1).Initialize(opts, warpContractAddress)
+	Expect(err).Should(BeNil())
+	WaitForTransactionSuccess(context.Background(), l1, tx.Hash())
+}
+
 func (t TeleporterTestInfo) InitializeBlockchainID(l1 interfaces.L1TestInfo, fundedKey *ecdsa.PrivateKey) {
 	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1.EVMChainID)
 	Expect(err).Should(BeNil())
@@ -110,6 +119,30 @@ func (t TeleporterTestInfo) DeployTeleporterRegistry(l1 interfaces.L1TestInfo, d
 	info := t[l1.BlockchainID]
 	info.TeleporterRegistryAddress = teleporterRegistryAddress
 	info.TeleporterRegistry = teleporterRegistry
+}
+
+func DeployTeleporterMessengerToEthereum(
+	ctx context.Context,
+	fundedKey *ecdsa.PrivateKey,
+	chainID *big.Int,
+	client ethclient.Client,
+	warpContract common.Address,
+) (common.Address, *teleportermessenger.TeleporterMessenger) {
+	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, chainID)
+	Expect(err).Should(BeNil())
+	address, tx, teleporterMessenger, err := teleportermessenger.DeployTeleporterMessenger(opts, client)
+	Expect(err).Should(BeNil())
+
+	WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())
+
+	// initialize the Warp contracts
+	tx, err = teleporterMessenger.Initialize(opts, warpContract)
+	Expect(err).Should(BeNil())
+
+	WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())
+
+	return address, teleporterMessenger
+
 }
 
 func (t TeleporterTestInfo) DeployTeleporterMessenger(
@@ -197,6 +230,55 @@ func (t TeleporterTestInfo) RelayTeleporterMessage(
 	return receipt
 }
 
+func (t TeleporterTestInfo) RelayInterchainTeleporterMessage(
+	ctx context.Context,
+	ethereumChainID *big.Int,
+	ethClient ethclient.Client,
+	avalancheNetworkID uint32,
+	avalanchePChainBlockchainID ids.ID,
+	sourceReceipt *types.Receipt,
+	source interfaces.L1TestInfo,
+	destination *teleportermessenger.TeleporterMessenger,
+	ethFundedKey *ecdsa.PrivateKey,
+	signatureAggregator *SignatureAggregator,
+) *types.Receipt {
+	log.Info("Relaying transaction to destination chain")
+	// Fetch the Teleporter message from the logs
+	unsignedMsg := ExtractWarpMessageFromLog(ctx, sourceReceipt, source)
+
+	// Loop over each client on source chain to ensure they all have time to accept the block.
+	// Note: if we did not confirm this here, the next stage could be racy since it assumes every node
+	// has accepted the block.
+	WaitForAllValidatorsToAcceptBlock(ctx, source.NodeURIs, source.BlockchainID, sourceReceipt.BlockNumber.Uint64())
+
+	icmMessage := PrepareICMMessageForEthereum(
+		avalancheNetworkID,
+		avalanchePChainBlockchainID,
+		source.SubnetID,
+		source.BlockchainID,
+		signatureAggregator,
+		unsignedMsg,
+	)
+
+	opts, err := bind.NewKeyedTransactorWithChainID(ethFundedKey, ethereumChainID)
+	Expect(err).Should(BeNil())
+
+	tx, err := destination.ReceiveInterChainMessage(opts, icmMessage, PrivateKeyToAddress(ethFundedKey))
+	Expect(err).Should(BeNil())
+
+	log.Info("Sending transaction to destination chain")
+	receipt := WaitForTransactionSuccessWithClient(ctx, ethClient, tx.Hash())
+
+	// Check the transaction logs for the ReceiveCrossChainMessage event emitted by the Teleporter contract
+	/*receiveEvent, err := GetEventFromLogs(
+	  	receipt.Logs,
+	  	destination.ParseReceiveCrossChainMessage,
+	  )
+	  Expect(err).Should(BeNil())*/
+	//	Expect(receiveEvent.SourceBlockchainID[:]).Should(Equal(avalanchePChainBlockchainID[:]))
+	return receipt
+}
+
 func (t TeleporterTestInfo) SendExampleCrossChainMessageAndVerify(
 	ctx context.Context,
 	source interfaces.L1TestInfo,
@@ -209,7 +291,7 @@ func (t TeleporterTestInfo) SendExampleCrossChainMessageAndVerify(
 	signatureAggregator *SignatureAggregator,
 	expectSuccess bool,
 ) {
-	// Call the example messenger contract on L1 A
+	// Call the example messenger contract on L1 AF
 	optsA, err := bind.NewKeyedTransactorWithChainID(senderKey, source.EVMChainID)
 	Expect(err).Should(BeNil())
 	tx, err := sourceExampleMessenger.SendMessage(
@@ -276,6 +358,107 @@ func (t TeleporterTestInfo) SendExampleCrossChainMessageAndVerify(
 		Expect(currMessage).Should(Equal(message))
 	} else {
 		Expect(currMessage).ShouldNot(Equal(message))
+	}
+}
+
+func (t TeleporterTestInfo) SendExampleInterChainMessageAndVerify(
+	ctx context.Context,
+	ethereumChainID *big.Int,
+	ethClient ethclient.Client,
+	avalancheNetworkID uint32,
+	avalanchePChainBlockchainID ids.ID,
+	source interfaces.L1TestInfo,
+	sourceExampleMessenger *testmessenger.TestMessenger,
+	destExampleMessengerAddress common.Address,
+	destinationMessenger *teleportermessenger.TeleporterMessenger,
+	senderKey *ecdsa.PrivateKey,
+	ethFundedKey *ecdsa.PrivateKey,
+	message string,
+	signatureAggregator *SignatureAggregator,
+	expectSuccess bool,
+) {
+	// Call the example messenger contract on L1 AF
+	optsA, err := bind.NewKeyedTransactorWithChainID(senderKey, source.EVMChainID)
+	Expect(err).Should(BeNil())
+	destinationChainID := [32]byte{}
+	ethereumChainID.FillBytes(destinationChainID[:])
+	log.Info("Sending message to chain", "id", ethereumChainID)
+	tx, err := sourceExampleMessenger.SendMessage(
+		optsA,
+		destinationChainID,
+		destExampleMessengerAddress,
+		common.BigToAddress(common.Big0),
+		big.NewInt(0),
+		testmessenger.SendMessageRequiredGas,
+		message,
+	)
+	Expect(err).Should(BeNil())
+
+	// Wait for the transaction to be mined
+	receipt := WaitForTransactionSuccess(ctx, source, tx.Hash())
+
+	sourceTeleporterMessenger := t.TeleporterMessenger(source)
+
+	event, err := GetEventFromLogs(receipt.Logs, sourceTeleporterMessenger.ParseSendCrossChainMessage)
+	Expect(err).Should(BeNil())
+	Expect(event.DestinationBlockchainID[:]).Should(Equal(destinationChainID[:]))
+
+	teleporterMessageID := event.MessageID
+
+	//
+	// Relay the message to the destination
+	//
+	receipt = t.RelayInterchainTeleporterMessage(
+		ctx,
+		ethereumChainID,
+		ethClient,
+		avalancheNetworkID,
+		avalanchePChainBlockchainID,
+		receipt,
+		source,
+		destinationMessenger,
+		ethFundedKey,
+		signatureAggregator,
+	)
+
+	//
+	// Check Teleporter message received on the destination
+	// and that we received the expected string
+	//
+	delivered, err := destinationMessenger.MessageReceived(
+		&bind.CallOpts{}, teleporterMessageID,
+	)
+	Expect(err).Should(BeNil())
+	Expect(delivered).Should(BeTrue())
+
+	if expectSuccess {
+		// Check that message execution was successful
+		messageExecutedEvent, err := GetEventFromLogs(
+			receipt.Logs,
+			destinationMessenger.ParseMessageExecuted,
+		)
+		Expect(err).Should(BeNil())
+		Expect(messageExecutedEvent.MessageID[:]).Should(Equal(teleporterMessageID[:]))
+		messageReceivedMessageEvent, err := GetEventFromLogs(
+			receipt.Logs,
+			destinationMessenger.ParseReceiveCrossChainMessage,
+		)
+		Expect(err).Should(BeNil())
+		Expect(messageReceivedMessageEvent.MessageID[:]).Should(Equal(teleporterMessageID[:]))
+	} else {
+		// Check that message execution failed
+		messageExecutionFailedEvent, err := GetEventFromLogs(
+			receipt.Logs,
+			destinationMessenger.ParseMessageExecutionFailed,
+		)
+		Expect(err).Should(BeNil())
+		Expect(messageExecutionFailedEvent.MessageID[:]).Should(Equal(teleporterMessageID[:]))
+		messageReceivedMessageEvent, err := GetEventFromLogs(
+			receipt.Logs,
+			destinationMessenger.ParseReceiveCrossChainMessage,
+		)
+		Expect(err).Should(BeNil())
+		Expect(messageReceivedMessageEvent.MessageID[:]).Should(Equal(teleporterMessageID[:]))
 	}
 }
 

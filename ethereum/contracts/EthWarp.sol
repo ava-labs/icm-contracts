@@ -10,7 +10,8 @@ import {
     WarpBlockHash
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
 import {IWarpExt} from "@avalabs/avalanche-contracts/teleporter/IWarpExt.sol";
-import {ICM, ICMMessage} from "./utils/ICM.sol";
+import {ICMMessage} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
+import {ICM} from "./utils/ICM.sol";
 import {IVerifyICMMessage} from "./interfaces/IVerifyWarpMessage.sol";
 
 
@@ -24,19 +25,26 @@ contract EthWarp is IWarpExt {
     bytes32 public blockchainID;
 
     /**
+     * @notice The chain ID of that the Warp message originated from. Used
+     * to ensure that message IDs are computed computed consistently on source and
+     * target teleporter contracts.
+     */
+    bytes32 public warpSourceChainID;
+
+    /**
      * @notice A mapping of avalanche chain IDs to contract addresses that know how
      * to validate received Warp message.
      */
     mapping(bytes32 avaBlockchainId => address verifyWarpMessage) internal _registeredChains;
 
-    constructor (uint256 blockChainId) {
-        blockChainId = blockChainId;
+    constructor (uint256 blockChainId, bytes32 _warpSourceChainID) {
+        blockchainID = bytes32(uint256(blockChainId));
+        warpSourceChainID = _warpSourceChainID;
     }
 
-    function getVerifiedMessageFromPayload(
-        bytes calldata payload
+    function getVerifiedICMMessage(
+        ICMMessage calldata icmMessage
     ) external view returns (WarpMessage memory warpMessage) {
-        ICMMessage memory icmMessage = ICM.parseICMMessage(payload);
         require(
             isChainRegistered(icmMessage.unsignedMessage.avalancheSourceBlockchainID),
             "Cannot receive a Warp message from a chain whose validator set is unknown"
@@ -44,7 +52,7 @@ contract EthWarp is IWarpExt {
         bool isValid = IVerifyICMMessage(_registeredChains[icmMessage.unsignedMessage.avalancheSourceBlockchainID])
             .verifyICMMessage(icmMessage);
         require(isValid, "Received an invalid ICM message");
-        warpMessage = ICM.handleMessage(icmMessage.unsignedMessage);
+        warpMessage = ICM.handleMessage(icmMessage.unsignedMessage, warpSourceChainID);
         return warpMessage;
     }
 
@@ -53,7 +61,7 @@ contract EthWarp is IWarpExt {
     }
 
     function getVerifiedWarpMessage(uint32 index) external pure returns (WarpMessage calldata, bool) {
-        revert("This method can't be called on Ethereum, use `getMessageFromPayload` instead");
+        revert("This method can't be called on Ethereum, use `getVerifiedICMMessage` instead");
     }
 
     function getVerifiedWarpBlockHash(

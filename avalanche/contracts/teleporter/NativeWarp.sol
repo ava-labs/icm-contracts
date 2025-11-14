@@ -10,6 +10,7 @@ import {
     WarpBlockHash,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {ICMMessage} from "./ITeleporterMessenger.sol";
 import {IWarpExt} from "./IWarpExt.sol";
 
 contract WarpNative is IWarpExt {
@@ -19,8 +20,8 @@ contract WarpNative is IWarpExt {
     IWarpMessenger public constant WARP_MESSENGER =
         IWarpMessenger(0x0200000000000000000000000000000000000005);
 
-    function getVerifiedMessageFromPayload(
-        bytes calldata payload
+    function getVerifiedICMMessage(
+        ICMMessage calldata icmMessage
     ) external view returns (WarpMessage memory message) {
         revert("Todo");
     }

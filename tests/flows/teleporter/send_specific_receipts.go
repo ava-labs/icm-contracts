@@ -254,7 +254,6 @@ func receiptIncluded(
 ) bool {
 	for _, receipt := range receipts {
 		messageID, err := teleporterutils.CalculateMessageID(
-			teleporterMessengerAddress,
 			sourceL1.BlockchainID,
 			destinationL1.BlockchainID,
 			receipt.ReceivedMessageNonce,

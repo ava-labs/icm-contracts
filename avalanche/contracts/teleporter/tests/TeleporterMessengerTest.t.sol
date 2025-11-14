@@ -77,7 +77,8 @@ contract TeleporterMessengerTest is Test {
             abi.encode(DEFAULT_DESTINATION_BLOCKCHAIN_ID)
         );
 
-        teleporterMessenger = new TeleporterMessenger(0x0200000000000000000000000000000000000005);
+        teleporterMessenger = new TeleporterMessenger();
+        teleporterMessenger.initialize(address(0x0200000000000000000000000000000000000005));
 
         // Blockchain ID should be 0 before it is initialized.
         assertEq(teleporterMessenger.blockchainID(), bytes32(0));

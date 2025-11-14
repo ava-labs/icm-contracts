@@ -34,7 +34,7 @@ contract TestMessenger is ReentrancyGuardUpgradeable, TeleporterRegistryOwnableA
     mapping(bytes32 sourceBlockchainID => Message message) private _messages;
 
     /**
-     * @dev Emitted when a message is submited to be sent.
+     * @dev Emitted when a message is submitted to be sent.
      */
     event SendMessage(
         bytes32 indexed destinationBlockchainID,

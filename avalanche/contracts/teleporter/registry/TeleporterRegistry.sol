@@ -3,7 +3,7 @@
 
 // SPDX-License-Identifier: LicenseRef-Ecosystem
 
-pragma solidity 0.8.25;
+pragma solidity ^0.8.25;
 
 import {ITeleporterMessenger} from "@teleporter/ITeleporterMessenger.sol";
 import {

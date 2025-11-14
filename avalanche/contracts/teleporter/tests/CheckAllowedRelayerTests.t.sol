@@ -9,7 +9,7 @@ import {TeleporterMessenger} from "../TeleporterMessenger.sol";
 import {Test} from "@forge-std/Test.sol";
 
 contract CheckIsAllowedRelayerTest is
-    TeleporterMessenger(0x0200000000000000000000000000000000000005),
+    TeleporterMessenger,
     Test
 {
 

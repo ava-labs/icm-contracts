@@ -6,13 +6,13 @@ import (
 
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp/payload"
-	avalanchevalidatorsetregistry "github.com/ava-labs/icm-contracts/abi-bindings/go/AvalancheValidatorSetRegistry"
+	teleportermessenger "github.com/ava-labs/icm-contracts/abi-bindings/go/teleporter/TeleporterMessenger"
 	"github.com/ava-labs/libevm/log"
 )
 
 // DebugICMMessage provides detailed analysis of an ICM message for debugging validation issues
 func DebugICMMessage(
-	icmMessage avalanchevalidatorsetregistry.ICMMessage,
+	icmMessage teleportermessenger.ICMMessage,
 	validatorsBytes []byte,
 	expectedNetworkID uint32,
 ) {
@@ -79,7 +79,7 @@ func DebugICMMessage(
 
 // CompareICMMessageFields helps identify specific field mismatches
 func CompareICMMessageFields(
-	icmMessage avalanchevalidatorsetregistry.ICMMessage,
+	icmMessage teleportermessenger.ICMMessage,
 	expectedNetworkID uint32,
 	expectedSourceBlockchainID [32]byte,
 ) {

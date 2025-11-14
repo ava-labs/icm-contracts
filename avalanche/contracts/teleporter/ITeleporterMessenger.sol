@@ -3,7 +3,7 @@
 
 // SPDX-License-Identifier: LicenseRef-Ecosystem
 
-pragma solidity 0.8.25;
+pragma solidity ^0.8.25;
 
 // A message receipt identifies the message that was delivered by its nonce,
 // and the address that can redeem the reward for that message.
@@ -26,7 +26,7 @@ struct TeleporterMessageInput {
     bytes message;
 }
 
-// Represents a message sent or received by an implementation of {ITeleporterMessenger}.
+// Represents a cross-chain message sent or received by an implementation of {ITeleporterMessenger}.
 struct TeleporterMessage {
     uint256 messageNonce;
     address originSenderAddress;
@@ -45,6 +45,27 @@ struct TeleporterFeeInfo {
     address feeTokenAddress;
     uint256 amount;
 }
+
+
+struct ICMSignature {
+    bytes signers;
+    bytes signature;
+}
+
+
+struct ICMUnsignedMessage {
+    uint32 avalancheNetworkID;
+    bytes32 avalancheSourceBlockchainID;
+    bytes payload;
+}
+
+/// A signed ICM message which carries a Teleporter message
+struct ICMMessage {
+    ICMUnsignedMessage unsignedMessage;
+    bytes unsignedMessageBytes;
+    ICMSignature signature;
+}
+
 
 /**
  * @dev Interface that describes functionalities for a cross-chain messenger implementing the Teleporter protcol.
@@ -125,6 +146,7 @@ interface ITeleporterMessenger {
         TeleporterMessageInput calldata messageInput
     ) external returns (bytes32);
 
+
     /**
      * @notice Called by transactions to retry the sending of a cross-chain message.
      *
@@ -164,7 +186,7 @@ interface ITeleporterMessenger {
      * @notice Receives an inter-chain message, and marks the `relayerRewardAddress` for fee reward for a successful delivery.
      *
      */
-    function receiveInterChainMessage(bytes calldata messagePayload, address relayerRewardAddress) external;
+    function receiveInterChainMessage(ICMMessage calldata icmMessage, address relayerRewardAddress) external;
 
     /**
      * @notice Retries the execution of a previously delivered message by verifying the payload matches
@@ -193,7 +215,15 @@ interface ITeleporterMessenger {
         bytes32[] calldata messageIDs,
         TeleporterFeeInfo calldata feeInfo,
         address[] calldata allowedRelayerAddresses
-    ) external returns (bytes32);
+    ) external returns (bytes32); /**
+
+     * @notice Sends the receipts for the given `messageIDs`.
+     *
+     * @dev Sends the specified message receipts in a new message (with an empty payload) back to the source chain.
+     * This is intended for use in sending receipts that have not been sent in a timely manner by the standard
+     * receipt delivery mechanism.
+     * @return The message ID of the newly sent message.
+     */
 
     /**
      * @notice Sends any fee amount rewards for the given fee asset out to the caller.

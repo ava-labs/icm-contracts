@@ -8,8 +8,8 @@ import {
     ValidatorSetStatePayload,
     ValidatorSets
 } from "./utils/ValidatorSets.sol";
-import {ICMMessage, AddressedCall} from "./utils/ICM.sol";
-import {ICM} from "./utils/ICM.sol";
+import {ICMMessage} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
+import {ICM, AddressedCall} from "./utils/ICM.sol";
 import {IVerifyICMMessage} from "./interfaces/IVerifyWarpMessage.sol";
 
 /**
@@ -23,15 +23,25 @@ contract AvalancheValidatorSetRegistry is
     IVerifyICMMessage
 {
     uint32 public immutable avalancheNetworkID;
-    uint256 public nextValidatorSetID = 0;
+    /**
+     * @notice The blockchain this registry maintains validator sets for
+     * @dev This should be a blockchain for which the registered validators
+     * represents the entire validator set. E.g., if this contract instance is
+     * verifying Avalanche L1 instances, this ID should be the L1 ID, not the
+     * P-chain ID.
+     */
+    bytes32 public immutable avalancheBlockChainID;
+    uint32 public nextValidatorSetID = 0;
 
     // Mapping of validator set IDs to their complete validator set data.
     mapping(uint256 => ValidatorSet) private _validatorSets;
 
     constructor(
-        uint32 _avalancheNetworkID
+        uint32 _avalancheNetworkID,
+        bytes32 _avalancheBlockChainID
     ) {
         avalancheNetworkID = _avalancheNetworkID;
+        avalancheBlockChainID = _avalancheBlockChainID;
     }
 
     /**
@@ -78,7 +88,7 @@ contract AvalancheValidatorSetRegistry is
             pChainTimestamp: validatorSetStatePayload.pChainTimestamp
         });
         require(
-            ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet), "Invalid ICM message"
+            ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,validatorSet), "Invalid ICM message"
         );
 
         // Store the validator set.
@@ -105,7 +115,7 @@ contract AvalancheValidatorSetRegistry is
         ValidatorSet storage currentValidatorSet = _validatorSets[validatorSetID];
 
         // Verify the ICM message using the current validator set
-        bool isValid = ICM.verifyICMMessage(message, avalancheNetworkID, currentValidatorSet);
+        bool isValid = ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,currentValidatorSet);
         require(isValid, "Invalid ICM message");
 
         // Parse and validate the validator set data
@@ -179,20 +189,22 @@ contract AvalancheValidatorSetRegistry is
         ICMMessage calldata message
     ) external view returns (bool) {
         ValidatorSet memory validatorSet = _getValidatorSet(validatorSetID);
-        return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+        return ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
     }
 
     /**
      * @notice Verify the signatures of an ICM message against the latest validator set.
      * @param message The ICM message to be verified
-     * @return True if the message is valid, false otherwise
+     * @return True if the message is valid, false otherwise.
      */
     function verifyICMMessage(
         ICMMessage calldata message
     ) external view returns (bool) {
         ValidatorSet memory validatorSet = getCurrentValidatorSet();
-        return ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+        bool valid = ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
+        return valid;
     }
+
     function _getValidatorSet(
         uint256 validatorSetID
     ) private view returns (ValidatorSet memory) {
@@ -227,7 +239,7 @@ contract AvalancheValidatorSetRegistry is
 
         // Parse the validator set state payload.
         validatorSetStatePayload =
-                            ValidatorSets.parseValidatorSetStatePayload(addressedCall.payload);
+            ValidatorSets.parseValidatorSetStatePayload(addressedCall.payload);
 
         // Check that the validator set hash matches the hash of the serialized validator set.
         require(

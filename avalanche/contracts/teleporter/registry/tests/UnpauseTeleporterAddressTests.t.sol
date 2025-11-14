@@ -24,7 +24,7 @@ abstract contract UnpauseTeleporterAddressTest is BaseTeleporterRegistryAppTest 
 
         // Add a new Teleporter address to the registry and update minimum version
 
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
         _updateMinTeleporterVersionSuccess(app, teleporterRegistry.latestVersion());
 
@@ -78,7 +78,7 @@ abstract contract UnpauseTeleporterAddressTest is BaseTeleporterRegistryAppTest 
         // Check that a Teleporter address can be paused before it is registered with the registry
 
         // Create a new Teleporter address that is not registered with the registry
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
 
         // Pause the new Teleporter address before it is registered
         _pauseTeleporterAddressSuccess(app, newTeleporterAddress);
@@ -98,7 +98,7 @@ abstract contract UnpauseTeleporterAddressTest is BaseTeleporterRegistryAppTest 
         // Check that a Teleporter address can be paused before it is registered with the registry
 
         // Create a new Teleporter address that is not registered with the registry
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
 
         // Pause the new Teleporter address before it is registered
         _pauseTeleporterAddressSuccess(app, newTeleporterAddress);

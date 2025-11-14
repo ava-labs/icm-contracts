@@ -13,7 +13,7 @@ contract AvalancheValidatorSetRegistryTest is Test {
     uint32 constant NETWORK_ID = 1;
 
     function setUp() public {
-        registry = new AvalancheValidatorSetRegistry(NETWORK_ID);
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID, bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7"));
     }
 
     function testGetAvalancheNetworkID() public view {
@@ -72,7 +72,7 @@ contract AvalancheValidatorSetRegistryTest is Test {
 
     function testIncorrectNetworkId() public {
         // create a new registry with a network id different than the one the message is intended for
-        registry = new AvalancheValidatorSetRegistry(NETWORK_ID + 1);
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID + 1, bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7"));
         bytes memory validatorBytes =
             hex"000000000004055b1e5892c401dc04a72699da740f768f25f16fbac3debaed3caa7f502242b9b8b5890c6795d30bd6011451aef8b547133e7251b1d022c842645433528f94d9e118d2b3a7bd2ec8e8feb971e7d2fe7f5ba81f056147a61f4b4e5e747529ac1d0000000000000064064bb2e2313f21f36907e4c010a7bfee0216a3f0000bf2b1c83adf6aa6675bada4b68dd023f4f4c9285be2c75ff745ac0b790412ba453f7d1a0c49c9c7e1fd7a791110499ea762a96d57b69e67d2e25fb5756a37e26f4c4a69b27939799b92f9000000000000006413d331edb3c1f4113b5148e25bf32658f962d43dea4115fe40fb0c38ac3acd58537cc147218e34e86fd5366ed1ef0d00173010db4bbb9e64cb676d39f4bae156b7b8bc76102d6e41e7bc46c6b6a369d21726f9e7be4b929ce4dcf84fa1a1a56600000000000000641831d57287d398005355881a59ee05384c9467c7974650cb6a38fd1346d3ec58484ab0ad97678bf21521c6e6824e08180d16fb7a9257aac66442415c3f51f35b691f5ce4389ce22c0701b2a1ac6d05f2907e040eb7a03b5aef68bbd90cfbea770000000000000064";
         bytes memory signedValidtorSetStateMessage =

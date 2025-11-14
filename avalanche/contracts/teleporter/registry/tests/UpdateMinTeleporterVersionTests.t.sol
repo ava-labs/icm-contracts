@@ -16,7 +16,7 @@ abstract contract UpdateMinTeleporterVersionTest is BaseTeleporterRegistryAppTes
         app.receiveTeleporterMessage(DEFAULT_SOURCE_BLOCKCHAIN_ID, DEFAULT_ORIGIN_ADDRESS, "");
 
         // Now add new protocol version to registry and update the app's min version
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
 
         _updateMinTeleporterVersionSuccess(app, teleporterRegistry.latestVersion());
@@ -38,7 +38,7 @@ abstract contract UpdateMinTeleporterVersionTest is BaseTeleporterRegistryAppTes
         // that is not registered in the registry.
 
         // First add to the registry by skipping a version
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
         uint256 latestVersion = teleporterRegistry.latestVersion();
         uint32 messageIndex = 0;
         WarpMessage memory warpMessage = _createWarpOffChainMessage(

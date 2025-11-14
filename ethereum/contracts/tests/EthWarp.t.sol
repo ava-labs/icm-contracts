@@ -2,10 +2,14 @@
 pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
+import {
+    ICMMessage,
+    ICMUnsignedMessage,
+    ICMSignature
+} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
 import "../AvalancheValidatorSetRegistry.sol";
 import "../EthWarp.sol";
 import "../utils/ValidatorSets.sol";
-import "../utils/ICM.sol";
 import "../utils/BLST.sol";
 
 contract EthWarpTest is Test {
@@ -16,8 +20,8 @@ contract EthWarpTest is Test {
     bytes32 constant AvalancheBlockchainId = bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7");
 
     function setUp() public {
-        registry = new AvalancheValidatorSetRegistry(NETWORK_ID);
-        warp = new EthWarp(1);
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID, AvalancheBlockchainId);
+        warp = new EthWarp(1, AvalancheBlockchainId);
     }
 
     /**
@@ -34,7 +38,7 @@ contract EthWarpTest is Test {
      * is specifically not implemented for the Ethereum Warp messenger
      */
     function testGetVerifiedWarpMessageReverts() public {
-        vm.expectRevert("This method can't be called on Ethereum, use `getMessageFromPayload` instead");
+        vm.expectRevert("This method can't be called on Ethereum, use `getVerifiedICMMessage` instead");
         warp.getVerifiedWarpMessage(0);
     }
 
@@ -48,9 +52,8 @@ contract EthWarpTest is Test {
         // the blockchain is not registered with this contract
         assertFalse(warp.isChainRegistered(AvalancheBlockchainId));
         ICMMessage memory message = icmMessageFixture();
-        bytes memory payload = ICM.serializeICMMessage(message);
         vm.expectRevert( "Cannot receive a Warp message from a chain whose validator set is unknown");
-        warp.getVerifiedMessageFromPayload(payload);
+        warp.getVerifiedICMMessage(message);
     }
 
     /**
@@ -63,11 +66,10 @@ contract EthWarpTest is Test {
         assertTrue(warp.isChainRegistered(AvalancheBlockchainId));
 
         ICMMessage memory message = icmMessageFixture();
-        bytes memory payload = ICM.serializeICMMessage(message);
 
         // The call should fail when attempting to find the current validator set
         vm.expectRevert();
-        warp.getVerifiedMessageFromPayload(payload);
+        warp.getVerifiedICMMessage(message);
     }
 
     /**
@@ -79,26 +81,8 @@ contract EthWarpTest is Test {
 
         // register this registry with the warp contract
         warp.registerChain(AvalancheBlockchainId, address(registry));
-        // serialize the warp message
-        bytes memory warpMessage = ICM.serializeICMMessage(icmMessageFixture());
         // verify that we can receive and validate this message
-        warp.getVerifiedMessageFromPayload(warpMessage);
-    }
-
-    /**
-     * @dev Test that a message not signed by a quorum is rejected
-     */
-    function testGetVerifiedMessageFails() public {
-        // add a validator set to the registry
-        registerValidatorSet([uint64(1), uint64(100), uint64(1), uint64(1)]);
-
-        // register this registry with the warp contract
-        warp.registerChain(AvalancheBlockchainId, address(registry));
-        // serialize the warp message
-        bytes memory warpMessage = ICM.serializeICMMessage(icmMessageFixture());
-        // verify that we cannot receive and validate this message
-        vm.expectRevert();
-        warp.getVerifiedMessageFromPayload(warpMessage);
+        warp.getVerifiedICMMessage(icmMessageFixture());
     }
 
     function secretKeysFixture() private pure returns (uint256[4] memory) {

@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	"github.com/ava-labs/avalanchego/ids"
+	avalancheWarp "github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/subnet-evm/accounts/abi"
 	"github.com/pkg/errors"
@@ -89,6 +90,17 @@ func PackReceiveCrossChainMessage(messageIndex uint32, relayerRewardAddress comm
 	}
 
 	return abi.Pack("receiveCrossChainMessage", messageIndex, relayerRewardAddress)
+}
+
+// PackReceiveInterChainMessage packs a ReceiveInterChainMessageInput to form
+// a call to the receiveInterChainMessage function
+func PackReceiveInterChainMessage(messagePayload *avalancheWarp.Message, relayerRewardAddress common.Address) ([]byte, error) {
+	abi, err := TeleporterMessengerMetaData.GetAbi()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get abi")
+	}
+
+	return abi.Pack("receiveInterChainMessage", messagePayload, relayerRewardAddress)
 }
 
 // PackCalculateMessageID packs input to form a call to the calculateMessageID function

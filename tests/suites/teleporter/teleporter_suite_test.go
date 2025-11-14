@@ -16,13 +16,14 @@ import (
 	"github.com/ava-labs/icm-contracts/tests/network"
 	"github.com/ava-labs/icm-contracts/tests/utils"
 	deploymentUtils "github.com/ava-labs/icm-contracts/utils/deployment-utils"
+	"github.com/ava-labs/libevm/common"
 	"github.com/ava-labs/libevm/log"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 const (
-	teleporterByteCodeFile  = "./out/TeleporterMessenger.sol/TeleporterMessenger.json"
+	teleporterByteCodeFile  = "./avalanche/out/TeleporterMessenger.sol/TeleporterMessenger.json"
 	warpGenesisTemplateFile = "./tests/utils/warp-genesis-template.json"
 
 	teleporterMessengerLabel = "TeleporterMessenger"
@@ -111,6 +112,7 @@ var _ = ginkgo.BeforeSuite(func() {
 
 	for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
 		TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+		TeleporterInfo.Initialize(l1, fundedKey, common.HexToAddress("0x0200000000000000000000000000000000000005"))
 		TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
 		TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
 	}

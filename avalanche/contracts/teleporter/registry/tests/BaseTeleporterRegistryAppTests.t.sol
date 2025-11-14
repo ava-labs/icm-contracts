@@ -102,6 +102,7 @@ abstract contract BaseTeleporterRegistryAppTest is TeleporterRegistryTest {
         TeleporterRegistryTest.setUp();
         _addProtocolVersion(teleporterRegistry, teleporterAddress);
         _mockFeeAsset = new UnitTestMockERC20();
+        TeleporterMessenger(teleporterAddress).initialize(address(0x0200000000000000000000000000000000000005));
         TeleporterMessenger(teleporterAddress).initializeBlockchainID();
     }
 
@@ -122,7 +123,8 @@ abstract contract BaseTeleporterRegistryAppTest is TeleporterRegistryTest {
         app.receiveTeleporterMessage(DEFAULT_SOURCE_BLOCKCHAIN_ID, DEFAULT_ORIGIN_ADDRESS, "");
 
         // Now add new protocol version to registry and update the app's min version
-        address newTeleporterAddress = address(new TeleporterMessenger(0x0200000000000000000000000000000000000005));
+        address newTeleporterAddress = address(new TeleporterMessenger());
+
         _addProtocolVersion(teleporterRegistry, newTeleporterAddress);
 
         _updateMinTeleporterVersionSuccess(app, teleporterRegistry.latestVersion());

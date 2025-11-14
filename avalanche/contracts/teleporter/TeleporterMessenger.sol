@@ -15,14 +15,15 @@ import {
     TeleporterMessageInput,
     TeleporterMessage,
     TeleporterFeeInfo,
-    ITeleporterMessenger
+    ITeleporterMessenger,
+    ICMMessage
 } from "./ITeleporterMessenger.sol";
 import {ReceiptQueue} from "./ReceiptQueue.sol";
 import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";
 import {ITeleporterReceiver} from "./ITeleporterReceiver.sol";
 import {ReentrancyGuards} from "@utilities/ReentrancyGuards.sol";
 import {IWarpExt} from "./IWarpExt.sol";
-import {IWarpMessenger} from "../../../lib/subnet-evm/contracts/contracts/interfaces/IWarpMessenger.sol";
+import {IWarpMessenger} from "../../lib/subnet-evm/contracts/contracts/interfaces/IWarpMessenger.sol";
 
 /**
  * @dev Implementation of the {ITeleporterMessenger} interface.
@@ -46,10 +47,20 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         TeleporterFeeInfo feeInfo;
     }
 
+    /*
+     * @dev The address of the Warp contract this TeleportMessenger instance
+     * uses. This indirection is to allow initializing the `WARP_MESSENGER` value
+     * exactly once without using constructors. This is to allow using Nick's method
+     * for deploying this contract
+     */
+    address private WARP_CONTRACT_ADDRESS;
+
     /**
      * @notice The contract for verifying Warp messages
      */
-    IWarpExt public immutable WARP_MESSENGER;
+    IWarpExt private WARP_MESSENGER;
+
+    string public constant VERSION = "V2";
 
     /**
      * @notice The blockchain ID of the chain the contract is deployed on.
@@ -111,10 +122,17 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
             => mapping(address feeTokenContract => uint256 redeemableRewardAmount)
     ) internal _relayerRewardAmounts;
 
-    // @notice Register the address of the Warp contract to be used by
-    // this teleporter.
-    constructor (address warpContract) {
-        WARP_MESSENGER = IWarpExt(warpContract);
+    /*
+    * @notice Register the address of the Warp contract to be used by
+    *  this teleporter. This can be done only once.
+    * @dev This function is a delayed constructor to allow using Nick's method
+    * to deploy this contract
+    */
+    function initialize(address warpContract) external  {
+        if ( WARP_CONTRACT_ADDRESS == address (0) ) {
+            WARP_CONTRACT_ADDRESS = warpContract;
+            WARP_MESSENGER = IWarpExt(warpContract);
+        }
     }
 
     /**
@@ -277,11 +295,11 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
      * @inheritdoc ITeleporterMessenger
      */
     function receiveInterChainMessage(
-        bytes calldata messagePayload,
+        ICMMessage calldata icmMessage,
         address relayerRewardAddress
     ) external receiverNonReentrant {
         WarpMessage memory warpMessage =
-            WARP_MESSENGER.getVerifiedMessageFromPayload(messagePayload);
+            WARP_MESSENGER.getVerifiedICMMessage(icmMessage);
         _processWarpMessage(warpMessage, relayerRewardAddress);
     }
 
@@ -617,6 +635,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
             blockchainID = blockchainID_;
             emit BlockchainIDInitialized(blockchainID_);
         }
+
         return blockchainID_;
     }
 
@@ -628,9 +647,9 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         bytes32 sourceBlockchainID,
         bytes32 destinationBlockchainID,
         uint256 nonce
-    ) public view returns (bytes32) {
+    ) public pure returns (bytes32) {
         return
-            keccak256(abi.encode(address(this), sourceBlockchainID, destinationBlockchainID, nonce));
+            keccak256(abi.encode(VERSION, sourceBlockchainID, destinationBlockchainID, nonce));
     }
 
     /**
@@ -666,16 +685,46 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         TeleporterMessageInput memory messageInput,
         TeleporterMessageReceipt[] memory receipts
     ) private returns (bytes32) {
+
+        (bytes32 messageID, TeleporterMessage memory teleporterMessage, TeleporterFeeInfo memory  adjustedFeeInfo)
+            = _prepareTeleporterMessage(messageInput, receipts);
+
+        bytes memory teleporterMessageBytes = abi.encode(teleporterMessage);
+        sentMessageInfo[messageID] = SentMessageInfo({
+            messageHash: keccak256(teleporterMessageBytes),
+            feeInfo: adjustedFeeInfo
+        });
+
+        emit SendCrossChainMessage(
+            messageID, messageInput.destinationBlockchainID, teleporterMessage, adjustedFeeInfo
+        );
+
+        // Submit the message to the AWM precompile.
+        WARP_MESSENGER.sendWarpMessage(teleporterMessageBytes);
+
+        return messageID;
+    }
+
+
+    /**
+     * @dev Helper function that assempbles the actual telepoter message and associated
+     * metadata (message id, fee info)
+     */
+    function _prepareTeleporterMessage(
+        TeleporterMessageInput memory messageInput,
+        TeleporterMessageReceipt[] memory receipts
+    ) private returns (bytes32 messageID, TeleporterMessage memory teleporterMessage, TeleporterFeeInfo memory ) {
         // If the blockchain ID has yet to be initialized, do so now.
         bytes32 blockchainID_ = initializeBlockchainID();
 
+
         // Get the message ID to use for this message by incrementing it.
         uint256 messageNonce_ = ++messageNonce;
-        bytes32 messageID =
+        messageID =
             calculateMessageID(blockchainID_, messageInput.destinationBlockchainID, messageNonce_);
 
         // Construct and serialize the message.
-        TeleporterMessage memory teleporterMessage = TeleporterMessage({
+        teleporterMessage = TeleporterMessage({
             messageNonce: messageNonce_,
             originSenderAddress: msg.sender,
             destinationBlockchainID: messageInput.destinationBlockchainID,
@@ -685,7 +734,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
             receipts: receipts,
             message: messageInput.message
         });
-        bytes memory teleporterMessageBytes = abi.encode(teleporterMessage);
+
 
         // If the fee amount is non-zero, transfer the asset into control of this TeleporterMessenger contract instance.
         // The fee is allowed to be 0 because it's possible for someone to run their own relayer and deliver their own messages,
@@ -710,19 +759,8 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
             feeTokenAddress: messageInput.feeInfo.feeTokenAddress,
             amount: adjustedFeeAmount
         });
-        sentMessageInfo[messageID] = SentMessageInfo({
-            messageHash: keccak256(teleporterMessageBytes),
-            feeInfo: adjustedFeeInfo
-        });
 
-        emit SendCrossChainMessage(
-            messageID, messageInput.destinationBlockchainID, teleporterMessage, adjustedFeeInfo
-        );
-
-        // Submit the message to the AWM precompile.
-        WARP_MESSENGER.sendWarpMessage(teleporterMessageBytes);
-
-        return messageID;
+        return (messageID, teleporterMessage, adjustedFeeInfo);
     }
 
     /**

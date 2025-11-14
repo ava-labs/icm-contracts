@@ -9,6 +9,7 @@ import {
     WarpMessage,
     IWarpMessenger
 } from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {ICMMessage} from "./ITeleporterMessenger.sol";
 
 /**
  * @dev Interface that allows adapting the Warp interface. This is necessary for external interoperability
@@ -20,7 +21,7 @@ interface IWarpExt is IWarpMessenger {
      * getting the actual verified Warp message.
      * @return message A verified Warp message.
      */
-    function getVerifiedMessageFromPayload(
-        bytes calldata payload
+    function getVerifiedICMMessage(
+        ICMMessage calldata icmMessag3
     ) external view returns (WarpMessage memory message);
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.30;
 
 import {ValidatorSet} from "../utils/ValidatorSets.sol";
-import {ICMMessage} from "../utils/ICM.sol";
+import {ICMMessage} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
 
 /**
  * @title IAvalancheValidatorSetRegistry
