@@ -335,7 +335,7 @@ func (n *LocalAvalancheNetwork) AddSubnetValidators(
 	l1 interfaces.L1TestInfo,
 	partialSync bool,
 ) interfaces.L1TestInfo {
-	// Modify the each node's config to track the l1
+	// Modify each node's config to track the l1
 	for _, node := range nodes {
 		goLog.Printf("Adding node %s @ %s to l1 %s", node.NodeID, node.URI, l1.SubnetID)
 		existingTrackedSubnets := node.Flags[config.TrackSubnetsKey]
