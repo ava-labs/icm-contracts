@@ -60,7 +60,6 @@ func TestCalculateMessageID(t *testing.T) {
 			destinationID, err := ids.FromString(test.destinationBlockchainID)
 			require.NoError(t, err)
 			id, err := CalculateMessageID(
-				test.teleporterMessengerAddress,
 				sourceID,
 				destinationID,
 				big.NewInt(test.nonce),
