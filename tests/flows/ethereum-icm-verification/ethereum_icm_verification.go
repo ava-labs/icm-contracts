@@ -88,7 +88,6 @@ func EthereumICMVerification(
 		ethereumFundedKey,
 		ethereumNetwork.ChainID,
 		ethereumNetwork.Client,
-		l1Info.BlockchainID,
 	)
 	log.Info("Deployed EthWarp contract on the Ethereum network", "address", ethWarpAddress)
 

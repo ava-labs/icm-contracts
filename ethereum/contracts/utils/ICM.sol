@@ -363,10 +363,10 @@ library ICM {
      * @param message The unsigned part of an ICM message
      * @return A Warp message
      */
-    function handleMessage(ICMUnsignedMessage memory message, bytes32 sourceChainID ) internal pure returns (WarpMessage memory) {
+    function handleMessage(ICMUnsignedMessage memory message ) internal pure returns (WarpMessage memory) {
         AddressedCall memory addressedCall = parseAddressedCall(message.payload);
         return WarpMessage({
-            sourceChainID: sourceChainID,
+            sourceChainID: message.avalancheSourceBlockchainID,
             // N.B. This prevents this function from being used for internal interop calls
             // to teleporter
             originSenderAddress: address(0),

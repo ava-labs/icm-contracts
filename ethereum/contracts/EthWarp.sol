@@ -24,12 +24,6 @@ contract EthWarp is IWarpExt {
      */
     bytes32 public blockchainID;
 
-    /**
-     * @notice The chain ID of that the Warp message originated from. Used
-     * to ensure that message IDs are computed computed consistently on source and
-     * target teleporter contracts.
-     */
-    bytes32 public warpSourceChainID;
 
     /**
      * @notice A mapping of avalanche chain IDs to contract addresses that know how
@@ -37,9 +31,8 @@ contract EthWarp is IWarpExt {
      */
     mapping(bytes32 avaBlockchainId => address verifyWarpMessage) internal _registeredChains;
 
-    constructor (uint256 blockChainId, bytes32 _warpSourceChainID) {
+    constructor (uint256 blockChainId) {
         blockchainID = bytes32(uint256(blockChainId));
-        warpSourceChainID = _warpSourceChainID;
     }
 
     function getVerifiedICMMessage(
@@ -52,7 +45,7 @@ contract EthWarp is IWarpExt {
         bool isValid = IVerifyICMMessage(_registeredChains[icmMessage.unsignedMessage.avalancheSourceBlockchainID])
             .verifyICMMessage(icmMessage);
         require(isValid, "Received an invalid ICM message");
-        warpMessage = ICM.handleMessage(icmMessage.unsignedMessage, warpSourceChainID);
+        warpMessage = ICM.handleMessage(icmMessage.unsignedMessage);
         return warpMessage;
     }
 

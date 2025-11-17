@@ -20,12 +20,11 @@ func DeployEthWarp(
     fundedKey *ecdsa.PrivateKey,
     chainID *big.Int,
     client ethclient.Client,
-    warpChainID ids.ID,
 ) (common.Address, *ethwarp.EthWarp) {
     opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, chainID)
     Expect(err).Should(BeNil())
-    log.Info("Deploying WARP with dest chain", "id", warpChainID.Hex())
-    address, tx, ethWarp, err := ethwarp.DeployEthWarp(opts, client, chainID, warpChainID)
+    log.Info("Deploying WARP with dest chain")
+    address, tx, ethWarp, err := ethwarp.DeployEthWarp(opts, client, chainID)
     Expect(err).Should(BeNil())
 
     WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())

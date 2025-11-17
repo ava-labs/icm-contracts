@@ -21,7 +21,7 @@ contract EthWarpTest is Test {
 
     function setUp() public {
         registry = new AvalancheValidatorSetRegistry(NETWORK_ID, AvalancheBlockchainId);
-        warp = new EthWarp(1, AvalancheBlockchainId);
+        warp = new EthWarp(1);
     }
 
     /**
