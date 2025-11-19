@@ -44,16 +44,10 @@ func RegisterValSetRegistryWithEthWarp(
     opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, chainID)
     Expect(err).Should(BeNil())
     tx, err := ethWarp.RegisterChain(opts, avalancheL1BlockchainID, validatorSetRegistryAddress)
-    if err != nil {
-        log.Error("Failed to register ValidatorSetRegistry to EthWarp contract", "error", err)
-        log.Info("Registering a ValidatorSetRegistry to an EthWarp contract failed", "error", err)
-    } else if tx != nil {
-        log.Info("EthWarp contract registered validator set", "Blockchain ID", avalancheL1BlockchainID, "contract", validatorSetRegistryAddress)
-        log.Info("Register chain to EthWarp transaction", "tx", tx.Hash(), "txData", hex.EncodeToString(tx.Data()))
-    } else {
-        log.Error("Transaction is nil but no error returned")
-    }
     Expect(err).Should(BeNil())
+    
+    log.Info("EthWarp contract registered validator set", "Blockchain ID", avalancheL1BlockchainID, "contract", validatorSetRegistryAddress)
+    log.Info("Register chain to EthWarp transaction", "tx", tx.Hash(), "txData", hex.EncodeToString(tx.Data()))
 
     // Wait for the transaction to be mined and get the receipt.
     txReceipt := WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())
