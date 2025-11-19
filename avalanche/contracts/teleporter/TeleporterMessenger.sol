@@ -23,7 +23,8 @@ import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";
 import {ITeleporterReceiver} from "./ITeleporterReceiver.sol";
 import {ReentrancyGuards} from "@utilities/ReentrancyGuards.sol";
 import {IWarpExt} from "./IWarpExt.sol";
-import {IWarpMessenger} from "../../lib/subnet-evm/contracts/contracts/interfaces/IWarpMessenger.sol";
+import {IWarpMessenger} from "@avalabs/subnet-evm-contracts@1.2.2/contracts/interfaces/IWarpMessenger.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
 
 /**
  * @dev Implementation of the {ITeleporterMessenger} interface.
@@ -34,7 +35,7 @@ import {IWarpMessenger} from "../../lib/subnet-evm/contracts/contracts/interface
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
  */
-contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
+contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards, Initializable {
     using SafeERC20 for IERC20;
     using ReceiptQueue for ReceiptQueue.TeleporterMessageReceiptQueue;
 
@@ -47,13 +48,6 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         TeleporterFeeInfo feeInfo;
     }
 
-    /*
-     * @dev The address of the Warp contract this TeleportMessenger instance
-     * uses. This indirection is to allow initializing the `WARP_MESSENGER` value
-     * exactly once without using constructors. This is to allow using Nick's method
-     * for deploying this contract
-     */
-    address private WARP_CONTRACT_ADDRESS;
 
     /**
      * @notice The contract for verifying Warp messages
@@ -128,11 +122,8 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
     * @dev This function is a delayed constructor to allow using Nick's method
     * to deploy this contract
     */
-    function initialize(address warpContract) external  {
-        if ( WARP_CONTRACT_ADDRESS == address (0) ) {
-            WARP_CONTRACT_ADDRESS = warpContract;
-            WARP_MESSENGER = IWarpExt(warpContract);
-        }
+    function initialize(address warpContract) external initializer {
+        WARP_MESSENGER = IWarpExt(warpContract);
     }
 
     /**
