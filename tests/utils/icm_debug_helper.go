@@ -16,10 +16,10 @@ func DebugICMMessage(
 	validatorsBytes []byte,
 	expectedNetworkID uint32,
 ) {
-	log.Info("=== ICM MESSAGE DEBUG ANALYSIS ===")
+	log.Debug("=== ICM MESSAGE DEBUG ANALYSIS ===")
 
 	// 1. Basic message structure
-	log.Info("1. Message Structure",
+	log.Debug("1. Message Structure",
 		"networkID", icmMessage.UnsignedMessage.AvalancheNetworkID,
 		"sourceBlockchainID", hex.EncodeToString(icmMessage.UnsignedMessage.AvalancheSourceBlockchainID[:]),
 		"payloadLength", len(icmMessage.UnsignedMessage.Payload),
@@ -27,7 +27,7 @@ func DebugICMMessage(
 
 	// 2. Network ID validation
 	networkIDValid := icmMessage.UnsignedMessage.AvalancheNetworkID == expectedNetworkID
-	log.Info("2. Network ID Validation",
+	log.Debug("2. Network ID Validation",
 		"expected", expectedNetworkID,
 		"actual", icmMessage.UnsignedMessage.AvalancheNetworkID,
 		"valid", networkIDValid,
@@ -41,7 +41,7 @@ func DebugICMMessage(
 	}
 
 	sourceAddressValid := len(addressedCall.SourceAddress) == 0
-	log.Info("3. AddressedCall Structure",
+	log.Debug("3. AddressedCall Structure",
 		"sourceAddressLength", len(addressedCall.SourceAddress),
 		"sourceAddressValid", sourceAddressValid,
 		"innerPayloadLength", len(addressedCall.Payload),
@@ -49,13 +49,13 @@ func DebugICMMessage(
 
 	// 4. Validator set hash verification
 	computedHash := sha256.Sum256(validatorsBytes)
-	log.Info("4. Validator Set Hash",
+	log.Debug("4. Validator Set Hash",
 		"validatorBytesLength", len(validatorsBytes),
 		"computedHash", hex.EncodeToString(computedHash[:]),
 	)
 
 	// 5. Signature analysis
-	log.Info("5. Signature Analysis",
+	log.Debug("5. Signature Analysis",
 		"signersLength", len(icmMessage.Signature.Signers),
 		"signers", hex.EncodeToString(icmMessage.Signature.Signers),
 		"signatureLength", len(icmMessage.Signature.Signature),
@@ -67,14 +67,14 @@ func DebugICMMessage(
 	if err != nil {
 		log.Error("6. Signed Message Parsing FAILED", "error", err)
 	} else {
-		log.Info("6. Signed Message Structure",
+		log.Debug("6. Signed Message Structure",
 			"messageID", unsignedMessage.ID().String(),
 			"networkID", unsignedMessage.NetworkID,
 			"sourceChainID", unsignedMessage.SourceChainID.String(),
 		)
 	}
 
-	log.Info("=== END ICM MESSAGE DEBUG ANALYSIS ===")
+	log.Debug("=== END ICM MESSAGE DEBUG ANALYSIS ===")
 }
 
 // CompareICMMessageFields helps identify specific field mismatches

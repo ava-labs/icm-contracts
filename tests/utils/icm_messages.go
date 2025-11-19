@@ -50,7 +50,7 @@ func PrepareICMMessageForEthereum(
 	}
 
 	// Debug logging before sending transaction
-	log.Info("DEBUG: ICM Message Details",
+	log.Debug("DEBUG: ICM Message Details",
 		"avalancheNetworkID", avalancheNetworkID,
 		"avalancheSourceBlockchainID", hex.EncodeToString(avalanchePChainBlockchainID[:]),
 		"avalancheL1BlockchainID", hex.EncodeToString(avalancheL1BlockchainID[:]),

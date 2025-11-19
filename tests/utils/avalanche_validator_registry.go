@@ -119,24 +119,24 @@ func RegisterAvalancheValidatorSet(
 		signatureAggregator,
 		unsignedMessage,
 	)
-	log.Info("DEBUG: Validator Set Details:",
+	log.Debug("DEBUG: Validator Set Details:",
 		"validatorsBytesLength", len(validatorsBytes),
 		"validatorsBytes", hex.EncodeToString(validatorsBytes),
 	)
 	// Try to encode the transaction data to see what would be sent
 	registryABI, abiErr := abi.JSON(strings.NewReader(avalanchevalidatorsetregistry.AvalancheValidatorSetRegistryABI))
-	if abiErr == nil {
+	if abiErr != nil {
+		log.Error("Failed to parse contract ABI", "error", abiErr)
+	} else {
 		txData, encodeErr := registryABI.Pack("registerValidatorSet", icmMessage, validatorsBytes)
 		if encodeErr == nil {
-			log.Info("DEBUG: Raw transaction calldata",
+			log.Debug("DEBUG: Raw transaction calldata",
 				"data", hex.EncodeToString(txData),
 				"dataLength", len(txData),
 			)
 		} else {
 			log.Error("Failed to encode transaction data", "error", encodeErr)
 		}
-	} else {
-		log.Error("Failed to parse contract ABI", "error", abiErr)
 	}
 
 	// Test the verification before sending the transaction
@@ -144,14 +144,14 @@ func RegisterAvalancheValidatorSet(
 	if err != nil {
 		log.Error("Failed to get registry network ID", "error", err)
 	} else {
-		log.Info("DEBUG: Registry network ID", "registryNetworkID", registryNetworkID, "expectedNetworkID", avalancheNetworkID)
+		log.Debug("DEBUG: Registry network ID", "registryNetworkID", registryNetworkID, "expectedNetworkID", avalancheNetworkID)
 		if registryNetworkID != avalancheNetworkID {
 			log.Error("Network ID mismatch", "registryNetworkID", registryNetworkID, "expectedNetworkID", avalancheNetworkID)
 		}
 	}
 
 	// Parse the addressed call payload to debug its contents
-	log.Info("DEBUG: AddressedCall payload details",
+	log.Debug("DEBUG: AddressedCall payload details",
 		"payloadBytes", hex.EncodeToString(addressCallPayload.Bytes()),
 		"sourceAddressLength", len([]byte{}),
 		"validatorSetStatePayloadBytes", hex.EncodeToString(validaterSetStatePayload.Bytes()),
@@ -159,14 +159,14 @@ func RegisterAvalancheValidatorSet(
 
 	// Additional debug: check the validator set hash that was computed vs what's expected
 	computedHash := sha256.Sum256(validatorsBytes)
-	log.Info("DEBUG: Validator set hash validation",
+	log.Debug("DEBUG: Validator set hash validation",
 		"expectedHash", hex.EncodeToString(validatorSetHash[:]),
 		"computedHash", hex.EncodeToString(computedHash[:]),
 		"hashMatch", bytes.Equal(validatorSetHash[:], computedHash[:]),
 	)
 
 	// Debug the unsigned message structure
-	log.Info("DEBUG: Unsigned message structure breakdown",
+	log.Debug("DEBUG: Unsigned message structure breakdown",
 		"networkID", avalancheNetworkID,
 		"sourceBlockchainID", hex.EncodeToString(avalanchePChainBlockchainID[:]),
 		"targetBlockchainID", hex.EncodeToString(avalancheL1BlockchainID[:]),
@@ -179,7 +179,7 @@ func RegisterAvalancheValidatorSet(
 	CompareICMMessageFields(icmMessage, avalancheNetworkID, avalanchePChainBlockchainID)
 
 	// Try a static call first to simulate the transaction and see detailed error
-	log.Info("DEBUG: Attempting static call simulation...")
+	log.Debug("DEBUG: Attempting static call simulation...")
 	callOpts := &bind.CallOpts{
 		From:    opts.From,
 		Context: ctx,
@@ -191,7 +191,7 @@ func RegisterAvalancheValidatorSet(
 	if err != nil {
 		log.Error("Failed to get next validator set ID", "error", err)
 	} else {
-		log.Info("DEBUG: Next validator set ID", "nextID", currentValidatorSetID)
+		log.Debug("DEBUG: Next validator set ID", "nextID", currentValidatorSetID)
 	}
 
 	// Register the validator set in the registry.
@@ -202,23 +202,21 @@ func RegisterAvalancheValidatorSet(
 
 		// Additional debugging: examine the specific error message
 		errorStr := err.Error()
-		log.Info("DEBUG: Detailed error analysis", "errorString", errorStr)
+		log.Debug("DEBUG: Detailed error analysis", "errorString", errorStr)
 		if strings.Contains(errorStr, "Invalid ICM message") {
 			log.Error("DIAGNOSIS: ICM message validation failed - check networkID, sourceBlockchainID, signature verification, or weight quorum")
 		}
 		if strings.Contains(errorStr, "execution reverted") {
 			log.Error("DIAGNOSIS: Transaction reverted - likely a require() statement failed in the contract")
 		}
-	} else if tx != nil {
-		log.Info("Register validator set transaction", "tx", tx.Hash(), "txData", hex.EncodeToString(tx.Data()))
 	} else {
-		log.Error("Transaction is nil but no error returned")
+		log.Info("Register validator set transaction", "tx", tx.Hash(), "txData", hex.EncodeToString(tx.Data()))
 	}
 	Expect(err).Should(BeNil())
 
 	// Wait for the transaction to be mined and get the receipt.
 	txReceipt := WaitForTransactionSuccessWithClient(ctx, client, tx.Hash())
-	log.Info("DEBUG: Transaction receipt", "txReceipt", txReceipt, "gasUsed", txReceipt.GasUsed)
+	log.Debug("DEBUG: Transaction receipt", "txReceipt", txReceipt, "gasUsed", txReceipt.GasUsed)
 
 	// Get the event from the logs, and confirm the validator set was registered.
 	validatorSetRegisteredEvent, err := GetEventFromLogs(txReceipt.Logs, validatorSetRegistry.ParseValidatorSetRegistered)
