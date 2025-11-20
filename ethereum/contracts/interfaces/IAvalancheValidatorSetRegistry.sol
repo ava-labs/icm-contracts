@@ -66,16 +66,15 @@ interface IAvalancheValidatorSetRegistry {
     function getAvalancheNetworkID() external view returns (uint32);
 
     /**
-     * @notice Verifies an ICM message against a validator set
+     * @notice Verifies an ICM message against a validator set ir reverts
      * @dev This function validates that the message is properly signed by a sufficient quorum of validators
      * from the validator set identified by validatorSetID. The verification includes checking the network ID,
      * blockchain ID, and cryptographic signature verification.
      * @param validatorSetID The ID of the validator set to verify the message against
      * @param message The ICM message to verify
-     * @return True if the message is valid, false otherwise
      */
     function verifyICMMessageWithID(
         uint256 validatorSetID,
         ICMMessage calldata message
-    ) external view returns (bool);
+    ) external view;
 }

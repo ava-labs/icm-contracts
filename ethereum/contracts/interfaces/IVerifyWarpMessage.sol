@@ -8,10 +8,10 @@ import {ICMMessage} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMes
  */
 interface IVerifyICMMessage {
     /*
-     * @notice Verify an ICM message
+     * @notice Verify an ICM message or revert
      * @return True if the message is valid, false otherwise.
      */
     function verifyICMMessage(
         ICMMessage calldata message
-    ) external view returns (bool);
+    ) external view;
 }

@@ -32,7 +32,7 @@ contract EthWarp is IWarpExt {
     mapping(bytes32 avaBlockchainId => address verifyWarpMessage) internal _registeredChains;
 
     constructor (uint256 blockChainId) {
-        blockchainID = bytes32(uint256(blockChainId));
+        blockchainID = bytes32(blockChainId);
     }
 
     function getVerifiedICMMessage(
@@ -42,9 +42,8 @@ contract EthWarp is IWarpExt {
             isChainRegistered(icmMessage.unsignedMessage.avalancheSourceBlockchainID),
             "Cannot receive a Warp message from a chain whose validator set is unknown"
         );
-        bool isValid = IVerifyICMMessage(_registeredChains[icmMessage.unsignedMessage.avalancheSourceBlockchainID])
+        IVerifyICMMessage(_registeredChains[icmMessage.unsignedMessage.avalancheSourceBlockchainID])
             .verifyICMMessage(icmMessage);
-        require(isValid, "Received an invalid ICM message");
         warpMessage = ICM.handleMessage(icmMessage.unsignedMessage);
         return warpMessage;
     }

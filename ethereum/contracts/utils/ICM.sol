@@ -56,9 +56,12 @@ library ICM {
         uint256 resultIndex = 0;
 
         // Process all bytes, skipping leading zeros in the first byte
-        for (uint256 i = 0; i < data.length; ++i) {
-            uint256 startJ = (i == 0) ? leadingZeros : 0;
-            for (uint256 j = startJ; j < 8; ++j) {
+        for (uint256 j = leadingZeros; j < 8; ++j) {
+            result[resultIndex] = (uint8(data[0]) & (1 << (7 - j))) != 0;
+            resultIndex++;
+        }
+        for (uint256 i = 1; i < data.length; ++i) {
+            for (uint256 j = 0; j < 8; ++j) {
                 result[resultIndex] = (uint8(data[i]) & (1 << (7 - j))) != 0;
                 resultIndex++;
             }
@@ -312,7 +315,7 @@ library ICM {
         uint32 avalancheNetworkID,
         bytes32 avalancheBlockChainID,
         ValidatorSet memory validatorSet
-    ) internal view returns (bool) {
+    ) internal view  {
         if (message.unsignedMessage.avalancheNetworkID != avalancheNetworkID) {
             revert("Invalid avalanche network ID");
         }
@@ -347,7 +350,6 @@ library ICM {
         if (!result) {
             revert("Invalid signature");
         }
-        return result;
     }
 
     /**

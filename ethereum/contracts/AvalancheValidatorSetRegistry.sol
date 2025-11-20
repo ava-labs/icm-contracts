@@ -87,9 +87,9 @@ contract AvalancheValidatorSetRegistry is
             pChainHeight: validatorSetStatePayload.pChainHeight,
             pChainTimestamp: validatorSetStatePayload.pChainTimestamp
         });
-        require(
-            ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,validatorSet), "Invalid ICM message"
-        );
+
+        ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,validatorSet);
+
 
         // Store the validator set.
         uint256 validatorSetID = nextValidatorSetID++;
@@ -115,8 +115,7 @@ contract AvalancheValidatorSetRegistry is
         ValidatorSet storage currentValidatorSet = _validatorSets[validatorSetID];
 
         // Verify the ICM message using the current validator set
-        bool isValid = ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,currentValidatorSet);
-        require(isValid, "Invalid ICM message");
+        ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,currentValidatorSet);
 
         // Parse and validate the validator set data
         (
@@ -176,33 +175,30 @@ contract AvalancheValidatorSetRegistry is
     }
 
     /**
-     * @notice Verifies an ICM message against a validator set
+     * @notice Verifies an ICM message against a validator set or reverts
      * @dev This function validates that the message is properly signed by a sufficient quorum of validators
      * from the validator set identified by validatorSetID. The verification includes checking the network ID,
      * blockchain ID, and cryptographic signature verification.
      * @param validatorSetID The ID of the validator set to verify the message against
      * @param message The ICM message to verify
-     * @return True if the message is valid, false otherwise
      */
     function verifyICMMessageWithID(
         uint256 validatorSetID,
         ICMMessage calldata message
-    ) external view returns (bool) {
+    ) external view {
         ValidatorSet memory validatorSet = _getValidatorSet(validatorSetID);
-        return ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
+        ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
     }
 
     /**
-     * @notice Verify the signatures of an ICM message against the latest validator set.
+     * @notice Verify the signatures of an ICM message against the latest validator set or reverts
      * @param message The ICM message to be verified
-     * @return True if the message is valid, false otherwise.
      */
     function verifyICMMessage(
         ICMMessage calldata message
-    ) external view returns (bool) {
+    ) external view {
         ValidatorSet memory validatorSet = getCurrentValidatorSet();
-        bool valid = ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
-        return valid;
+        ICM.verifyICMMessage(message, avalancheNetworkID, avalancheBlockChainID, validatorSet);
     }
 
     function _getValidatorSet(
