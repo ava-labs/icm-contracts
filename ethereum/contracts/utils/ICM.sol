@@ -47,8 +47,7 @@ library ICM {
         }
 
         // Calculate the final result size (total bits minus leading zeros)
-        uint256 totalBits = data.length * 8;
-        uint256 resultSize = totalBits - leadingZeros;
+        uint256 resultSize = data.length * 8 - leadingZeros;
 
         // Create result array with the exact size needed
         bool[] memory result = new bool[](resultSize);
