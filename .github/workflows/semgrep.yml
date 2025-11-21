@@ -17,7 +17,7 @@ jobs:
     if: (github.actor != 'dependabot[bot]')
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: semgrep ci --dry-run --sarif > semgrep.sarif
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN_PUB }}
