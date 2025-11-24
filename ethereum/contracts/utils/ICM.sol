@@ -341,7 +341,7 @@ library ICM {
             filterValidators(signers, validatorSet.validators);
 
         if (!verifyWeight(aggregateWeight, validatorSet.totalWeight)) {
-            revert("Invalid weight");
+            revert("Insufficient weight");
         }
 
         bool result = BLST.verifySignature(
