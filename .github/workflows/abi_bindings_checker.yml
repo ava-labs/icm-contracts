@@ -34,6 +34,11 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
 
+      - name: Install svm
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+          ~/.cargo/bin/cargo install svm-rs
+
       - name: Generate ABI Go bindings
         run: |
           export PATH=$PATH:$HOME/.foundry/bin
