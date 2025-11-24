@@ -28,7 +28,7 @@ jobs:
       - name: Run unit tests
         run: |
           export PATH=$PATH:$HOME/.foundry/bin
-          forge test -vvv
+          forge test --root avalanche -vvv
 
   go-unit-tests:
     runs-on: ubuntu-22.04
