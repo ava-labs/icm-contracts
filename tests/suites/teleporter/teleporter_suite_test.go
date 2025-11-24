@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	teleporterByteCodeFile  = "./out/TeleporterMessenger.sol/TeleporterMessenger.json"
+	teleporterByteCodeFile  = "./avalanche/out/TeleporterMessenger.sol/TeleporterMessenger.json"
 	warpGenesisTemplateFile = "./tests/utils/warp-genesis-template.json"
 
 	teleporterMessengerLabel = "TeleporterMessenger"
