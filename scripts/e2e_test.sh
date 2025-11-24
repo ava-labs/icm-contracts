@@ -127,7 +127,7 @@ cd $ICM_CONTRACTS_PATH
 BASEDIR=$BASEDIR ICM_SERVICES_BUILD_PATH=$ICM_SERVICES_BUILD_PATH "${ICM_CONTRACTS_PATH}/scripts/install_sig_agg_release.sh"
 echo "Installed signature-aggregator from icm-services release ${ICM_SERVICES_VERSION}"
 
-cd $ICM_CONTRACTS_PATH
+cd "$ICM_CONTRACTS_PATH/avalanche/"
 if command -v forge &> /dev/null; then
   forge build --skip test
 else

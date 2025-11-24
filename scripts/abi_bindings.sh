@@ -56,7 +56,10 @@ if ! command -v forge &> /dev/null; then
 fi
 
 if ! command -v svm &> /dev/null; then
-    echo "svm not found. Please install svm-rs to manage Solidity versions. See: https://github.com/roynalnaruto/svm-rs" && exit 1
+    echo "svm not found, installing..."
+    # install Rust toolchain
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+    ~/.cargo/bin/cargo install svm-rs
 fi
 
 # Install abigen
