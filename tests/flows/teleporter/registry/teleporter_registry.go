@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	teleporterByteCodeFile = "./out/TeleporterMessenger.sol/TeleporterMessenger.json"
+	teleporterByteCodeFile = "./avalanche/out/TeleporterMessenger.sol/TeleporterMessenger.json"
 )
 
 func TeleporterRegistry(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
