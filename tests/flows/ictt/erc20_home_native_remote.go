@@ -31,7 +31,7 @@ var (
  * Transfers C-Chain example ERC20 tokens to L1 A as L1 A's native token
  * Transfer back tokens from L1 A to C-Chain
  */
-func ERC20TokenHomeNativeTokenRemote(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func ERC20TokenHomeNativeTokenRemote(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

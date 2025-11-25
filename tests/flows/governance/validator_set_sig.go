@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func ValidatorSetSig(network *localnetwork.LocalNetwork) {
+func ValidatorSetSig(network *localnetwork.LocalAvalancheNetwork) {
 	// ************************************************************************************************
 	// Setup
 	// ************************************************************************************************

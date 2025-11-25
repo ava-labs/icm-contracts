@@ -37,6 +37,7 @@ contract InitializeBlockchainIDTest is Test {
         );
 
         teleporterMessenger = new TeleporterMessenger();
+        teleporterMessenger.initialize(address(0x0200000000000000000000000000000000000005));
     }
 
     function testUninitialized() public {

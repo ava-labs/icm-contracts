@@ -40,7 +40,7 @@ const (
 )
 
 var (
-	LocalNetworkInstance *localnetwork.LocalNetwork
+	LocalNetworkInstance *localnetwork.LocalAvalancheNetwork
 	TeleporterInfo       utils.TeleporterTestInfo
 	e2eFlags             *e2e.FlagVars
 )
@@ -79,7 +79,7 @@ var _ = ginkgo.BeforeSuite(func() {
 	// Create the local network instance
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	LocalNetworkInstance = localnetwork.NewLocalNetwork(
+	LocalNetworkInstance = localnetwork.NewLocalAvalancheNetwork(
 		ctx,
 		"teleporter-test-local-network",
 		warpGenesisTemplateFile,
@@ -124,6 +124,7 @@ var _ = ginkgo.BeforeSuite(func() {
 
 		for _, l1 := range LocalNetworkInstance.GetAllL1Infos() {
 			TeleporterInfo.SetTeleporter(teleporterContractAddress, l1)
+			TeleporterInfo.Initialize(l1, fundedKey, common.HexToAddress("0x0200000000000000000000000000000000000005"))
 			TeleporterInfo.InitializeBlockchainID(l1, fundedKey)
 			TeleporterInfo.DeployTeleporterRegistry(l1, fundedKey)
 		}

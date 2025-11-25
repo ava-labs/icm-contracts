@@ -102,6 +102,7 @@ abstract contract BaseTeleporterRegistryAppTest is TeleporterRegistryTest {
         TeleporterRegistryTest.setUp();
         _addProtocolVersion(teleporterRegistry, teleporterAddress);
         _mockFeeAsset = new UnitTestMockERC20();
+        TeleporterMessenger(teleporterAddress).initialize(address(0x0200000000000000000000000000000000000005));
         TeleporterMessenger(teleporterAddress).initializeBlockchainID();
     }
 

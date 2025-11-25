@@ -88,6 +88,14 @@ func (t TeleporterTestInfo) SetTeleporter(address common.Address, l1 interfaces.
 	info.TeleporterMessenger = teleporterMessenger
 }
 
+func (t TeleporterTestInfo) Initialize(l1 interfaces.L1TestInfo, fundedKey *ecdsa.PrivateKey, warpContractAddress common.Address) {
+	opts, err := bind.NewKeyedTransactorWithChainID(fundedKey, l1.EVMChainID)
+	Expect(err).Should(BeNil())
+	tx, err := t.TeleporterMessenger(l1).Initialize(opts, warpContractAddress)
+	Expect(err).Should(BeNil())
+	WaitForTransactionSuccess(context.Background(), l1, tx.Hash())
+}
+
 func (t TeleporterTestInfo) SetTeleporterRegistry(address common.Address, l1 interfaces.L1TestInfo) {
 	teleporterRegistry, err := teleporterregistry.NewTeleporterRegistry(
 		address, l1.RPCClient,

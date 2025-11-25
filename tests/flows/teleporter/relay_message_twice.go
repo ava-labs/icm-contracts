@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func RelayMessageTwice(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func RelayMessageTwice(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1AInfo := network.GetPrimaryNetworkInfo()
 	l1BInfo, _ := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

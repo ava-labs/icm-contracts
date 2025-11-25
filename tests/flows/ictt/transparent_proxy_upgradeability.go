@@ -26,7 +26,7 @@ import (
  * Check that the transfer was successful, and expected balances are correct
  */
 
-func TransparentUpgradeableProxy(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func TransparentUpgradeableProxy(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
 	fundedAddress, fundedKey := network.GetFundedAccountInfo()

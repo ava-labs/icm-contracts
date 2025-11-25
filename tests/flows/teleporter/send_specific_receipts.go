@@ -18,7 +18,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func SendSpecificReceipts(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func SendSpecificReceipts(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1AInfo := network.GetPrimaryNetworkInfo()
 	l1BInfo, _ := network.GetTwoL1s()
 	l1ATeleporterMessenger := teleporter.TeleporterMessenger(l1AInfo)
@@ -254,7 +254,6 @@ func receiptIncluded(
 ) bool {
 	for _, receipt := range receipts {
 		messageID, err := teleporterutils.CalculateMessageID(
-			teleporterMessengerAddress,
 			sourceL1.BlockchainID,
 			destinationL1.BlockchainID,
 			receipt.ReceivedMessageNonce,

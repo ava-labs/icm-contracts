@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func AddFeeAmount(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func AddFeeAmount(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1AInfo := network.GetPrimaryNetworkInfo()
 	l1BInfo, _ := network.GetTwoL1s()
 	teleporterContractAddress := teleporter.TeleporterMessengerAddress(l1AInfo)
