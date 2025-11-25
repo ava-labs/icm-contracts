@@ -88,8 +88,12 @@ contract AvalancheValidatorSetRegistry is
             pChainTimestamp: validatorSetStatePayload.pChainTimestamp
         });
 
+        // Check that blockchain ID matches the current validator set.
+        require(
+            validatorSetStatePayload.avalancheBlockchainID == avalancheBlockChainID,
+            "Blockchain ID mismatch"
+        );
         ICM.verifyICMMessage(message, avalancheNetworkID,  avalancheBlockChainID,validatorSet);
-
 
         // Store the validator set.
         uint256 validatorSetID = nextValidatorSetID++;
