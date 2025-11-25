@@ -155,6 +155,7 @@ func TeleporterRegistry(network *localnetwork.LocalNetwork, teleporter utils.Tel
 	// Update teleporter with the new TeleporterMessengers
 	for _, l1 := range network.GetAllL1Infos() {
 		teleporter.SetTeleporter(newTeleporterAddress, l1)
+		teleporter.Initialize(l1, fundedKey, common.HexToAddress("0x0200000000000000000000000000000000000005"))
 		teleporter.InitializeBlockchainID(l1, fundedKey)
 	}
 

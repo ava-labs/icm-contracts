@@ -6,14 +6,13 @@
 pragma solidity 0.8.25;
 
 import {Test} from "@forge-std/Test.sol";
+import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
 import {
     TeleporterMessenger,
     TeleporterMessage,
     TeleporterMessageInput,
     TeleporterMessageReceipt,
-    TeleporterFeeInfo,
-    IWarpMessenger,
-    WarpMessage
+    TeleporterFeeInfo
 } from "../TeleporterMessenger.sol";
 
 // TeleporterMessengerTest and its child contracts all initialize the blockchain ID in the set up
@@ -37,6 +36,7 @@ contract InitializeBlockchainIDTest is Test {
         );
 
         teleporterMessenger = new TeleporterMessenger();
+        teleporterMessenger.initialize(address(0x0200000000000000000000000000000000000005));
     }
 
     function testUninitialized() public {

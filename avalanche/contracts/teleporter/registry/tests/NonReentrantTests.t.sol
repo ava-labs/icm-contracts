@@ -107,6 +107,7 @@ abstract contract NonReentrantTest is BaseTeleporterRegistryAppTest {
 
     function testNonReentrantDifferentTeleporter() public {
         TeleporterMessenger teleporterV2 = new TeleporterMessenger();
+        teleporterV2.initialize(address(0x0200000000000000000000000000000000000005));
         teleporterV2.initializeBlockchainID();
         _addProtocolVersion(teleporterRegistry, address(teleporterV2));
 
