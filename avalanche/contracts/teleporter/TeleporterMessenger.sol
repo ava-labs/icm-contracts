@@ -13,8 +13,7 @@ import {
     TeleporterMessageInput,
     TeleporterMessage,
     TeleporterFeeInfo,
-    ITeleporterMessenger,
-    ICMMessage
+    ITeleporterMessenger
 } from "./ITeleporterMessenger.sol";
 import {ReceiptQueue} from "./ReceiptQueue.sol";
 import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";

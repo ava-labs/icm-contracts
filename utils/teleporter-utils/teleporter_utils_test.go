@@ -30,7 +30,7 @@ func TestCalculateMessageID(t *testing.T) {
 			sourceBlockchainID:         "2D8RG4UpSXbPbvPCAWppNJyqTG2i2CAXSkTgmTBBvs7GKNZjsY",
 			destinationBlockchainID:    "yH8D7ThNJkxmtkuv2jgBa4P1Rn3Qpr4pPr7QYNfcdoS6k6HWp",
 			nonce:                      1,
-			expectedID:                 "ZyaPKmkZwJTJNKkUjvNLVAd5rGhcj7pUC61rtQh93Z6Ue2Fxu",
+			expectedID:                 "jYP9LS4Hsz6GykPxVrucf6dUZRfXHLRpjpzLxyccjBoJr1dom",
 			expectedError:              false,
 		},
 		{
@@ -39,7 +39,7 @@ func TestCalculateMessageID(t *testing.T) {
 			sourceBlockchainID:         "2D8RG4UpSXbPbvPCAWppNJyqTG2i2CAXSkTgmTBBvs7GKNZjsY",
 			destinationBlockchainID:    "yH8D7ThNJkxmtkuv2jgBa4P1Rn3Qpr4pPr7QYNfcdoS6k6HWp",
 			nonce:                      2,
-			expectedID:                 "inHeK6nYc8uhUVPygnAUPN8Wk7PGPPQXHEd9ch8vyMUPxoaA7",
+			expectedID:                 "2gzmsJRZ3H2NShgkGNUnf2889a1bbVEZwfZngaRUWNcC7RWr5w",
 			expectedError:              false,
 		},
 		{
@@ -48,7 +48,7 @@ func TestCalculateMessageID(t *testing.T) {
 			sourceBlockchainID:         "2D8RG4UpSXbPbvPCAWppNJyqTG2i2CAXSkTgmTBBvs7GKNZjsY",
 			destinationBlockchainID:    "yH8D7ThNJkxmtkuv2jgBa4P1Rn3Qpr4pPr7QYNfcdoS6k6HWp",
 			nonce:                      3,
-			expectedID:                 "2ooMeB82Buik3jwAq3vCyb3DPuj3BAPFozALu9GsxNAw4qDdtq",
+			expectedID:                 "MCV4YGY9FfdsVUT5mo66zHANm9NNBTeYRqrpASQNCdEP7gKbq",
 			expectedError:              false,
 		},
 	}
