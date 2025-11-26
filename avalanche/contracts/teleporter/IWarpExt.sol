@@ -22,6 +22,6 @@ interface IWarpExt is IWarpMessenger {
      * @return message A verified Warp message.
      */
     function getVerifiedICMMessage(
-        ICMMessage calldata icmMessag3
+        ICMMessage calldata icmMessage
     ) external view returns (WarpMessage memory message);
 }

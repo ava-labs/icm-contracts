@@ -267,7 +267,6 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards, Initiali
         // The contract should be deployed using the universal deployer pattern, such that it knows messages
         // received from the same address on other chains were constructed using the same bytecode of this contract.
         // This allows for trusting the message format and uniqueness as specified by sendCrossChainMessage.
-        // TODO: This check may not be sufficient if this contract is receiving message from non-avalanche L1s
         require(
             warpMessage.originSenderAddress == address(this),
             "TeleporterMessenger: invalid origin sender address"

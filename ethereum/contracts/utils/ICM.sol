@@ -366,11 +366,14 @@ library ICM {
      */
     function handleMessage(ICMUnsignedMessage memory message ) internal pure returns (WarpMessage memory) {
         AddressedCall memory addressedCall = parseAddressedCall(message.payload);
+        address sourceAddress;
+        bytes memory sourceAddressBytes = addressedCall.sourceAddress;
+        assembly {
+            sourceAddress := mload(add(sourceAddressBytes, 20))
+        }
         return WarpMessage({
             sourceChainID: message.avalancheSourceBlockchainID,
-            // N.B. This prevents this function from being used for internal interop calls
-            // to teleporter
-            originSenderAddress: address(0),
+            originSenderAddress: sourceAddress,
             payload: addressedCall.payload
         });
     }
