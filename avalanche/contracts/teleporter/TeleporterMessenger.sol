@@ -7,7 +7,7 @@ pragma solidity 0.8.25;
 
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/utils/SafeERC20.sol";
-import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
+import {WarpMessage} from "@subnet-evm/IWarpMessenger.sol";
 import {
     TeleporterMessageReceipt,
     TeleporterMessageInput,
@@ -19,6 +19,8 @@ import {ReceiptQueue} from "./ReceiptQueue.sol";
 import {SafeERC20TransferFrom} from "@utilities/SafeERC20TransferFrom.sol";
 import {ITeleporterReceiver} from "./ITeleporterReceiver.sol";
 import {ReentrancyGuards} from "@utilities/ReentrancyGuards.sol";
+import {IWarpExt} from "./IWarpExt.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable@5.0.2/proxy/utils/Initializable.sol";
 
 /**
  * @dev Implementation of the {ITeleporterMessenger} interface.
@@ -29,7 +31,7 @@ import {ReentrancyGuards} from "@utilities/ReentrancyGuards.sol";
  *
  * @custom:security-contact https://github.com/ava-labs/icm-contracts/blob/main/SECURITY.md
  */
-contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
+contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards, Initializable {
     using SafeERC20 for IERC20;
     using ReceiptQueue for ReceiptQueue.TeleporterMessageReceiptQueue;
 
@@ -42,11 +44,13 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         TeleporterFeeInfo feeInfo;
     }
 
+    string public constant VERSION = "V2";
+
     /**
-     * @notice Warp precompile used for sending and receiving Warp messages.
+     * @notice The contract for verifying Warp messages
      */
-    IWarpMessenger public constant WARP_MESSENGER =
-        IWarpMessenger(0x0200000000000000000000000000000000000005);
+    IWarpExt private _warpMessenger;
+
 
     /**
      * @notice The blockchain ID of the chain the contract is deployed on.
@@ -107,6 +111,16 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         address relayerRewardAddress
             => mapping(address feeTokenContract => uint256 redeemableRewardAmount)
     ) internal _relayerRewardAmounts;
+
+    /*
+    * @notice Register the address of the Warp contract to be used by
+    *  this teleporter. This can be done only once.
+    * @dev This function is a delayed constructor to allow using Nick's method
+    * to deploy this contract
+    */
+    function initialize(address warpContract) external initializer {
+        _warpMessenger = IWarpExt(warpContract);
+    }
 
     /**
      * @dev See {ITeleporterMessenger-sendCrossChainMessage}
@@ -169,7 +183,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
 
         // Resubmit the message to the warp precompile now that we know
         // the exact message was already submitted in the past.
-        WARP_MESSENGER.sendWarpMessage(messageBytes);
+        _warpMessenger.sendWarpMessage(messageBytes);
     }
 
     /**
@@ -227,15 +241,12 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
 
     /**
      * @dev Emits a {ReceiveCrossChainMessage} event.
+     * Receives a Warp message via storage slots and processes it.
      * Re-entrancy is explicitly disallowed between receiving functions. One message is not able to receive another message.
      * Requirements:
      *
-     * - `relayerRewardAddress` must not be the zero address.
-     * - `messageIndex` must specify a valid warp message in the transaction's storage slots.
-     * - Valid warp message provided in storage slots, and sender address matches the address of this contract.
-     * - Teleporter message `destinationBlockchainID` must match the `blockchainID` of this contract.
-     * - Teleporter message was not previously received.
-     * - Transaction was sent by an allowed relayer for corresponding teleporter message.
+     * - Valid warp message provided in storage slots
+     * - sender address matches the address of this contract
      *
      * @inheritdoc ITeleporterMessenger
      */
@@ -246,82 +257,21 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         // Verify and parse the cross chain message included in the transaction access list
         // using the warp message precompile.
         (WarpMessage memory warpMessage, bool success) =
-            WARP_MESSENGER.getVerifiedWarpMessage(messageIndex);
+            _warpMessenger.getVerifiedWarpMessage(messageIndex);
         require(success, "TeleporterMessenger: invalid warp message");
 
         // Only allow for messages to be received from the same address as this teleporter contract.
         // The contract should be deployed using the universal deployer pattern, such that it knows messages
         // received from the same address on other chains were constructed using the same bytecode of this contract.
         // This allows for trusting the message format and uniqueness as specified by sendCrossChainMessage.
+        // TODO: This check may not be sufficient if this contract is receiving message from non-avalanche L1s
         require(
             warpMessage.originSenderAddress == address(this),
             "TeleporterMessenger: invalid origin sender address"
         );
-
-        // Parse the payload of the message.
-        TeleporterMessage memory teleporterMessage =
-            abi.decode(warpMessage.payload, (TeleporterMessage));
-
-        // If the blockchain ID has yet to be initialized, do so now.
-        bytes32 blockchainID_ = initializeBlockchainID();
-
-        // Require that the message was intended for this blockchain.
-        require(
-            teleporterMessage.destinationBlockchainID == blockchainID_,
-            "TeleporterMessenger: invalid destination chain ID"
-        );
-
-        // Calculate the message ID of the message given the source blockchain ID and message nonce.
-        bytes32 messageID = calculateMessageID(
-            warpMessage.sourceChainID, blockchainID_, teleporterMessage.messageNonce
-        );
-
-        // Require that the message has not been received previously.
-        require(!_messageReceived(messageID), "TeleporterMessenger: message already received");
-
-        // Check that the caller is allowed to deliver this message.
-        require(
-            _checkIsAllowedRelayer(msg.sender, teleporterMessage.allowedRelayerAddresses),
-            "TeleporterMessenger: unauthorized relayer"
-        );
-
-        // Mark the message as received.
-        _markMessageReceived(messageID, teleporterMessage.messageNonce);
-
-        // Store the relayer reward address if non-zero.
-        if (relayerRewardAddress != address(0)) {
-            _relayerRewardAddresses[messageID] = relayerRewardAddress;
-        }
-
-        // Process the receipts that were included in the teleporter message by paying the
-        // fee for the messages are reward to the given relayers.
-        uint256 length = teleporterMessage.receipts.length;
-        for (uint256 i; i < length; ++i) {
-            _markReceipt(blockchainID_, warpMessage.sourceChainID, teleporterMessage.receipts[i]);
-        }
-
-        // Store the receipt of this message delivery.
-        receiptQueues[warpMessage.sourceChainID].enqueue(
-            TeleporterMessageReceipt({
-                receivedMessageNonce: teleporterMessage.messageNonce,
-                relayerRewardAddress: relayerRewardAddress
-            })
-        );
-
-        emit ReceiveCrossChainMessage(
-            messageID,
-            warpMessage.sourceChainID,
-            msg.sender,
-            relayerRewardAddress,
-            teleporterMessage
-        );
-
-        // Execute the message.
-        if (teleporterMessage.message.length > 0) {
-            _handleInitialMessageExecution(messageID, warpMessage.sourceChainID, teleporterMessage);
-        }
+        _processWarpMessage(warpMessage, relayerRewardAddress);
     }
-
+    
     /**
      * @dev A Teleporter message has an associated `requiredGasLimit` that is used to execute the message.
      * If the `requiredGasLimit` is too low, then the message execution will fail. This method allows
@@ -569,7 +519,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
     function initializeBlockchainID() public returns (bytes32) {
         bytes32 blockchainID_ = blockchainID;
         if (blockchainID_ == bytes32(0)) {
-            blockchainID_ = WARP_MESSENGER.getBlockchainID();
+            blockchainID_ = _warpMessenger.getBlockchainID();
             require(blockchainID_ != bytes32(0), "TeleporterMessenger: zero blockchain ID");
             blockchainID = blockchainID_;
             emit BlockchainIDInitialized(blockchainID_);
@@ -585,10 +535,89 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         bytes32 sourceBlockchainID,
         bytes32 destinationBlockchainID,
         uint256 nonce
-    ) public view returns (bytes32) {
+    ) public pure returns (bytes32) {
         return
-            keccak256(abi.encode(address(this), sourceBlockchainID, destinationBlockchainID, nonce));
+            keccak256(abi.encode(VERSION, sourceBlockchainID, destinationBlockchainID, nonce));
     }
+
+    /**
+ * @dev Emits a {ReceiveCrossChainMessage} event.
+     *
+     * - `relayerRewardAddress` must not be the zero address.
+     * - Teleporter message `destinationBlockchainID` must match the `blockchainID` of this contract.
+     * - Teleporter message was not previously received.
+     * - Transaction was sent by an allowed relayer for corresponding teleporter message.
+     *
+     */
+    function _processWarpMessage(
+        WarpMessage memory warpMessage,
+        address relayerRewardAddress
+    ) internal {
+
+        // Parse the payload of the message.
+        TeleporterMessage memory teleporterMessage =
+                            abi.decode(warpMessage.payload, (TeleporterMessage));
+
+        // If the blockchain ID has yet to be initialized, do so now.
+        bytes32 blockchainID_ = initializeBlockchainID();
+
+        // Require that the message was intended for this blockchain.
+        require(
+            teleporterMessage.destinationBlockchainID == blockchainID_,
+            "TeleporterMessenger: invalid destination chain ID"
+        );
+
+        // Calculate the message ID of the message given the source blockchain ID and message nonce.
+        bytes32 messageID = calculateMessageID(
+            warpMessage.sourceChainID, blockchainID_, teleporterMessage.messageNonce
+        );
+
+        // Require that the message has not been received previously.
+        require(!_messageReceived(messageID), "TeleporterMessenger: message already received");
+
+        // Check that the caller is allowed to deliver this message.
+        require(
+            _checkIsAllowedRelayer(msg.sender, teleporterMessage.allowedRelayerAddresses),
+            "TeleporterMessenger: unauthorized relayer"
+        );
+
+        // Mark the message as received.
+        _markMessageReceived(messageID, teleporterMessage.messageNonce);
+
+        // Store the relayer reward address if non-zero.
+        if (relayerRewardAddress != address(0)) {
+            _relayerRewardAddresses[messageID] = relayerRewardAddress;
+        }
+
+        // Process the receipts that were included in the teleporter message by paying the
+        // fee for the messages are reward to the given relayers.
+        uint256 length = teleporterMessage.receipts.length;
+        for (uint256 i; i < length; ++i) {
+            _markReceipt(blockchainID_, warpMessage.sourceChainID, teleporterMessage.receipts[i]);
+        }
+
+        // Store the receipt of this message delivery.
+        receiptQueues[warpMessage.sourceChainID].enqueue(
+            TeleporterMessageReceipt({
+                receivedMessageNonce: teleporterMessage.messageNonce,
+                relayerRewardAddress: relayerRewardAddress
+            })
+        );
+
+        emit ReceiveCrossChainMessage(
+            messageID,
+            warpMessage.sourceChainID,
+            msg.sender,
+            relayerRewardAddress,
+            teleporterMessage
+        );
+
+        // Execute the message.
+        if (teleporterMessage.message.length > 0) {
+            _handleInitialMessageExecution(messageID, warpMessage.sourceChainID, teleporterMessage);
+        }
+    }
+
 
     /**
      * @dev Checks whether `delivererAddress` is allowed to deliver the message.
@@ -677,7 +706,7 @@ contract TeleporterMessenger is ITeleporterMessenger, ReentrancyGuards {
         );
 
         // Submit the message to the AWM precompile.
-        WARP_MESSENGER.sendWarpMessage(teleporterMessageBytes);
+        _warpMessenger.sendWarpMessage(teleporterMessageBytes);
 
         return messageID;
     }

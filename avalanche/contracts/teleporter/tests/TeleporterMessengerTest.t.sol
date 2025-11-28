@@ -6,17 +6,17 @@
 pragma solidity 0.8.25;
 
 import {Test} from "@forge-std/Test.sol";
+import {WarpMessage, IWarpMessenger} from "@subnet-evm/IWarpMessenger.sol";
 import {
     TeleporterMessenger,
     TeleporterMessage,
     TeleporterMessageReceipt,
     TeleporterMessageInput,
-    TeleporterFeeInfo,
-    IWarpMessenger,
-    WarpMessage
+    TeleporterFeeInfo
 } from "../TeleporterMessenger.sol";
 import {UnitTestMockERC20} from "@mocks/UnitTestMockERC20.sol";
 import {IERC20} from "@openzeppelin/contracts@5.0.2/token/ERC20/IERC20.sol";
+
 
 // Parent contract for TeleporterMessenger tests. Deploys a TeleporterMessenger
 // instance in the test setup, and provides helper methods for sending and
@@ -78,6 +78,7 @@ contract TeleporterMessengerTest is Test {
         );
 
         teleporterMessenger = new TeleporterMessenger();
+        teleporterMessenger.initialize(address(0x0200000000000000000000000000000000000005));
 
         // Blockchain ID should be 0 before it is initialized.
         assertEq(teleporterMessenger.blockchainID(), bytes32(0));

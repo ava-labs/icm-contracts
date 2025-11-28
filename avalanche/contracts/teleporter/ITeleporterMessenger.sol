@@ -3,7 +3,7 @@
 
 // SPDX-License-Identifier: LicenseRef-Ecosystem
 
-pragma solidity 0.8.25;
+pragma solidity ^0.8.25;
 
 // A message receipt identifies the message that was delivered by its nonce,
 // and the address that can redeem the reward for that message.
@@ -45,6 +45,27 @@ struct TeleporterFeeInfo {
     address feeTokenAddress;
     uint256 amount;
 }
+
+
+struct ICMSignature {
+    bytes signers;
+    bytes signature;
+}
+
+
+struct ICMUnsignedMessage {
+    uint32 avalancheNetworkID;
+    bytes32 avalancheSourceBlockchainID;
+    bytes payload;
+}
+
+/// A signed ICM message which carries a Teleporter message
+struct ICMMessage {
+    ICMUnsignedMessage unsignedMessage;
+    bytes unsignedMessageBytes;
+    ICMSignature signature;
+}
+
 
 /**
  * @dev Interface that describes functionalities for a cross-chain messenger implementing the Teleporter protcol.

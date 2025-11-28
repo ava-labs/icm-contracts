@@ -149,7 +149,7 @@ func NewLocalNetwork(
 	warpGenesisTemplateFile string,
 	l1Specs []L1Spec,
 	numPrimaryNetworkValidators int,
-	extraNodeCount int, // for use by tests, eg to add new L1 validators
+	extraNodeCount int, // for use by tests, e.g. to add new L1 validators
 	flagVars *e2e.FlagVars,
 ) *LocalNetwork {
 	// There must be at least one primary network validator per L1
@@ -423,7 +423,7 @@ func (n *LocalNetwork) AddSubnetValidators(
 	l1 interfaces.L1TestInfo,
 	partialSync bool,
 ) interfaces.L1TestInfo {
-	// Modify the each node's config to track the l1
+	// Modify each node's config to track the l1
 	for _, node := range nodes {
 		goLog.Printf("Adding node %s @ %s to l1 %s", node.NodeID, node.URI, l1.SubnetID)
 		existingTrackedSubnets := node.Flags[config.TrackSubnetsKey]
