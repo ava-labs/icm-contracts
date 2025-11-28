@@ -152,14 +152,14 @@ func SendNativeTransfer(
 // Asserts Receipt.status equals success.
 func sendAndWaitForTransaction(
 	ctx context.Context,
-	l1Info interfaces.L1TestInfo,
+	client ethclient.Client,
 	tx *types.Transaction,
 	success bool,
 ) *types.Receipt {
-	err := l1Info.RPCClient.SendTransaction(ctx, tx)
+	err := client.SendTransaction(ctx, tx)
 	Expect(err).Should(BeNil())
 
-	return waitForTransaction(ctx, l1Info, tx.Hash(), success)
+	return waitForTransaction(ctx, client, tx.Hash(), success)
 }
 
 // Sends a tx, and waits for it to be mined.
@@ -169,7 +169,7 @@ func SendTransactionAndWaitForFailure(
 	l1Info interfaces.L1TestInfo,
 	tx *types.Transaction,
 ) *types.Receipt {
-	return sendAndWaitForTransaction(ctx, l1Info, tx, false)
+	return sendAndWaitForTransaction(ctx, l1Info.RPCClient, tx, false)
 }
 
 // Sends a tx, and waits for it to be mined.
@@ -179,7 +179,7 @@ func SendTransactionAndWaitForSuccess(
 	l1Info interfaces.L1TestInfo,
 	tx *types.Transaction,
 ) *types.Receipt {
-	return sendAndWaitForTransaction(ctx, l1Info, tx, true)
+	return sendAndWaitForTransaction(ctx, l1Info.RPCClient, tx, true)
 }
 
 // Waits for a transaction to be mined.
@@ -189,7 +189,15 @@ func WaitForTransactionSuccess(
 	l1Info interfaces.L1TestInfo,
 	txHash common.Hash,
 ) *types.Receipt {
-	return waitForTransaction(ctx, l1Info, txHash, true)
+	return waitForTransaction(ctx, l1Info.RPCClient, txHash, true)
+}
+
+func WaitForTransactionSuccessWithClient(
+	ctx context.Context,
+	client ethclient.Client,
+	txHash common.Hash,
+) *types.Receipt {
+	return waitForTransaction(ctx, client, txHash, true)
 }
 
 // Waits for a transaction to be mined.
@@ -199,26 +207,26 @@ func WaitForTransactionFailure(
 	l1Info interfaces.L1TestInfo,
 	txHash common.Hash,
 ) *types.Receipt {
-	return waitForTransaction(ctx, l1Info, txHash, false)
+	return waitForTransaction(ctx, l1Info.RPCClient, txHash, false)
 }
 
 // Waits for a transaction to be mined.
 // Asserts Receipt.status equals success.
 func waitForTransaction(
 	ctx context.Context,
-	l1Info interfaces.L1TestInfo,
+	client ethclient.Client,
 	txHash common.Hash,
 	success bool,
 ) *types.Receipt {
 	cctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 	defer cancel()
 
-	receipt, err := WaitMined(cctx, l1Info.RPCClient, txHash)
+	receipt, err := WaitMined(cctx, client, txHash)
 	Expect(err).Should(BeNil())
 
 	if success {
 		if receipt.Status == types.ReceiptStatusFailed {
-			TraceTransactionAndExit(ctx, l1Info.RPCClient, receipt.TxHash)
+			TraceTransactionAndExit(ctx, client, receipt.TxHash)
 		}
 	} else {
 		Expect(receipt.Status).Should(Equal(types.ReceiptStatusFailed))

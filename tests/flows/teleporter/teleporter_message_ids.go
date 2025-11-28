@@ -16,7 +16,7 @@ import (
 )
 
 // Tests Teleporter message ID calculation
-func CalculateMessageID(network *localnetwork.LocalNetwork, teleporter utils.TeleporterTestInfo) {
+func CalculateMessageID(network *localnetwork.LocalAvalancheNetwork, teleporter utils.TeleporterTestInfo) {
 	l1Info := network.GetPrimaryNetworkInfo()
 
 	sourceBlockchainID := common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd")

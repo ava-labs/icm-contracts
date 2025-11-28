@@ -21,7 +21,7 @@ import (
  * C-Chain and calls contract on the C-Chain using sendAndCall
  */
 func ERC20TokenHomeERC20TokenRemoteSendAndCall(
-	network *localnetwork.LocalNetwork,
+	network *localnetwork.LocalAvalancheNetwork,
 	teleporter utils.TeleporterTestInfo,
 ) {
 	cChainInfo := network.GetPrimaryNetworkInfo()
