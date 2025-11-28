@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	LocalNetworkInstance *localnetwork.LocalNetwork
+	LocalNetworkInstance *localnetwork.LocalAvalancheNetwork
 	e2eFlags             *e2e.FlagVars
 )
 
@@ -47,7 +47,7 @@ var _ = ginkgo.BeforeSuite(func() {
 	// Create the local network instance
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	LocalNetworkInstance = localnetwork.NewLocalNetwork(
+	LocalNetworkInstance = localnetwork.NewLocalAvalancheNetwork(
 		ctx,
 		"governance-test-local-network",
 		warpGenesisTemplateFile,

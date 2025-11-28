@@ -25,7 +25,7 @@ import (
  * - Disable the validator by issuing a DisableL1ValidatorTx on the P-Chain
  * - Initiate and complete validator removal
  */
-func RemoveDelegatorInactiveValidator(network *localnetwork.LocalNetwork) {
+func RemoveDelegatorInactiveValidator(network *localnetwork.LocalAvalancheNetwork) {
 	// Get the L1s info
 	cChainInfo := network.GetPrimaryNetworkInfo()
 	l1AInfo, _ := network.GetTwoL1s()
