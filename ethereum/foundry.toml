@@ -1,0 +1,33 @@
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["lib"]
+solc_version = '0.8.30'
+evm_version = 'prague'
+via_ir = true
+test = 'tests'
+bytecode_hash = "none"
+optimizer = true
+optimizer_runs = 200
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = false
+int_types = 'preserve'
+multiline_func_header = 'params_first'
+quote_style = 'double'
+number_underscores = 'thousands'
+override_spacing = true
+wrap_comments = false
+
+# Add the following to your VSCode settings to enable automatic formatting.
+# {
+#   "editor.formatOnSave": true,
+#   "[solidity]": {
+#     "editor.defaultFormatter": "JuanBlanco.solidity" 
+#   },
+#   "solidity.formatter": "forge",
+# }
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
