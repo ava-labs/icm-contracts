@@ -313,28 +313,11 @@ library ICM {
     function verifyICMMessage(
         ICMMessage memory message,
         uint32 avalancheNetworkID,
-        bytes32 avalancheBlockChainID,
         ValidatorSet memory validatorSet
     ) internal view  {
         if (message.unsignedMessage.avalancheNetworkID != avalancheNetworkID) {
             revert("Invalid avalanche network ID");
         }
-
-        // TODO: Do we need to check the avalanche source blockchain ID?
-        // It's expected to be different in cases where the message is from the primary network.
-        // if (
-        //     message.unsignedMessage.avalancheSourceBlockchainID
-        //         != validatorSet.avalancheBlockchainID
-        // ) {
-        //     revert("Invalid avalanche source blockchain ID");
-        // }
-
-
-         if (
-            avalancheBlockChainID != validatorSet.avalancheBlockchainID
-         ) {
-             revert("Invalid avalanche source blockchain ID");
-         }
 
         bool[] memory signers = bytesToBoolArray(message.signature.signers);
         (bytes memory aggregatePublicKey, uint64 aggregateWeight) =

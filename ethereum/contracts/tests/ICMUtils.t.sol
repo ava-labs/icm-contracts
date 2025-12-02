@@ -129,8 +129,8 @@ contract ICMUtilsTest is Test {
             hex"0000000000013d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a70000000d48656c6c6f2c20576f726c64210000000000000001010cb7f52fa291c273810bcf0dd1d3dc41e0449e6da4ff2b90243ce33b6ff4733cbd3f8446878109e369db1ae9a67622430d3d6ec6a9b1abb9e6cd86df330080a546d2b8599950618eb76efbdfe13ef74fc14e4fa9919bd440dd2bd02bf84421af089653aef1a209f9bbf2837562b02adc6e766753e0247417225a4de4ad095ad50d619b719e234702df7f87e8cd54873310c55d7516d586441d7dd978e199f08383013aa6e3b2f9a48ac3366e9a5df7a003786b93b937d9ccf463a6f10b342306"
         );
         ICM.verifyICMMessage(
-            message, 1,
-            bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7"),
+            message,
+            1,
             validatorSet
         );
     }
@@ -170,7 +170,6 @@ contract ICMUtilsTest is Test {
         ICM.verifyICMMessage(
             message,
             1,
-            bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7"),
             validatorSet
         );
     }
