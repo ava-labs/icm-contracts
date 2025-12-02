@@ -11,9 +11,10 @@ contract AvalancheValidatorSetRegistryTest is Test {
     AvalancheValidatorSetRegistry registry;
 
     uint32 constant NETWORK_ID = 1;
+    uint256 constant ETH_CHAIN_ID = 1981;
 
     function setUp() public {
-        registry = new AvalancheValidatorSetRegistry(NETWORK_ID);
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID, ETH_CHAIN_ID);
     }
 
     function testGetAvalancheNetworkID() public view {
@@ -72,7 +73,7 @@ contract AvalancheValidatorSetRegistryTest is Test {
 
     function testIncorrectNetworkId() public {
         // create a new registry with a network id different than the one the message is intended for
-        registry = new AvalancheValidatorSetRegistry(NETWORK_ID + 1);
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID + 1, ETH_CHAIN_ID);
         bytes memory validatorBytes =
             hex"000000000004055b1e5892c401dc04a72699da740f768f25f16fbac3debaed3caa7f502242b9b8b5890c6795d30bd6011451aef8b547133e7251b1d022c842645433528f94d9e118d2b3a7bd2ec8e8feb971e7d2fe7f5ba81f056147a61f4b4e5e747529ac1d0000000000000064064bb2e2313f21f36907e4c010a7bfee0216a3f0000bf2b1c83adf6aa6675bada4b68dd023f4f4c9285be2c75ff745ac0b790412ba453f7d1a0c49c9c7e1fd7a791110499ea762a96d57b69e67d2e25fb5756a37e26f4c4a69b27939799b92f9000000000000006413d331edb3c1f4113b5148e25bf32658f962d43dea4115fe40fb0c38ac3acd58537cc147218e34e86fd5366ed1ef0d00173010db4bbb9e64cb676d39f4bae156b7b8bc76102d6e41e7bc46c6b6a369d21726f9e7be4b929ce4dcf84fa1a1a56600000000000000641831d57287d398005355881a59ee05384c9467c7974650cb6a38fd1346d3ec58484ab0ad97678bf21521c6e6824e08180d16fb7a9257aac66442415c3f51f35b691f5ce4389ce22c0701b2a1ac6d05f2907e040eb7a03b5aef68bbd90cfbea770000000000000064";
         bytes memory signedValidtorSetStateMessage =
@@ -81,5 +82,162 @@ contract AvalancheValidatorSetRegistryTest is Test {
         ICMMessage memory message = ICM.parseICMMessage(signedValidtorSetStateMessage);
         vm.expectRevert();
         registry.registerValidatorSet(message, validatorBytes);
+    }
+}
+
+
+contract WarpExtTest is Test {
+    AvalancheValidatorSetRegistry registry;
+
+    uint32 constant NETWORK_ID = 1;
+    bytes32 constant AvalancheBlockchainId = bytes32(hex"3d0ad12b8ee8928edf248ca91ca55600fb383f07c32bff1d6dec472b25cf59a7");
+
+    function setUp() public {
+        registry = new AvalancheValidatorSetRegistry(NETWORK_ID, 1);
+    }
+
+    /**
+     * @dev The `getVerifiedWarpBlockHash` method is part of the IWarpExt interface, but it
+      * is specifically not implemented for the AvalancheValidatorSetRegistry
+     */
+    function testWarpBlochHashReverts() public {
+        vm.expectRevert("This method cannot be called on Ethereum");
+        registry.getVerifiedWarpBlockHash(0);
+    }
+
+    /**
+     * @dev The `getVerifiedWarpMessage` method is part of the IWarpExt interface, but it
+     * is specifically not implemented for the AvalancheValidatorSetRegistry
+     */
+    function testGetVerifiedWarpMessageReverts() public {
+        vm.expectRevert("This method can't be called on Ethereum, use `getVerifiedICMMessage` instead");
+        registry.getVerifiedWarpMessage(0);
+    }
+
+    /**
+     * @dev We test that trying to verify an ICM message against a non-existent
+     * validator set reverts.
+     */
+    function testUnregisteredBlockchain() public {
+        // the blockchain is not registered with this contract
+        assert(registry.nextValidatorSetID() < 10);
+        ICMMessage memory message = icmMessageFixture();
+        vm.expectRevert( "Validator set does not exist");
+        registry.getVerifiedICMMessage(10, message);
+    }
+
+    /**
+     * @dev Test happy flow that warp can receive a message signed by a quorum of validators
+     */
+    function testGetVerifiedMessageFromPayload() public {
+        // add a validator set to the registry with all equal weights
+        uint256 validatorSetID = registerValidatorSet([uint64(100), uint64(100), uint64(100), uint64(100)]);
+
+        // verify that we can receive and validate this message
+        registry.getVerifiedICMMessage(validatorSetID, icmMessageFixture());
+    }
+
+    function secretKeysFixture() private pure returns (uint256[4] memory) {
+        return [uint256(1337), uint256(1338), uint256(1339), uint256(1340)];
+    }
+
+    /**
+     * @dev An ICM message used for testing. It is signed by all validators except the second
+     */
+    function icmMessageFixture() private view returns (ICMMessage memory) {
+        AddressedCall memory addressedCall = AddressedCall({
+            sourceAddress: hex"deadbeef",
+            payload: hex"48656c6c6f2c20576f726c6421"
+        });
+        ICMUnsignedMessage memory unsignedMessage =  ICMUnsignedMessage ({
+            avalancheNetworkID: 1,
+            avalancheSourceBlockchainID: AvalancheBlockchainId,
+            payload: ICM.serializeAddressedCall(addressedCall)
+        });
+        bytes memory unsignedMessageBytes = ICM.serializeICMUnsignedMessage(unsignedMessage);
+        uint256[4] memory secretKeys = secretKeysFixture();
+        uint256[] memory sks = new uint256[] (3);
+        sks[0] = secretKeys[0];
+        sks[1] = secretKeys[2];
+        sks[2] = secretKeys[3];
+        bytes memory sig = BLST.createAggregateSignature(sks, unsignedMessageBytes);
+        return ICMMessage({
+            unsignedMessage: unsignedMessage,
+            unsignedMessageBytes: unsignedMessageBytes,
+            signature: ICMSignature({
+                signers: hex"0d",
+                signature: sig
+            })
+        });
+    }
+
+    /**
+     * @dev A factory function to register a set of four validators to the registry
+     * The weights are passed in as parameter
+     */
+    function registerValidatorSet(uint64[4] memory weights) private returns (uint256) {
+        // construct public keys
+        bytes[] memory publicKeys = new bytes[](4);
+        uint256[4] memory secretKeys = secretKeysFixture();
+        publicKeys[0] = BLST.getPublicKeyFromSecret(secretKeys[0]);
+        publicKeys[1] = BLST.getPublicKeyFromSecret(secretKeys[1]);
+        publicKeys[2] = BLST.getPublicKeyFromSecret(secretKeys[2]);
+        publicKeys[3] = BLST.getPublicKeyFromSecret(secretKeys[3]);
+
+        // construct the validator set
+        Validator[] memory validators = new Validator[](4);
+        for (uint256 i = 0; i < 4; ++i) {
+            validators[i] = Validator({
+                blsPublicKey: publicKeys[i],
+                weight: weights[i]
+            });
+        }
+
+        bytes memory validatorBytes = ValidatorSets.serializeValidators(validators);
+
+        // construct the validator set state payload
+        ValidatorSetStatePayload memory validatorSetState = ValidatorSetStatePayload({
+            avalancheBlockchainID: AvalancheBlockchainId,
+            pChainHeight: 1,
+            pChainTimestamp: 1,
+            validatorSetHash: sha256(validatorBytes)
+        });
+
+        // construct the addressed call for registering validators
+        AddressedCall memory addressedCall = AddressedCall({
+            sourceAddress: new bytes(0),
+            payload: ValidatorSets.serializeValidatorSetStatePayload(validatorSetState)
+        });
+
+        // construct the unsigned ICM message
+        ICMUnsignedMessage memory unsignedMessage =  ICMUnsignedMessage ({
+            avalancheNetworkID: 1,
+            avalancheSourceBlockchainID: AvalancheBlockchainId,
+            payload: ICM.serializeAddressedCall(addressedCall)
+        });
+
+        bytes memory unsignedMessageBytes = ICM.serializeICMUnsignedMessage(unsignedMessage);
+
+        // sign the ICM message
+        uint256[] memory sks = new uint256[] (4);
+        sks[0] = secretKeys[0];
+        sks[1] = secretKeys[1];
+        sks[2] = secretKeys[2];
+        sks[3] = secretKeys[3];
+        bytes memory sig = BLST.createAggregateSignature(sks, unsignedMessageBytes);
+
+        // construct the final ICM message
+        ICMMessage memory icmMessage = ICMMessage({
+            unsignedMessage: unsignedMessage,
+            unsignedMessageBytes: unsignedMessageBytes,
+            signature: ICMSignature({
+            signers: hex"0f",
+            signature: sig
+        })
+        });
+        uint256 expected_id = registry.nextValidatorSetID();
+        uint256 id = registry.registerValidatorSet(icmMessage, validatorBytes);
+        assertEq(id, expected_id);
+        return id;
     }
 }

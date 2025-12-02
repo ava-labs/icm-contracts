@@ -8,9 +8,13 @@ import {
     ValidatorSetStatePayload,
     ValidatorSets
 } from "./utils/ValidatorSets.sol";
+import {
+    WarpMessage,
+    WarpBlockHash
+} from "@subnet-evm/IWarpMessenger.sol";
 import {ICMMessage} from "@avalabs/avalanche-contracts/teleporter/ITeleporterMessenger.sol";
 import {ICM, AddressedCall} from "./utils/ICM.sol";
-
+import {IWarpExt} from "@avalabs/avalanche-contracts/teleporter/IWarpExt.sol";
 
 /**
  * @title AvalancheValidatorSetRegistry
@@ -19,16 +23,25 @@ import {ICM, AddressedCall} from "./utils/ICM.sol";
  * Updates are authenticated through signed ICM messages from the current validator set.
  */
 contract AvalancheValidatorSetRegistry is
-    IAvalancheValidatorSetRegistry
+    IAvalancheValidatorSetRegistry,
+    IWarpExt
 {
     uint32 public immutable avalancheNetworkID;
     uint32 public nextValidatorSetID = 0;
+    /**
+     * @notice The chain ID of the Ethereum network the contract is deployed on.
+     * @dev The chain ID for Ethereum is a uint which we reinterpret as bytes32
+     * to remain consistent with the existing interface
+     */
+    uint256 public ethereumBlockchainID;
+
 
     // Mapping of validator set IDs to their complete validator set data.
     mapping(uint256 => ValidatorSet) private _validatorSets;
 
-    constructor(uint32 _avalancheNetworkID) {
+    constructor(uint32 _avalancheNetworkID, uint256 _ethereumBlockchainID) {
         avalancheNetworkID = _avalancheNetworkID;
+        ethereumBlockchainID = _ethereumBlockchainID;
     }
 
     /**
@@ -125,6 +138,7 @@ contract AvalancheValidatorSetRegistry is
         emit ValidatorSetUpdated(validatorSetID, validatorSetStatePayload.avalancheBlockchainID);
     }
 
+
     /**
      * @notice Gets a validator set by its ID
      * @param validatorSetID The ID of the validator set to get
@@ -155,9 +169,41 @@ contract AvalancheValidatorSetRegistry is
     function verifyICMMessage(
         uint256 validatorSetID,
         ICMMessage calldata message
-    ) external view {
+    ) public view override {
         ValidatorSet memory validatorSet = _getValidatorSet(validatorSetID);
         ICM.verifyICMMessage(message, avalancheNetworkID, validatorSet);
+    }
+
+    /**
+     * * @notice Verifies an ICM message against a validator set or reverts.
+     * @param validatorSetID The ID of the validator set to verify the message against
+     * @param icmMessage The ICM message to verify
+     * @return The derived message that TeleporterMessenger expects
+     */
+    function getVerifiedICMMessage(
+        uint256 validatorSetID,
+        ICMMessage calldata icmMessage
+    ) external view returns (WarpMessage memory) {
+        verifyICMMessage(validatorSetID, icmMessage);
+        return ICM.handleMessage(icmMessage.unsignedMessage);
+    }
+
+    function sendWarpMessage(bytes calldata payload) external returns (bytes32) {
+        revert("Sending Warp messages from Ethereum is not currently supported");
+    }
+
+    function getVerifiedWarpMessage(uint32 index) external pure returns (WarpMessage calldata, bool) {
+        revert("This method can't be called on Ethereum, use `getVerifiedICMMessage` instead");
+    }
+
+    function getVerifiedWarpBlockHash(
+        uint32 index
+    ) external pure returns (WarpBlockHash calldata, bool) {
+        revert("This method cannot be called on Ethereum");
+    }
+
+    function getBlockchainID() external view returns (bytes32) {
+        return bytes32(ethereumBlockchainID);
     }
 
     function _getValidatorSet(
