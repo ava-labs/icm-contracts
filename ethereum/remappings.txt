@@ -1,0 +1,2 @@
+@avalabs/avalanche-contracts=../avalanche/contracts
+@subnet-evm=../avalanche/contracts/subnet-evm
