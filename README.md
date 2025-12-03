@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> This repository has been moved in it's entirety to [ICM Services](https://github.com/ava-labs/icm-contracts/edit/main/README.md) repository. All of the commits exist with the same hashes and the tags and their associated releases have been recreated. To open issues, pull requests, and discusssions, do so in the ICM Services repository. 
+> This repository has been moved in it's entirety to [`icm-services`](https://github.com/ava-labs/icm-contracts/edit/main/README.md). All commits exist with the same hash, and tags and their associated releases have also been migrated. All new issues, pull requests, and discussions should be opened in the `icm-services` repository. For the latest releases, see the `icm-services` [release page](https://github.com/ava-labs/icm-services/releases).
 
 # ICM Contracts
 
