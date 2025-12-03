@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository has been moved in it's entirety to [`icm-services`](https://github.com/ava-labs/icm-contracts/edit/main/README.md). All commits exist with the same hash, and tags and their associated releases have also been migrated. All new issues, pull requests, and discussions should be opened in the `icm-services` repository. For the latest releases, see the `icm-services` [release page](https://github.com/ava-labs/icm-services/releases).
+
 # ICM Contracts
 
 For help getting started with building ICM contracts, refer to [the avalanche-starter-kit repository](https://github.com/ava-labs/avalanche-starter-kit).
