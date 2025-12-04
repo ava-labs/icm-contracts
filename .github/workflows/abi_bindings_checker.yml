@@ -30,9 +30,14 @@ jobs:
       - name: Install solc
         run: |
           source ./scripts/versions.sh
-          wget https://github.com/ethereum/solidity/releases/download/v$SOLIDITY_VERSION/solc-static-linux
+          wget https://github.com/ethereum/solidity/releases/download/v$AVALANCHE_SOLIDITY_VERSION/solc-static-linux
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
+
+      - name: Install svm
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+          ~/.cargo/bin/cargo install svm-rs
 
       - name: Generate ABI Go bindings
         run: |

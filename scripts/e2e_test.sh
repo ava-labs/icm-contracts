@@ -101,7 +101,7 @@ fi
 source "$ICM_CONTRACTS_PATH"/scripts/constants.sh
 source "$ICM_CONTRACTS_PATH"/scripts/versions.sh
 
-BASEDIR=${BASEDIR:-"$HOME/.teleporter-deps"}
+BASEDIR=${BASEDIR:-"$HOME/.icm-contracts-e2e-deps"}
 
 cwd=$(pwd)
 # Install the avalanchego and subnet-evm binaries
@@ -123,7 +123,7 @@ cd $ICM_CONTRACTS_PATH
 BASEDIR=$BASEDIR ICM_SERVICES_BUILD_PATH=$ICM_SERVICES_BUILD_PATH "${ICM_CONTRACTS_PATH}/scripts/install_sig_agg_release.sh"
 echo "Installed signature-aggregator from icm-services release ${ICM_SERVICES_VERSION}"
 
-cd $ICM_CONTRACTS_PATH
+cd "$ICM_CONTRACTS_PATH/avalanche/"
 if command -v forge &> /dev/null; then
   forge build --skip test
 else
